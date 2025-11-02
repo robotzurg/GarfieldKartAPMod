@@ -3,6 +3,9 @@ using UnityEngine;
 using System;
 using HarmonyLib;
 using System.Reflection;
+using static Rewired.Controller;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GarfieldKartAPMod
 {
@@ -37,13 +40,42 @@ namespace GarfieldKartAPMod
             // Set up assembly resolver
             AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
+            // Check if System.Numerics types are available
+            try
+            {
+                var bigIntType = Type.GetType("System.Numerics.BigInteger, System.Numerics");
+                Logger.LogInfo($"BigInteger available: {bigIntType != null}");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"BigInteger check failed: {ex.Message}");
+            }
+
+            UITextureSwapper.Initialize();
+
             // Initialize Archipelago client
             APClient = new ArchipelagoClient();
+
+            // Hook up save management to connection events
+            APClient.OnConnected += OnArchipelagoConnected;
+            APClient.OnDisconnected += OnArchipelagoDisconnected;
 
             harmony = new Harmony(PluginGUID);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             Logger.LogInfo($"{PluginName} loaded successfully!");
+        }
+
+        private void OnArchipelagoConnected()
+        {
+            Log.Message("Connected to Archipelago");
+        }
+
+        private void OnArchipelagoDisconnected()
+        {
+            Log.Message("Disconnected from Archipelago");
+
+            ArchipelagoItemTracker.Clear();
         }
 
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
@@ -93,8 +125,8 @@ namespace GarfieldKartAPMod
 
 namespace GarfieldKartAPMod.Patches
 {
-    // Patch the main menu start - adjust class name based on actual game code
-    [HarmonyPatch(typeof(MenuHDMain), "Enter")] 
+    // Patch the main menu start
+    [HarmonyPatch(typeof(MenuHDMain), "Enter")]
     public class MenuHDMain_Enter_Patch
     {
         static void Postfix()
@@ -104,21 +136,29 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
-    [HarmonyPatch(typeof(RcRace), "StartRace")]
-    public class RcRace_StartRace_Patch
+    [HarmonyPatch(typeof(RacePuzzlePiece), "DoTrigger")]
+    public class RacePuzzlePiece_DoTrigger
     {
-        static void Prefix(RcRace __instance)
+        static void Prefix(RacePuzzlePiece __instance)
         {
             if (GarfieldKartAPMod.APClient.IsConnected)
             {
-                Log.Message("Race started while connected to Archipelago!");
+                GarfieldKartAPMod.APClient.SendLocationFromName("Win Ice Cream Cup");
+            }
+        }
+    }
 
-                GameSaveManager saveManager = GameSaveManager.Instance;
-                if (saveManager != null)
-                {
-                    // Access save data and send locations as needed
-                    Log.Message("Save data accessed during race start");
-                }
+    [HarmonyPatch(typeof(MenuHDTrackSelection), "Enter")]
+    public class MenuHDTrackSelection_Enter_Patch
+    {
+        static void Postfix(MenuHDTrackSelection __instance)
+        {
+            Log.Message("Track Selection Menu opened");
+
+            // Swap puzzle piece icons if connected to Archipelago
+            if (GarfieldKartAPMod.APClient.IsConnected)
+            {
+                UITextureSwapper.SwapPuzzlePieceIcons(__instance);
             }
         }
     }

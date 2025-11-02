@@ -4,10 +4,10 @@ namespace GarfieldKartAPMod
 {
     public class ConnectionUI : MonoBehaviour
     {
-        private bool showUI = false;
+        private bool showUI = true;
         private string hostname = "archipelago.gg";
-        private string port = "38281";
-        private string slotName = "";
+        private string port = "64626";
+        private string slotName = "Jeff-GK"; // Listing this for testing
         private string password = "";
         private string statusMessage = "";
         private Rect windowRect = new Rect(Screen.width / 2 - 300, Screen.height / 2 - 250, 800, 700);

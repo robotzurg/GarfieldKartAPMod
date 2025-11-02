@@ -27,7 +27,7 @@ namespace GarfieldKartAPMod
                 session.Socket.SocketClosed += OnSocketClosed;
 
                 LoginResult result = session.TryConnectAndLogin(
-                    "Garfield Kart",
+                    "Garfield Kart - Furious Racing",
                     slotName,
                     ItemsHandlingFlags.AllItems,
                     new Version(0, 6, 3),
@@ -41,6 +41,9 @@ namespace GarfieldKartAPMod
 
                     // Subscribe to item received events
                     session.Items.ItemReceived += OnItemReceived;
+
+                    // Load items we already have
+                    ArchipelagoItemTracker.LoadFromServer();
 
                     OnConnected?.Invoke();
                 }
@@ -61,6 +64,11 @@ namespace GarfieldKartAPMod
             }
         }
 
+        public ArchipelagoSession GetSession()
+        {
+            return session;
+        }
+
         public void Disconnect()
         {
             if (session != null)
@@ -74,7 +82,10 @@ namespace GarfieldKartAPMod
         private void OnItemReceived(ReceivedItemsHelper helper)
         {
             var item = helper.PeekItem();
-            Log.Message($"Item Received");
+            string itemName = session.Items.GetItemName(item.ItemId);
+
+            Log.Message($"Item Received: {itemName} (ID: {item.ItemId})");
+
             helper.DequeueItem();
         }
 
@@ -95,6 +106,16 @@ namespace GarfieldKartAPMod
             {
                 session.Locations.CompleteLocationChecks(locationId);
                 Log.Message($"Sent location check: {locationId}");
+            }
+        }
+
+        public void SendLocationFromName(string locationName)
+        {
+            if (IsConnected)
+            {
+                long id = session.Locations.GetLocationIdFromName("Garfield Kart - Furious Racing", locationName);
+                session.Locations.CompleteLocationChecks(id);
+                Log.Message($"Sent location check: {id} - {locationName}");
             }
         }
     }

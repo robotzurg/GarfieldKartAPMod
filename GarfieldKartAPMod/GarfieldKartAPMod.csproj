@@ -1,16 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net45</TargetFramework>
-		<LangVersion>preview</LangVersion>
+		<LangVersion>latest</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<RestoreAdditionalProjectSources>
+			https://api.nuget.org/v3/index.json;
+			https://nuget.bepinex.dev/v3/index.json;
+			https://nuget.samboy.dev/v3/index.json
+		</RestoreAdditionalProjectSources>
 	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="Resources\archipelago_logo.png" />
+	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="BepInEx.Analyzers" Version="1.0.*" PrivateAssets="all" />
-		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
-		<PackageReference Include="GarfieldKartFR.GameLibs" Version="1.0.1" IncludeAssets="compile" />
+		<Reference Include="System.Numerics" />
 		<PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
-		<PackageReference Include="HarmonyX" Version="2.10.2" />
-		<PackageReference Include="UnityEngine.Modules" Version="2018.4.36" IncludeAssets="compile" />
+		<PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+		<PackageReference Include="BepInEx.Core" Version="5.*" />
+		<PackageReference Include="GarfieldKartFR.GameLibs" Version="1.0.1" IncludeAssets="compile" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\archipelago_logo.png" />
 	</ItemGroup>
 </Project>
