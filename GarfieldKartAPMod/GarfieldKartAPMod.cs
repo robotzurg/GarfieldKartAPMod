@@ -6,6 +6,7 @@ using System.Reflection;
 using static Rewired.Controller;
 using System.Collections.Generic;
 using System.Linq;
+using static Mono.Security.X509.X520;
 
 namespace GarfieldKartAPMod
 {
@@ -68,13 +69,13 @@ namespace GarfieldKartAPMod
 
         private void OnArchipelagoConnected()
         {
-            Log.Message("Connected to Archipelago");
+            Log.Message("Connected to Archipelago - loading items");
+            ArchipelagoItemTracker.LoadFromServer();
         }
 
         private void OnArchipelagoDisconnected()
         {
             Log.Message("Disconnected from Archipelago");
-
             ArchipelagoItemTracker.Clear();
         }
 
@@ -121,6 +122,45 @@ namespace GarfieldKartAPMod
             harmony?.UnpatchSelf();
         }
     }
+
+    public static class ArchipelagoUnlockOverride
+    {
+        private static HashSet<string> archipelagoUnlocks = new HashSet<string>();
+
+        public static void UnlockItem(string itemId)
+        {
+            archipelagoUnlocks.Add(itemId);
+            Log.Message($"[AP Override] Unlocked: {itemId}");
+        }
+
+        public static void LockItem(string itemId)
+        {
+            archipelagoUnlocks.Remove(itemId);
+            Log.Message($"[AP Override] Locked: {itemId}");
+        }
+
+        public static bool IsUnlocked(string itemId)
+        {
+            return archipelagoUnlocks.Contains(itemId);
+        }
+
+        public static void Clear()
+        {
+            archipelagoUnlocks.Clear();
+            Log.Message("[AP Override] Cleared all overrides");
+        }
+
+        public static bool ShouldBeUnlocked(string itemId, bool originalUnlockState)
+        {
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+            {
+                return originalUnlockState; // Not connected, use normal save
+            }
+
+            // When connected to AP, use our override
+            return IsUnlocked(itemId);
+        }
+    }
 }
 
 namespace GarfieldKartAPMod.Patches
@@ -136,18 +176,6 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
-    [HarmonyPatch(typeof(RacePuzzlePiece), "DoTrigger")]
-    public class RacePuzzlePiece_DoTrigger
-    {
-        static void Prefix(RacePuzzlePiece __instance)
-        {
-            if (GarfieldKartAPMod.APClient.IsConnected)
-            {
-                GarfieldKartAPMod.APClient.SendLocationFromName("Win Ice Cream Cup");
-            }
-        }
-    }
-
     [HarmonyPatch(typeof(MenuHDTrackSelection), "Enter")]
     public class MenuHDTrackSelection_Enter_Patch
     {
@@ -158,7 +186,56 @@ namespace GarfieldKartAPMod.Patches
             // Swap puzzle piece icons if connected to Archipelago
             if (GarfieldKartAPMod.APClient.IsConnected)
             {
-                UITextureSwapper.SwapPuzzlePieceIcons(__instance);
+                UITextureSwapper.SwapPuzzlePieceIcons(__instance.gameObject);
+            }
+        }
+    }
+
+
+
+    [HarmonyPatch(typeof(RacePuzzlePiece), "DoTrigger")]
+    public class RacePuzzlePiece_DoTrigger_Patch
+    {
+        static void Postfix(RacePuzzlePiece __instance, RcVehicle pVehicle)
+        {
+            // Swap puzzle piece icons if connected to Archipelago
+            if (GarfieldKartAPMod.APClient.IsConnected)
+            {
+                if (pVehicle && pVehicle.GetControlType() == RcVehicle.ControlType.Human)
+                {
+                    long puzzlePieceLocId = ArchipelagoConstants.GetPuzzlePiece(Singleton<GameConfigurator>.Instance.StartScene, __instance.Index);
+                    GarfieldKartAPMod.APClient.SendLocation(puzzlePieceLocId);
+                    Log.Message($"Sending Puzzle Piece {Singleton<GameConfigurator>.Instance.StartScene + "_" + __instance.Index}");
+                }
+            }
+
+        }
+    }
+
+    [HarmonyPatch(typeof(RewardManager), "EndChampionShip")]
+    public class RewardManager_EndChampionShip_Patch
+    {
+        static void Postfix(RewardManager __instance, int pFinalRank, int pNbFirstPlace, bool save)
+        {
+            string name = Singleton<GameConfigurator>.Instance.ChampionShipData.ChampionShipNameId;
+            if (GarfieldKartAPMod.APClient.IsConnected && pFinalRank == 0)
+            {
+                switch (name)
+                {
+                    case "CHAMPIONSHIP_NAME_1":
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY);
+                    break;
+                    case "CHAMPIONSHIP_NAME_2":
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY);
+                    break;
+                    case "CHAMPIONSHIP_NAME_3":
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_BURGER_CUP_VICTORY);
+                    break;
+                    case "CHAMPIONSHIP_NAME_4":
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY);
+                    break;
+                }
+                
             }
         }
     }

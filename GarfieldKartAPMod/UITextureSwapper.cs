@@ -137,7 +137,7 @@ namespace GarfieldKartAPMod
             hasSwappedThisMenu = false;
         }
 
-        public static void SwapPuzzlePieceIcons(MenuHDTrackSelection menu)
+        public static void SwapPuzzlePieceIcons(GameObject menu)
         {
             if (hasSwappedThisMenu)
             {
@@ -158,7 +158,6 @@ namespace GarfieldKartAPMod
             {
                 int swapCount = 0;
 
-                // Method 1: Unity UI (newer)
                 var images = menu.GetComponentsInChildren<UnityEngine.UI.Image>(true);
                 foreach (var image in images)
                 {

@@ -5,18 +5,10 @@ namespace GarfieldKartAPMod
     public class ArchipelagoItemTracker
     {
         private static HashSet<string> receivedItems = new HashSet<string>();
-        private static Dictionary<string, string> cupToItemMap = new Dictionary<string, string>();
 
         public static void Initialize()
         {
             Log.Message("Initializing Archipelago Item Tracker");
-
-            // TODO: Update these to be accurate
-            cupToItemMap["IceCream"] = "Ice Cream Cup";
-            cupToItemMap["Lasagna"] = "Lasagna Cup";
-            cupToItemMap["Pizza"] = "Pizza Cup";
-            cupToItemMap["Pastacup"] = "Pasta Cup";
-
         }
 
         public static void AddReceivedItem(string itemName)
@@ -24,6 +16,9 @@ namespace GarfieldKartAPMod
             if (receivedItems.Add(itemName))
             {
                 Log.Message($"[AP] Received item: {itemName}");
+
+                // Unlock the item in the override system
+                UnlockItem(itemName);
             }
         }
 
@@ -35,6 +30,7 @@ namespace GarfieldKartAPMod
         public static void Clear()
         {
             receivedItems.Clear();
+            ArchipelagoUnlockOverride.Clear();
             Log.Message("[AP] Cleared all received items");
         }
 
@@ -52,6 +48,19 @@ namespace GarfieldKartAPMod
                     string itemName = session.Items.GetItemName(item.ItemId);
                     AddReceivedItem(itemName);
                 }
+            }
+        }
+
+        private static void UnlockItem(string itemName)
+        {
+            // Map Archipelago item names to game IDs and unlock them
+
+            // Cups
+            if (itemName.Contains("Cup"))
+            {
+                string cupId = itemName.Replace(" Cup", "").Replace(" ", "");
+                ArchipelagoUnlockOverride.UnlockItem($"Cup_{cupId}");
+                Log.Message($"[AP] Unlocked cup: {cupId}");
             }
         }
     }

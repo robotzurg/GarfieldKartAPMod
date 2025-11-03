@@ -24,6 +24,11 @@ namespace GarfieldKartAPMod
             apClient.OnConnected += () => statusMessage = "Connected successfully!";
             apClient.OnConnectionFailed += (error) => statusMessage = $"Failed: {error}";
             apClient.OnDisconnected += () => statusMessage = "Disconnected";
+
+            originalCursorVisible = Cursor.visible;
+            originalLockMode = Cursor.lockState;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
         }
 
         private void Update()
