@@ -7,6 +7,8 @@ using static Rewired.Controller;
 using System.Collections.Generic;
 using System.Linq;
 using static Mono.Security.X509.X520;
+using TMPro;
+using Aube.AnimatorData;
 
 namespace GarfieldKartAPMod
 {
@@ -70,7 +72,7 @@ namespace GarfieldKartAPMod
         private void OnArchipelagoConnected()
         {
             Log.Message("Connected to Archipelago - loading items");
-            ArchipelagoItemTracker.LoadFromServer();
+            PopupManager.OpenPopup("Connected to Archipelago!", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
         }
 
         private void OnArchipelagoDisconnected()
@@ -122,45 +124,6 @@ namespace GarfieldKartAPMod
             harmony?.UnpatchSelf();
         }
     }
-
-    public static class ArchipelagoUnlockOverride
-    {
-        private static HashSet<string> archipelagoUnlocks = new HashSet<string>();
-
-        public static void UnlockItem(string itemId)
-        {
-            archipelagoUnlocks.Add(itemId);
-            Log.Message($"[AP Override] Unlocked: {itemId}");
-        }
-
-        public static void LockItem(string itemId)
-        {
-            archipelagoUnlocks.Remove(itemId);
-            Log.Message($"[AP Override] Locked: {itemId}");
-        }
-
-        public static bool IsUnlocked(string itemId)
-        {
-            return archipelagoUnlocks.Contains(itemId);
-        }
-
-        public static void Clear()
-        {
-            archipelagoUnlocks.Clear();
-            Log.Message("[AP Override] Cleared all overrides");
-        }
-
-        public static bool ShouldBeUnlocked(string itemId, bool originalUnlockState)
-        {
-            if (!GarfieldKartAPMod.APClient.IsConnected)
-            {
-                return originalUnlockState; // Not connected, use normal save
-            }
-
-            // When connected to AP, use our override
-            return IsUnlocked(itemId);
-        }
-    }
 }
 
 namespace GarfieldKartAPMod.Patches
@@ -191,6 +154,146 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    [HarmonyPatch(typeof(MenuHDGameType), "OnSubmitSplitScreen")]
+    public class MenuHDGameType_OnSubmitSplitScreen_Patch
+    {
+        static bool Prefix(MenuHDGameType __instance)
+        {
+            // Only override when connected to AP
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return true;
+
+            PopupManager.OpenPopup("Multiplayer is not supported for Archipelago.", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(MenuHDGameType), "OnSubmitMultiplayer")]
+    public class MenuHDGameType_OnSubmitMultiplayer_Patch
+    {
+        static bool Prefix(MenuHDGameType __instance)
+        {
+            // Only override when connected to AP
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return true;
+
+            PopupManager.OpenPopup("Multiplayer is not supported for Archipelago.", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
+            return false;
+        }
+    }
+
+
+    [HarmonyPatch(typeof(MenuHDTrackSelection), "OnSubmitTrack")]
+    public class MenuHDTrackSelection_OnSubmitTrack_Patch
+    {
+        static bool Prefix(MenuHDTrackSelection __instance, int track, int ___m_currentChampionshipIndex)
+        {
+            // Only override when connected to AP
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return true;
+
+            E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
+            if (gameMode == E_GameModeType.CHAMPIONSHIP)
+            {
+                // Get the constant for the cup
+                long cupLoc = 201 + ___m_currentChampionshipIndex;
+
+
+                // Check if unlocked via Archipelago
+                if (ArchipelagoItemTracker.HasItem(cupLoc))
+                {
+                    Log.Message($"[AP] Cup '{cupLoc}' is unlocked - allowing selection");
+                    return true; // Run original method
+                }
+                else
+                {
+                    Log.Message($"[AP] Track '{cupLoc}' is LOCKED - showing popup");
+                    PopupManager.OpenPopup("You haven't unlocked this cup!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
+                }
+                return false;
+            } else
+            {
+                return true;
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(MenuHDTrackSelection), "UpdateRacesButtons")]
+    public class MenuHDTrackSelection_UpdateRacesButtons_Patch
+    {
+        static bool Prefix(MenuHDTrackSelection __instance,
+            int cup,
+            List<HD_TrackSelection_Item> ___m_itemsButtons, 
+            int ___m_maxPuzzleNumber,
+            int ___m_currentSelectedButton,
+            bool ___m_hasFinishedEntering,
+            TextMeshProUGUI ___m_textCupCircuit
+            )
+        {
+            // Only override when connected to AP
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return true;
+
+            ArchipelagoItemTracker.LogAllReceivedItems();
+
+            string text = "";
+
+            for (int i = 0; i < ___m_itemsButtons.Count - 1; i++)
+            {
+                ___m_itemsButtons[i].ChangeBackground(PlayerGameEntities.ChampionShipDataList[cup].Sprites[i]);
+                text = Singleton<GameConfigurator>.Instance.ChampionShipData.Tracks[i];
+                int puzzleCount = ArchipelagoItemTracker.GetPuzzlePieceCount(text);
+                Log.Message($"{text}, {puzzleCount}");
+                ___m_itemsButtons[i].UpdatePuzzleText(puzzleCount);
+                ___m_itemsButtons[i].UpdateTimeTrialText(text);
+            }
+            if (___m_currentSelectedButton != 4 && ___m_hasFinishedEntering)
+            {
+                var method = AccessTools.Method(typeof(MenuHDTrackSelection), "UpdateTimeTrialValues");
+                method.Invoke(__instance, [___m_currentSelectedButton]);
+            }
+            if (___m_currentSelectedButton < Singleton<GameConfigurator>.Instance.ChampionShipData.TracksName.Length)
+            {
+                ___m_textCupCircuit.text = Singleton<GameConfigurator>.Instance.ChampionShipData.ChampionShipName + " - " + Singleton<GameConfigurator>.Instance.ChampionShipData.TracksName[___m_currentSelectedButton];
+            }
+
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(HD_TrackSelection_Item), "UpdatePuzzleText")]
+    public class HD_TrackSelection_Item_UpdatePuzzleText_Patch
+    {
+        static bool Prefix(HD_TrackSelection_Item __instance, int value, TextMeshProUGUI ___m_puzzleText, GameObject ___m_boardPuzzle, GameObject ___m_boardPuzzleFull, int ___m_maxPuzzleValue)
+        {
+            // Only override when connected to Archipelago
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return true;
+
+            // Update the text to show "X/3"
+            ___m_puzzleText.text = $"{value}/{___m_maxPuzzleValue}";
+
+            // Handle the visual state (full board vs partial)
+            if (value == ___m_maxPuzzleValue)
+            {
+                if (___m_boardPuzzle.activeSelf)
+                {
+                    ___m_boardPuzzle.SetActive(false);
+                }
+                ___m_boardPuzzleFull.SetActive(true);
+            }
+            else
+            {
+                if (___m_boardPuzzleFull.activeSelf)
+                {
+                    ___m_boardPuzzleFull.SetActive(false);
+                }
+                ___m_boardPuzzle.SetActive(true);
+            }
+
+            return false; // Skip original method
+        }
+    }
 
 
     [HarmonyPatch(typeof(RacePuzzlePiece), "DoTrigger")]

@@ -87,10 +87,7 @@ namespace GarfieldKartAPMod
             Log.Message($"Item Received: {itemName}");
 
             // Add to tracker
-            ArchipelagoItemTracker.AddReceivedItem(itemName);
-
-            // Override unlock state
-            UnlockItemFromArchipelago(itemName);
+            ArchipelagoItemTracker.AddReceivedItem(item.ItemId);
 
             helper.DequeueItem();
         }
@@ -113,47 +110,6 @@ namespace GarfieldKartAPMod
                 session.Locations.CompleteLocationChecks(locationId);
                 Log.Message($"Sent location check: {locationId}");
             }
-        }
-
-        public void SendLocationFromName(string locationName)
-        {
-            if (IsConnected)
-            {
-                long id = session.Locations.GetLocationIdFromName("Garfield Kart - Furious Racing", locationName);
-                session.Locations.CompleteLocationChecks(id);
-                Log.Message($"Sent location check: {id} - {locationName}");
-            }
-        }
-
-        private void UnlockItemFromArchipelago(string itemName)
-        {
-            // Map Archipelago item names to game IDs
-            string gameId = MapItemNameToGameId(itemName);
-
-            if (!string.IsNullOrEmpty(gameId))
-            {
-                ArchipelagoUnlockOverride.UnlockItem(gameId);
-                Log.Message($"Unlocked via AP override: {gameId}");
-            }
-        }
-
-        private string MapItemNameToGameId(string apItemName)
-        {
-            // Map AP item names to game internal IDs
-            return apItemName switch
-            {
-                "Lasagna Cup" => "Cup_Lasagna",
-                "Pizza Cup" => "Cup_Pizza",
-                "Burger Cup" => "Cup_Burger",
-                "Ice Cream Cup" => "Cup_IceCream",
-
-                "Arlene Kart" => "Kart_Arlene",
-                "Harry Kart" => "Kart_Harry",
-                "Lyman Kart" => "Kart_Lyman",
-                // etc...
-
-                _ => null
-            };
         }
     }
 }

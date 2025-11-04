@@ -1,36 +1,30 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace GarfieldKartAPMod
 {
     public class ArchipelagoItemTracker
     {
-        private static HashSet<string> receivedItems = new HashSet<string>();
+        private static HashSet<long> receivedItems = new HashSet<long>();
 
         public static void Initialize()
         {
             Log.Message("Initializing Archipelago Item Tracker");
         }
 
-        public static void AddReceivedItem(string itemName)
+        public static void AddReceivedItem(long itemId)
         {
-            if (receivedItems.Add(itemName))
-            {
-                Log.Message($"[AP] Received item: {itemName}");
-
-                // Unlock the item in the override system
-                UnlockItem(itemName);
-            }
+            receivedItems.Add(itemId);
         }
 
-        public static bool HasItem(string itemName)
+        public static bool HasItem(long itemId)
         {
-            return receivedItems.Contains(itemName);
+            return receivedItems.Contains(itemId);
         }
 
         public static void Clear()
         {
             receivedItems.Clear();
-            ArchipelagoUnlockOverride.Clear();
             Log.Message("[AP] Cleared all received items");
         }
 
@@ -45,22 +39,40 @@ namespace GarfieldKartAPMod
 
                 foreach (var item in items)
                 {
-                    string itemName = session.Items.GetItemName(item.ItemId);
-                    AddReceivedItem(itemName);
+                    Log.Message($"{item.ItemName} {item.ItemId}");
+                    AddReceivedItem(item.ItemId);
                 }
             }
         }
 
-        private static void UnlockItem(string itemName)
+        private static void UnlockItem(long itemId)
         {
-            // Map Archipelago item names to game IDs and unlock them
+            AddReceivedItem(itemId);
+        }
 
-            // Cups
-            if (itemName.Contains("Cup"))
+        public static int GetPuzzlePieceCount(string startScene)
+        {
+            long basePuzzlePieceId = ArchipelagoConstants.GetPuzzlePiece(startScene, 0);
+            if (basePuzzlePieceId == -1)
+                return 0;
+
+            int count = 0;
+            for (int i = 0; i < 3; i++) // Each track has 3 puzzle pieces
             {
-                string cupId = itemName.Replace(" Cup", "").Replace(" ", "");
-                ArchipelagoUnlockOverride.UnlockItem($"Cup_{cupId}");
-                Log.Message($"[AP] Unlocked cup: {cupId}");
+                if (HasItem(basePuzzlePieceId + i))
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        public static void LogAllReceivedItems()
+        {
+            Log.Message($"[AP Debug] Total items received: {receivedItems.Count}");
+            foreach (var itemId in receivedItems.OrderBy(x => x))
+            {
+                Log.Message($"[AP Debug] Item ID: {itemId}");
             }
         }
     }
