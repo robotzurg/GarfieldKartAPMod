@@ -72,6 +72,7 @@ namespace GarfieldKartAPMod
         private void OnArchipelagoConnected()
         {
             Log.Message("Connected to Archipelago - loading items");
+            uiObject.GetComponent<ConnectionUI>().ToggleUI();
             PopupManager.OpenPopup("Connected to Archipelago!", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
         }
 
@@ -193,25 +194,36 @@ namespace GarfieldKartAPMod.Patches
                 return true;
 
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
-            if (gameMode == E_GameModeType.CHAMPIONSHIP)
+            if (gameMode == E_GameModeType.CHAMPIONSHIP || gameMode == E_GameModeType.SINGLE)
             {
                 // Get the constant for the cup
                 long cupLoc = 201 + ___m_currentChampionshipIndex;
-
+                long progCups = ArchipelagoItemTracker.AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK);
+                bool unlock = false;
 
                 // Check if unlocked via Archipelago
                 if (ArchipelagoItemTracker.HasItem(cupLoc))
                 {
+                    unlock = true;
+                }
+                else if (progCups > 0)
+                {
+                    unlock = (cupLoc <= (200 + progCups));
+                }
+
+                if (unlock)
+                {
                     Log.Message($"[AP] Cup '{cupLoc}' is unlocked - allowing selection");
                     return true; // Run original method
-                }
+                } 
                 else
                 {
                     Log.Message($"[AP] Track '{cupLoc}' is LOCKED - showing popup");
                     PopupManager.OpenPopup("You haven't unlocked this cup!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
+                    return false;
                 }
-                return false;
-            } else
+            } 
+            else
             {
                 return true;
             }
@@ -234,8 +246,6 @@ namespace GarfieldKartAPMod.Patches
             if (!GarfieldKartAPMod.APClient.IsConnected)
                 return true;
 
-            ArchipelagoItemTracker.LogAllReceivedItems();
-
             string text = "";
 
             for (int i = 0; i < ___m_itemsButtons.Count - 1; i++)
@@ -243,7 +253,6 @@ namespace GarfieldKartAPMod.Patches
                 ___m_itemsButtons[i].ChangeBackground(PlayerGameEntities.ChampionShipDataList[cup].Sprites[i]);
                 text = Singleton<GameConfigurator>.Instance.ChampionShipData.Tracks[i];
                 int puzzleCount = ArchipelagoItemTracker.GetPuzzlePieceCount(text);
-                Log.Message($"{text}, {puzzleCount}");
                 ___m_itemsButtons[i].UpdatePuzzleText(puzzleCount);
                 ___m_itemsButtons[i].UpdateTimeTrialText(text);
             }
@@ -327,18 +336,17 @@ namespace GarfieldKartAPMod.Patches
                 {
                     case "CHAMPIONSHIP_NAME_1":
                         GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY);
-                    break;
+                        break;
                     case "CHAMPIONSHIP_NAME_2":
                         GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY);
-                    break;
+                        break;
                     case "CHAMPIONSHIP_NAME_3":
                         GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_BURGER_CUP_VICTORY);
-                    break;
+                        break;
                     case "CHAMPIONSHIP_NAME_4":
                         GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY);
-                    break;
+                        break;
                 }
-                
             }
         }
     }

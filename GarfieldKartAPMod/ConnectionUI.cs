@@ -6,8 +6,8 @@ namespace GarfieldKartAPMod
     {
         private bool showUI = true;
         private string hostname = "archipelago.gg";
-        private string port = "64626";
-        private string slotName = "Jeff-GK"; // Listing this for testing
+        private string port = "";
+        private string slotName = ""; 
         private string password = "";
         private string statusMessage = "";
         private Rect windowRect = new Rect(Screen.width / 2 - 300, Screen.height / 2 - 250, 800, 700);
@@ -31,27 +31,32 @@ namespace GarfieldKartAPMod
             Cursor.lockState = CursorLockMode.None;
         }
 
+        public void ToggleUI()
+        {
+            showUI = !showUI;
+
+            if (showUI)
+            {
+                // Store original cursor state and show cursor
+                originalCursorVisible = Cursor.visible;
+                originalLockMode = Cursor.lockState;
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
+            }
+            else
+            {
+                // Restore original cursor state
+                Cursor.visible = originalCursorVisible;
+                Cursor.lockState = originalLockMode;
+            }
+        }
+
         private void Update()
         {
             // Toggle UI with F1 key
             if (Input.GetKeyDown(KeyCode.F1))
             {
-                showUI = !showUI;
-
-                if (showUI)
-                {
-                    // Store original cursor state and show cursor
-                    originalCursorVisible = Cursor.visible;
-                    originalLockMode = Cursor.lockState;
-                    Cursor.visible = true;
-                    Cursor.lockState = CursorLockMode.None;
-                }
-                else
-                {
-                    // Restore original cursor state
-                    Cursor.visible = originalCursorVisible;
-                    Cursor.lockState = originalLockMode;
-                }
+                ToggleUI();
             }
         }
 
