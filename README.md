@@ -14,7 +14,8 @@ Please report any bugs or issues you find in [this channel](https://discord.com/
 ## Installation
 
 Ideally, use [r2modman](https://thunderstore.io/package/ebkr/r2modman/) or something like it.
-If installing manually, use r2modman and select "Import Local Files" when making a profile, then select the zipped file. It will then import it into your profile with dependencies.
+
+If installing manually, use r2modman and select "Import Local Mod" after making a profile for Garfield Kart, then select the zipped file. It will then import it into your profile with dependencies.
 
 ## Credits
 
