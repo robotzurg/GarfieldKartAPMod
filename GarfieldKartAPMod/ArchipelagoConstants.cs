@@ -515,5 +515,54 @@ namespace GarfieldKartAPMod
                     return -1;
             }
         }
+
+        public static long GetPuzzlePieceLoc(string startScene, int puzzleIndex)
+        {
+            switch (startScene)
+            {
+                // LASAGNA CUP
+                case "E2C1":
+                    return LOC_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E4C1":
+                    return LOC_CRAZY_DUNES_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E3C1":
+                    return LOC_PALEROCK_LAKE_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E1C1":
+                    return LOC_CITY_SLICKER_PUZZLE_PIECE_1 + puzzleIndex;
+
+                // PIZZA CUP
+                case "E3C2":
+                    return LOC_COUNTRY_BUMPKIN_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E2C2":
+                    return LOC_SPOOKY_MANOR_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E1C2":
+                    return LOC_MALLY_MARKET_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E4C2":
+                    return LOC_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1 + puzzleIndex;
+
+                // BURGER CUP
+                case "E1C3":
+                    return LOC_MISTY_FOR_ME_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E3C3":
+                    return LOC_SNEAK_A_PEAK_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E4C3":
+                    return LOC_BLAZING_OASIS_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E2C3":
+                    return LOC_PASTACOSI_FACTORY_PUZZLE_PIECE_1 + puzzleIndex;
+
+                // ICE CREAM CUP
+                case "E4C4":
+                    return LOC_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E1C4":
+                    return LOC_PROHIBITED_SITE_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E2C4":
+                    return LOC_CASKOU_PARK_PUZZLE_PIECE_1 + puzzleIndex;
+                case "E3C4":
+                    return LOC_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex;
+
+                default:
+                    return -1;
+            }
+        }
     }
 }

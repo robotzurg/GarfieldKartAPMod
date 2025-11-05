@@ -238,6 +238,30 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    [HarmonyPatch(typeof(GameSaveManager), "IsPuzzlePieceUnlocked")]
+    public class GameSaveManager_IsPuzzlePieceUnlocked_Patch
+    {
+        static bool Prefix(GameSaveManager __instance, string piece, Dictionary<string, bool> ___m_puzzlePieces, ref bool __result)
+        {
+            // Only override when connected to AP
+            if (GarfieldKartAPMod.APClient.IsConnected)
+            {
+                var pieceData = piece.Split('_');
+                int pieceIndex;
+                Int32.TryParse(pieceData[1], out pieceIndex);
+
+                // Set the result that will be returned
+                __result = ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.GetPuzzlePieceLoc(pieceData[0], pieceIndex));
+
+                // Return false to skip the original method
+                return false;
+            }
+
+            // Return true to run the original method
+            return true;
+        }
+    }
+
     [HarmonyPatch(typeof(MenuHDTrackSelection), "UpdateRacesButtons")]
     public class MenuHDTrackSelection_UpdateRacesButtons_Patch
     {
@@ -323,7 +347,7 @@ namespace GarfieldKartAPMod.Patches
             {
                 if (pVehicle && pVehicle.GetControlType() == RcVehicle.ControlType.Human)
                 {
-                    long puzzlePieceLocId = ArchipelagoConstants.GetPuzzlePiece(Singleton<GameConfigurator>.Instance.StartScene, __instance.Index);
+                    long puzzlePieceLocId = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, __instance.Index);
                     GarfieldKartAPMod.APClient.SendLocation(puzzlePieceLocId);
                     Log.Message($"Sending Puzzle Piece {Singleton<GameConfigurator>.Instance.StartScene + "_" + __instance.Index}");
                 }
@@ -367,21 +391,7 @@ namespace GarfieldKartAPMod.Patches
 
                 if (goalId == ArchipelagoConstants.GOAL_GRAND_PRIX)
                 {
-                    IReadOnlyCollection<long> checkedLocations = GarfieldKartAPMod.APClient.GetSession().Locations.AllLocationsChecked;
-                    int winCount = 0;
-
-                    foreach (long location in checkedLocations)
-                    {
-                        long[] winChecks = [ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY,
-                            ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY,
-                            ArchipelagoConstants.LOC_BURGER_CUP_VICTORY,
-                            ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY];
-                        if (winChecks.Contains(location))
-                        {
-                            winCount++;
-                        }
-                    }
-
+                    int winCount = ArchipelagoItemTracker.GetCupVictoryCount();
                     if (winCount == 4)
                     {
                         GarfieldKartAPMod.APClient.GetSession().SetGoalAchieved();
