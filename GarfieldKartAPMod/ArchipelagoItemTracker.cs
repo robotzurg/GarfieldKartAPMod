@@ -24,7 +24,7 @@ namespace GarfieldKartAPMod
 
         public static int AmountOfItem(long itemId)
         {
-            return receivedItems.Count(x => x > itemId);
+            return receivedItems.Count(x => x == itemId);
         }
 
         public static void Clear()
