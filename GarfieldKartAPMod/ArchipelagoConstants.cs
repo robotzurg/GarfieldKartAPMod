@@ -428,6 +428,13 @@ namespace GarfieldKartAPMod
         public const long ITEM_TRAP_HANDLING = 1501;
 
 
+        // Goals
+        public const long GOAL_GRAND_PRIX = 0;
+        public const long GOAL_RACES = 1;
+        public const long GOAL_TIME_TRIALS = 2;
+        public const long GOAL_PUZZLE_PIECE = 3;
+
+
         public static string GetSceneNameFromTrackId(TrackId trackId)
         {
             switch (trackId)

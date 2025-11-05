@@ -37,6 +37,7 @@ namespace GarfieldKartAPMod
                 if (result.Successful)
                 {
                     LoginSuccessful loginSuccess = (LoginSuccessful)result;
+                    GarfieldKartAPMod.sessionSlotData = loginSuccess.SlotData;
                     Log.Message($"Connected successfully! Slot: {loginSuccess.Slot}");
 
                     // Subscribe to item received events

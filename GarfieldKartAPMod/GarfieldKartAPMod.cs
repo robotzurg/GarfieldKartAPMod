@@ -21,6 +21,7 @@ namespace GarfieldKartAPMod
         public const string PluginVersion = "1.0.0";
 
         private Harmony harmony;
+        public static Dictionary<string, object> sessionSlotData;
         public static ArchipelagoClient APClient { get; private set; }
         private static GameObject uiObject;
         private static bool uiCreated = false;
@@ -347,7 +348,59 @@ namespace GarfieldKartAPMod.Patches
                         GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY);
                         break;
                 }
-            }
+
+                object goal;
+                long goalId = ArchipelagoConstants.GOAL_GRAND_PRIX;
+
+                if (GarfieldKartAPMod.sessionSlotData.TryGetValue("goal", out goal))
+                {
+                    goalId = (long)goal;
+                    Log.Message($"Goal is: {goalId}");
+                }
+
+                if (goalId == ArchipelagoConstants.GOAL_GRAND_PRIX)
+                {
+                    IReadOnlyCollection<long> checkedLocations = GarfieldKartAPMod.APClient.GetSession().Locations.AllLocationsChecked;
+                    int winCount = 0;
+
+                    foreach (long location in checkedLocations)
+                    {
+                        long[] winChecks = [ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY,
+                            ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY,
+                            ArchipelagoConstants.LOC_BURGER_CUP_VICTORY,
+                            ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY];
+                        if (winChecks.Contains(location))
+                        {
+                            winCount++;
+                        }
+                    }
+
+                    if (winCount == 4)
+                    {
+                        GarfieldKartAPMod.APClient.GetSession().SetGoalAchieved();
+                    }
+                }
+                else if (goalId == ArchipelagoConstants.GOAL_PUZZLE_PIECE)
+                {
+                    object reqPuzzleCountGet;
+                    int reqPuzzleCount = 48;
+                    if (GarfieldKartAPMod.sessionSlotData.TryGetValue("puzzle_piece_count", out reqPuzzleCountGet))
+                    {
+                        reqPuzzleCount = (int)reqPuzzleCountGet;
+                        Log.Message($"Goal is: {goalId}");
+                    }
+
+                    int puzzlePieceCount = ArchipelagoItemTracker.GetOverallPuzzlePieceCount();
+                    if (puzzlePieceCount == reqPuzzleCount)
+                    {
+                        GarfieldKartAPMod.APClient.GetSession().SetGoalAchieved();
+                    }
+                }
+                else
+                {
+                    Log.Debug(goalId);
+                }
+            } 
         }
     }
 }
