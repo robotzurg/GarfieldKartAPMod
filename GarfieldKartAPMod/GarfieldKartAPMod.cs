@@ -197,6 +197,13 @@ namespace GarfieldKartAPMod.Patches
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
             if (gameMode == E_GameModeType.CHAMPIONSHIP || gameMode == E_GameModeType.SINGLE)
             {
+                object pcs;
+                bool progressiveCups = false;
+                if (GarfieldKartAPMod.sessionSlotData.TryGetValue("progressive_cups", out pcs))
+                {
+                    progressiveCups = pcs.ToString() == "true" || pcs.ToString() == "1";
+                }
+
                 // Get the constant for the cup
                 long cupLoc = 201 + ___m_currentChampionshipIndex;
                 long progCups = ArchipelagoItemTracker.AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK);
@@ -207,9 +214,9 @@ namespace GarfieldKartAPMod.Patches
                 {
                     unlock = true;
                 }
-                else if (progCups > 0)
+                else if (progressiveCups)
                 {
-                    unlock = (cupLoc <= (200 + progCups));
+                    unlock = (cupLoc <= (201 + progCups));
                 }
 
                 if (unlock)
