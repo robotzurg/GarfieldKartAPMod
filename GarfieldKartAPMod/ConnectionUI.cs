@@ -6,7 +6,7 @@ namespace GarfieldKartAPMod
     {
         private bool showUI = true;
         private string hostname = "archipelago.gg";
-        private string port = "";
+        private string port = "38281";
         private string slotName = ""; 
         private string password = "";
         private string statusMessage = "";

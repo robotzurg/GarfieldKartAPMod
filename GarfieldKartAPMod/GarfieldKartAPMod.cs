@@ -9,6 +9,7 @@ using System.Linq;
 using static Mono.Security.X509.X520;
 using TMPro;
 using Aube.AnimatorData;
+using UnityEngine.Playables;
 
 namespace GarfieldKartAPMod
 {
@@ -25,6 +26,8 @@ namespace GarfieldKartAPMod
         public static ArchipelagoClient APClient { get; private set; }
         private static GameObject uiObject;
         private static bool uiCreated = false;
+        private static NotificationDisplay notificationDisplay;
+        private FileWriter fileWriter;
 
         public void Awake()
         {
@@ -56,6 +59,7 @@ namespace GarfieldKartAPMod
             }
 
             UITextureSwapper.Initialize();
+            fileWriter = gameObject.AddComponent<FileWriter>();
 
             // Initialize Archipelago client
             APClient = new ArchipelagoClient();
@@ -68,6 +72,17 @@ namespace GarfieldKartAPMod
             harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             Logger.LogInfo($"{PluginName} loaded successfully!");
+        }
+
+        public void Update()
+        {
+            if (APClient != null && APClient.HasPendingNotifications())
+            {
+                var notification = APClient.DequeuePendingNotification();
+
+                // Write to file (will only show notification if it's new data)
+                fileWriter.WriteData(notification);
+            }
         }
 
         private void OnArchipelagoConnected()
@@ -112,6 +127,11 @@ namespace GarfieldKartAPMod
                 DontDestroyOnLoad(uiObject);
                 var ui = uiObject.AddComponent<ConnectionUI>();
                 ui.Initialize(APClient);
+
+                // Add notification display
+                notificationDisplay = uiObject.AddComponent<NotificationDisplay>();
+                notificationDisplay.Initialize();
+
                 uiCreated = true;
             }
         }

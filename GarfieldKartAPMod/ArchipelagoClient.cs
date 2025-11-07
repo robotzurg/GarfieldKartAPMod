@@ -3,12 +3,15 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Packets;
 using System;
+using System.Collections.Generic;
 
 namespace GarfieldKartAPMod
 {
     public class ArchipelagoClient
     {
         private ArchipelagoSession session;
+        private Queue<(long itemId, int playerId, string itemName, string playerName)> pendingNotifications = new Queue<(long, int, string, string)>();
+        
         public bool IsConnected => session?.Socket.Connected ?? false;
 
         public event Action OnConnected;
@@ -83,12 +86,15 @@ namespace GarfieldKartAPMod
         private void OnItemReceived(ReceivedItemsHelper helper)
         {
             var item = helper.PeekItem();
+
             string itemName = session.Items.GetItemName(item.ItemId);
+            string playerName = session.Players.GetPlayerName(item.Player);
 
-            Log.Message($"Item Received: {itemName}");
+            Log.Message($"Item Received: {itemName} from {playerName}");
 
-            // Add to tracker
             ArchipelagoItemTracker.AddReceivedItem(item.ItemId);
+
+            pendingNotifications.Enqueue((item.ItemId, item.Player, itemName, playerName));
 
             helper.DequeueItem();
         }
@@ -109,8 +115,20 @@ namespace GarfieldKartAPMod
             if (IsConnected)
             {
                 session.Locations.CompleteLocationChecks(locationId);
+                ArchipelagoItemTracker.AddCheckedLocation(locationId);
                 Log.Message($"Sent location check: {locationId}");
+
             }
+        }
+
+        public bool HasPendingNotifications()
+        {
+            return pendingNotifications.Count > 0;
+        }
+
+        public (long itemId, int playerId, string itemName, string playerName) DequeuePendingNotification()
+        {
+            return pendingNotifications.Dequeue();
         }
     }
 }
