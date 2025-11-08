@@ -1,15 +1,21 @@
+using Aube;
+using Aube.AnimatorData;
 using BepInEx;
-using UnityEngine;
-using System;
 using HarmonyLib;
-using System.Reflection;
-using static Rewired.Controller;
+using Steamworks;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Mono.Security.X509.X520;
+using System.Reflection;
 using TMPro;
-using Aube.AnimatorData;
+using UnityEngine;
 using UnityEngine.Playables;
+using UnityEngine.UI;
+using UnityHotReloadNS;
+using static Cinemachine.CinemachineTriggerAction.ActionSettings;
+using static MenuHDTrackSelection;
+using static Mono.Security.X509.X520;
+using static Rewired.Controller;
 
 namespace GarfieldKartAPMod
 {
@@ -76,6 +82,15 @@ namespace GarfieldKartAPMod
 
         public void Update()
         {
+
+            if (Input.GetKeyUp(KeyCode.F2))
+            {
+                UnityHotReload.LoadNewAssemblyVersion(
+                    typeof(GarfieldKartAPMod).Assembly, // The currently loaded assembly to replace.
+                    "C:\\Users\\robot\\AppData\\Roaming\\r2modmanPlus-local\\GarfieldKartFuriousRacing\\profiles\\Default\\BepInEx\\plugins\\Jeffdev-GarfieldKartArchipelago/GarfieldKartAPMod.dll"  // The path to the newly compiled DLL.
+                );
+            }
+
             if (APClient != null && APClient.HasPendingNotifications())
             {
                 var notification = APClient.DequeuePendingNotification();
@@ -150,65 +165,278 @@ namespace GarfieldKartAPMod
 
 namespace GarfieldKartAPMod.Patches
 {
+    public class ButtonDisableHelper
+    {
+        public static void DisableLockedRaceButtons(object instance, object m_buttons, int currentCupIndex)
+        {
+            try
+            {
+                var buttonsType = m_buttons.GetType();
+
+                // Get Length property
+                var lengthProp = buttonsType.GetProperty("Length");
+                int length = (int)lengthProp.GetValue(m_buttons);
+
+                // Get the indexer with specific parameters (int index)
+                var indexerProp = buttonsType.GetProperty("Item", new Type[] { typeof(int) });
+
+                for (int i = 0; i < length; i++)
+                {
+                    var button = indexerProp.GetValue(m_buttons, new object[] { i }) as BetterButton;
+
+                    if (i == 4)
+                    {
+                        button.gameObject.SetActive(false);
+                        continue; // Skip the last button
+                    }
+                    long raceItemIdx = 101 + (4 * currentCupIndex) + i; // Race IDs
+
+                    if (!ArchipelagoItemTracker.HasItem(raceItemIdx))
+                    {
+                        if (button != null)
+                        {
+                            button.interactable = false;
+                        }
+                    }
+                    else
+                    {
+                        button.interactable = true;
+                        GkEventSystem.Current.SelectButton(button);
+                        if (instance is MenuHDTrackSelection)
+                            (instance as MenuHDTrackSelection).UpdateRacesButtons(currentCupIndex);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to disable buttons: {ex}");
+            }
+        }
+    }
+
     // Patch the main menu start
     [HarmonyPatch(typeof(MenuHDMain), "Enter")]
     public class MenuHDMain_Enter_Patch
     {
         static void Postfix()
         {
-            Log.Message("Main menu started, creating UI...");
+            Log.Message("Main menu started, creating UI... Test");
             GarfieldKartAPMod.CreateUI();
+        }
+    }
+
+    [HarmonyPatch(typeof(MenuHDGameMode), "Enter")]
+    public class MenuHDGameMode_Enter_Patch
+    {
+        static void Postfix(MenuHDGameMode __instance, object ___m_buttons)
+        {
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return;
+
+            try
+            {
+                var buttonsType = ___m_buttons.GetType();
+
+                // Get Length property
+                var lengthProp = buttonsType.GetProperty("Length");
+                int length = (int)lengthProp.GetValue(___m_buttons);
+
+                // Get the indexer with specific parameters (int index)
+                var indexerProp = buttonsType.GetProperty("Item", new Type[] { typeof(int) });
+
+                for (int i = 0; i < length; i++)
+                {
+                    if (i == 1)
+                    {
+                        long[] cups = ArchipelagoItemTracker.GetAvailableCups();
+
+                        if (cups.Count() == 0)
+                        {
+                            var button = indexerProp.GetValue(___m_buttons, new object[] { i }) as BetterButton;
+                            if (button != null)
+                            {
+                                button.interactable = false;
+                            }
+                        }
+                        
+                    } else if (i == 2)
+                    {
+                        var button = indexerProp.GetValue(___m_buttons, new object[] { i }) as BetterButton;
+                        if (button != null)
+                        {
+                            button.interactable = false;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to disable buttons: {ex}");
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(MenuHDGameMode), "OnSubmitChampionShip")]
+    public class MenuHDModeSelect_OnSubmitChampionShip_Patch
+    {
+        static bool Prefix(MenuHDGameMode __instance)
+        {
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return true;
+
+            long[] cups = ArchipelagoItemTracker.GetAvailableCups();
+
+            if (cups.Count() == 0)
+            {
+                PopupManager.OpenPopup("You haven't unlocked any cups!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
+                return false;
+            }
+            return true;
         }
     }
 
     [HarmonyPatch(typeof(MenuHDTrackSelection), "Enter")]
     public class MenuHDTrackSelection_Enter_Patch
     {
-        static void Postfix(MenuHDTrackSelection __instance)
+        static void Postfix(MenuHDTrackSelection __instance, EnumArray<TAB, BetterToggle> ___m_tabs, object ___m_buttons, ref int ___m_currentChampionshipIndex)
         {
             Log.Message("Track Selection Menu opened");
+            ArchipelagoItemTracker.ResyncFromServer();
 
             // Swap puzzle piece icons if connected to Archipelago
             if (GarfieldKartAPMod.APClient.IsConnected)
             {
                 UITextureSwapper.SwapPuzzlePieceIcons(__instance.gameObject);
             }
+
+            int foundTab = -1;
+            E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
+            long[] availableCups = ArchipelagoItemTracker.GetAvailableCups();
+
+            for (int i = 0; i < ___m_tabs.Length; i++)
+            {
+                long cupItemIdx = 201 + i;
+                bool activateButton = false;
+                if (ArchipelagoItemTracker.HasItem(cupItemIdx) || ArchipelagoItemTracker.HasRaceInCup(cupItemIdx))
+                {
+                    if (gameMode == E_GameModeType.CHAMPIONSHIP && availableCups.Contains(cupItemIdx))
+                        activateButton = true;
+                    else if (gameMode == E_GameModeType.SINGLE)
+                        activateButton = true;
+                    
+                    if (activateButton)
+                    {
+                        ___m_tabs[i].gameObject.SetActive(true);
+                        if (foundTab == -1)
+                        {
+                            GkEventSystem.Current.SelectTab(___m_tabs[i]);
+                            foundTab = i;
+                        }
+                    } else
+                    {
+                        ___m_tabs[i].gameObject.SetActive(false);
+                    }
+
+                }
+                else
+                    ___m_tabs[i].gameObject.SetActive(false);
+            }
+
+            ButtonDisableHelper.DisableLockedRaceButtons(__instance, ___m_buttons, foundTab != -1 ? foundTab : ___m_currentChampionshipIndex);
         }
     }
 
-    [HarmonyPatch(typeof(MenuHDGameType), "OnSubmitSplitScreen")]
-    public class MenuHDGameType_OnSubmitSplitScreen_Patch
+    [HarmonyPatch(typeof(MenuHDTrackSelection), "OnSelectChampionship")]
+    public class MenuHDTrackSelection_OnSelectChampionship_Patch
     {
-        static bool Prefix(MenuHDGameType __instance)
+        static void Postfix(MenuHDTrackSelection __instance, object ___m_buttons, int iId)
         {
-            // Only override when connected to AP
-            if (!GarfieldKartAPMod.APClient.IsConnected)
-                return true;
-
-            PopupManager.OpenPopup("Multiplayer is not supported for Archipelago.", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
-            return false;
+            ButtonDisableHelper.DisableLockedRaceButtons(__instance, ___m_buttons, iId);
         }
     }
 
-    [HarmonyPatch(typeof(MenuHDGameType), "OnSubmitMultiplayer")]
-    public class MenuHDGameType_OnSubmitMultiplayer_Patch
+    [HarmonyPatch(typeof(GkEventSystem), "OnSecondaryMove")]
+    public class GkEventSystem_OnSecondaryMove_Patch
     {
-        static bool Prefix(MenuHDGameType __instance)
+        static Exception Finalizer(Exception __exception)
         {
-            // Only override when connected to AP
-            if (!GarfieldKartAPMod.APClient.IsConnected)
-                return true;
+            if (__exception is InvalidCastException)
+            {
+                // Suppress the error - return null to prevent it from being thrown
+                Log.Debug("Suppressed InvalidCastException in OnSecondaryMove (navigating to disabled tab)");
+                return null;
+            }
 
-            PopupManager.OpenPopup("Multiplayer is not supported for Archipelago.", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
-            return false;
+            // Re-throw any other exceptions
+            return __exception;
         }
     }
 
+    [HarmonyPatch(typeof(RcRace), "StartRace")]
+    public class RcRace_StartRace_Patch
+    {
+        static void Prefix(RcRace __instance)
+        {
+            // Swap puzzle piece icons if connected to Archipelago
+            if (GarfieldKartAPMod.APClient.IsConnected)
+            {
+#if DEBUG
+                __instance.SetRaceNbLap(1); // For testing, set laps to 1
+#endif
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(MenuHDGameType), "Enter")]
+    public class MenuHDGameType_Enter_Patch
+    {
+        static void Prefix()
+        {
+            ArchipelagoItemTracker.ResyncFromServer();
+        }
+
+        static void Postfix(MenuHDGameType __instance, object ___m_buttons)
+        {
+            if (!GarfieldKartAPMod.APClient.IsConnected)
+                return;
+
+            try
+            {
+                var buttonsType = ___m_buttons.GetType();
+
+                // Get Length property
+                var lengthProp = buttonsType.GetProperty("Length");
+                int length = (int)lengthProp.GetValue(___m_buttons);
+
+                // Get the indexer with specific parameters (int index)
+                var indexerProp = buttonsType.GetProperty("Item", new Type[] { typeof(int) });
+
+                for (int i = 0; i < length; i++)
+                {
+                    if ((i == 1) || (i == 2))
+                    {
+                        var button = indexerProp.GetValue(___m_buttons, new object[] { i }) as BetterButton;
+                        if (button != null)
+                        {
+                            button.interactable = false;
+                            Log.Info($"Disabled button at index {i}");
+                        }
+                    }
+                   
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to disable buttons: {ex}");
+            }
+        }
+    }
 
     [HarmonyPatch(typeof(MenuHDTrackSelection), "OnSubmitTrack")]
     public class MenuHDTrackSelection_OnSubmitTrack_Patch
     {
-        static bool Prefix(MenuHDTrackSelection __instance, int track, int ___m_currentChampionshipIndex)
+        static bool Prefix(MenuHDTrackSelection __instance, int track, int ___m_currentChampionshipIndex, int ___m_currentSelectedButton)
         {
             // Only override when connected to AP
             if (!GarfieldKartAPMod.APClient.IsConnected)
@@ -224,13 +452,21 @@ namespace GarfieldKartAPMod.Patches
                     progressiveCups = pcs.ToString() == "true" || pcs.ToString() == "1";
                 }
 
+                object rcs;
+                string randomizeRaces = "off";
+                if (GarfieldKartAPMod.sessionSlotData.TryGetValue("randomize_races", out rcs))
+                {
+                    randomizeRaces = rcs.ToString();
+                }
+
                 // Get the constant for the cup
                 long cupLoc = 201 + ___m_currentChampionshipIndex;
+                long raceLoc = 101 + (4 * ___m_currentChampionshipIndex) + ___m_currentSelectedButton;
                 long progCups = ArchipelagoItemTracker.AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK);
                 bool unlock = false;
 
                 // Check if unlocked via Archipelago
-                if (ArchipelagoItemTracker.HasItem(cupLoc))
+                if (ArchipelagoItemTracker.HasItem(cupLoc) || ArchipelagoItemTracker.HasItem(raceLoc))
                 {
                     unlock = true;
                 }
@@ -247,7 +483,7 @@ namespace GarfieldKartAPMod.Patches
                 else
                 {
                     Log.Message($"[AP] Track '{cupLoc}' is LOCKED - showing popup");
-                    PopupManager.OpenPopup("You haven't unlocked this cup!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
+                    PopupManager.OpenPopup("You haven't unlocked this!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
                     return false;
                 }
             } 
@@ -373,6 +609,26 @@ namespace GarfieldKartAPMod.Patches
                 }
             }
 
+        }
+    }
+
+    [HarmonyPatch(typeof(RewardManager), "EarnReward")]
+    public class RewardManager_EarnReward_Patch
+    {
+        static void Postfix(RewardManager __instance, string track, int rank = 0)
+        {
+            if (GarfieldKartAPMod.APClient.IsConnected)
+            {
+                switch (Singleton<GameConfigurator>.Instance.GameModeType)
+                {
+                    case E_GameModeType.SINGLE:
+                        if (rank == 0)
+                        {
+                            GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
+                        }
+                    break;
+                }
+            }
         }
     }
 

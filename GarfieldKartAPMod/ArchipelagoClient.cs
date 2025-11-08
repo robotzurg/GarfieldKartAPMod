@@ -50,6 +50,9 @@ namespace GarfieldKartAPMod
                     ArchipelagoItemTracker.LoadFromServer();
 
                     OnConnected?.Invoke();
+
+                    ArchipelagoItemTracker.LogAllReceivedItems();
+                    ArchipelagoItemTracker.LogAllCheckedLocations();
                 }
                 else
                 {

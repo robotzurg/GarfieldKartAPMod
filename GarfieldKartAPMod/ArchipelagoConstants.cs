@@ -467,6 +467,51 @@ namespace GarfieldKartAPMod
             }
         }
 
+        public static long GetRaceVictoryLoc(string startScene)
+        {
+            switch (startScene)
+            {
+                case "E2C1":
+                    return LOC_CATZ_IN_THE_HOOD_VICTORY;
+                case "E4C1":
+                    return LOC_CRAZY_DUNES_VICTORY;
+                case "E3C1":
+                    return LOC_PALEROCK_LAKE_VICTORY;
+                case "E1C1":
+                    return LOC_CITY_SLICKER_VICTORY;
+
+                case "E3C2":
+                    return LOC_COUNTRY_BUMPKIN_VICTORY;
+                case "E2C2":
+                    return LOC_SPOOKY_MANOR_VICTORY;
+                case "E1C2":
+                    return LOC_MALLY_MARKET_VICTORY;
+                case "E4C2":
+                    return LOC_VALLEY_OF_THE_KINGS_VICTORY;
+
+                case "E1C3":
+                    return LOC_MISTY_FOR_ME_VICTORY;
+                case "E3C3":
+                    return LOC_SNEAK_A_PEAK_VICTORY;
+                case "E4C3":
+                    return LOC_BLAZING_OASIS_VICTORY;
+                case "E2C3":
+                    return LOC_PASTACOSI_FACTORY_VICTORY;
+
+                case "E4C4":
+                    return LOC_MYSTERIOUS_TEMPLE_VICTORY;
+                case "E1C4":
+                    return LOC_PROHIBITED_SITE_VICTORY;
+                case "E2C4":
+                    return LOC_CASKOU_PARK_VICTORY;
+                case "E3C4":
+                    return LOC_LOOPY_LAGOON_VICTORY;
+
+                default:
+                    return -1;
+            }
+        }
+
         public static long GetPuzzlePiece(string startScene, int puzzleIndex)
         {
             switch (startScene)
