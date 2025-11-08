@@ -117,11 +117,20 @@ namespace GarfieldKartAPMod
         {
             if (IsConnected)
             {
-                session.Locations.CompleteLocationChecks(locationId);
                 ArchipelagoItemTracker.AddCheckedLocation(locationId);
+                session.Locations.CompleteLocationChecks(locationId);
                 Log.Message($"Sent location check: {locationId}");
 
             }
+        }
+
+        public object GetSlotDataValue(string key)
+        {
+            if (session != null && GarfieldKartAPMod.sessionSlotData != null && GarfieldKartAPMod.sessionSlotData.ContainsKey(key))
+            {
+                return GarfieldKartAPMod.sessionSlotData[key];
+            }
+            return null;
         }
 
         public bool HasPendingNotifications()

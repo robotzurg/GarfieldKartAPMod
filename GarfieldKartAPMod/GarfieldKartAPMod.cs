@@ -11,11 +11,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.UI;
-using UnityHotReloadNS;
 using static Cinemachine.CinemachineTriggerAction.ActionSettings;
 using static MenuHDTrackSelection;
 using static Mono.Security.X509.X520;
 using static Rewired.Controller;
+
+#if DEBUG
+using UnityHotReloadNS;
+#endif
 
 namespace GarfieldKartAPMod
 {
@@ -82,7 +85,7 @@ namespace GarfieldKartAPMod
 
         public void Update()
         {
-
+#if DEBUG
             if (Input.GetKeyUp(KeyCode.F2))
             {
                 UnityHotReload.LoadNewAssemblyVersion(
@@ -90,6 +93,7 @@ namespace GarfieldKartAPMod
                     "C:\\Users\\robot\\AppData\\Roaming\\r2modmanPlus-local\\GarfieldKartFuriousRacing\\profiles\\Default\\BepInEx\\plugins\\Jeffdev-GarfieldKartArchipelago/GarfieldKartAPMod.dll"  // The path to the newly compiled DLL.
                 );
             }
+#endif
 
             if (APClient != null && APClient.HasPendingNotifications())
             {
@@ -304,46 +308,54 @@ namespace GarfieldKartAPMod.Patches
             Log.Message("Track Selection Menu opened");
             ArchipelagoItemTracker.ResyncFromServer();
 
+            object puzzleCheckObj = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
+            bool puzzleCheck = puzzleCheckObj != null && (puzzleCheckObj.ToString() == "true" || puzzleCheckObj.ToString() == "1");
+
             // Swap puzzle piece icons if connected to Archipelago
             if (GarfieldKartAPMod.APClient.IsConnected)
             {
-                UITextureSwapper.SwapPuzzlePieceIcons(__instance.gameObject);
-            }
-
-            int foundTab = -1;
-            E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
-            long[] availableCups = ArchipelagoItemTracker.GetAvailableCups();
-
-            for (int i = 0; i < ___m_tabs.Length; i++)
-            {
-                long cupItemIdx = 201 + i;
-                bool activateButton = false;
-                if (ArchipelagoItemTracker.HasItem(cupItemIdx) || ArchipelagoItemTracker.HasRaceInCup(cupItemIdx))
+                if (puzzleCheck)
                 {
-                    if (gameMode == E_GameModeType.CHAMPIONSHIP && availableCups.Contains(cupItemIdx))
-                        activateButton = true;
-                    else if (gameMode == E_GameModeType.SINGLE)
-                        activateButton = true;
-                    
-                    if (activateButton)
-                    {
-                        ___m_tabs[i].gameObject.SetActive(true);
-                        if (foundTab == -1)
-                        {
-                            GkEventSystem.Current.SelectTab(___m_tabs[i]);
-                            foundTab = i;
-                        }
-                    } else
-                    {
-                        ___m_tabs[i].gameObject.SetActive(false);
-                    }
-
+                    UITextureSwapper.SwapPuzzlePieceIcons(__instance.gameObject);
                 }
-                else
-                    ___m_tabs[i].gameObject.SetActive(false);
-            }
 
-            ButtonDisableHelper.DisableLockedRaceButtons(__instance, ___m_buttons, foundTab != -1 ? foundTab : ___m_currentChampionshipIndex);
+                int foundTab = -1;
+                E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
+                long[] availableCups = ArchipelagoItemTracker.GetAvailableCups();
+                int progCups = ArchipelagoItemTracker.AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK);
+
+                for (int i = 0; i < ___m_tabs.Length; i++)
+                {
+                    long cupItemIdx = 201 + i;
+                    bool activateButton = false;
+                    if (ArchipelagoItemTracker.HasItem(cupItemIdx) || ArchipelagoItemTracker.HasRaceInCup(cupItemIdx) || (progCups - 1) == i)
+                    {
+                        if (gameMode == E_GameModeType.CHAMPIONSHIP && (availableCups.Contains(cupItemIdx) || (progCups - 1) == i))
+                            activateButton = true;
+                        else if (gameMode == E_GameModeType.SINGLE)
+                            activateButton = true;
+
+                        if (activateButton)
+                        {
+                            ___m_tabs[i].gameObject.SetActive(true);
+                            if (foundTab == -1)
+                            {
+                                GkEventSystem.Current.SelectTab(___m_tabs[i]);
+                                foundTab = i;
+                            }
+                        }
+                        else
+                        {
+                            ___m_tabs[i].gameObject.SetActive(false);
+                        }
+
+                    }
+                    else
+                        ___m_tabs[i].gameObject.SetActive(false);
+                }
+
+                ButtonDisableHelper.DisableLockedRaceButtons(__instance, ___m_buttons, foundTab != -1 ? foundTab : ___m_currentChampionshipIndex);
+            }
         }
     }
 
@@ -499,8 +511,11 @@ namespace GarfieldKartAPMod.Patches
     {
         static bool Prefix(GameSaveManager __instance, string piece, Dictionary<string, bool> ___m_puzzlePieces, ref bool __result)
         {
+            object puzzleCheckObj = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
+            bool puzzleCheck = puzzleCheckObj != null && (puzzleCheckObj.ToString() == "true" || puzzleCheckObj.ToString() == "1");
+
             // Only override when connected to AP
-            if (GarfieldKartAPMod.APClient.IsConnected)
+            if (GarfieldKartAPMod.APClient.IsConnected && puzzleCheck)
             {
                 var pieceData = piece.Split('_');
                 int pieceIndex;
@@ -534,6 +549,12 @@ namespace GarfieldKartAPMod.Patches
             if (!GarfieldKartAPMod.APClient.IsConnected)
                 return true;
 
+            object puzzleCheckObj = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
+            bool puzzleCheck = puzzleCheckObj != null && (puzzleCheckObj.ToString() == "true" || puzzleCheckObj.ToString() == "1");
+
+            if (!puzzleCheck)
+                return true;
+
             string text = "";
 
             for (int i = 0; i < ___m_itemsButtons.Count - 1; i++)
@@ -563,8 +584,12 @@ namespace GarfieldKartAPMod.Patches
     {
         static bool Prefix(HD_TrackSelection_Item __instance, int value, TextMeshProUGUI ___m_puzzleText, GameObject ___m_boardPuzzle, GameObject ___m_boardPuzzleFull, int ___m_maxPuzzleValue)
         {
+
+            object puzzleCheckObj = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
+            bool puzzleCheck = puzzleCheckObj != null && (puzzleCheckObj.ToString() == "true" || puzzleCheckObj.ToString() == "1");
+
             // Only override when connected to Archipelago
-            if (!GarfieldKartAPMod.APClient.IsConnected)
+            if (!GarfieldKartAPMod.APClient.IsConnected || !puzzleCheck)
                 return true;
 
             // Update the text to show "X/3"
@@ -625,6 +650,11 @@ namespace GarfieldKartAPMod.Patches
                         if (rank == 0)
                         {
                             GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
+                            int raceWinCount = ArchipelagoItemTracker.GetRaceVictoryCount();
+                            if (raceWinCount == 16)
+                            {
+                                GarfieldKartAPMod.APClient.GetSession().SetGoalAchieved();
+                            }
                         }
                     break;
                 }
@@ -680,11 +710,18 @@ namespace GarfieldKartAPMod.Patches
                     if (GarfieldKartAPMod.sessionSlotData.TryGetValue("puzzle_piece_count", out reqPuzzleCountGet))
                     {
                         reqPuzzleCount = (int)reqPuzzleCountGet;
-                        Log.Message($"Goal is: {goalId}");
                     }
 
                     int puzzlePieceCount = ArchipelagoItemTracker.GetOverallPuzzlePieceCount();
                     if (puzzlePieceCount == reqPuzzleCount)
+                    {
+                        GarfieldKartAPMod.APClient.GetSession().SetGoalAchieved();
+                    }
+                }
+                else if (goalId == ArchipelagoConstants.GOAL_RACES)
+                {
+                    int raceWinCount = ArchipelagoItemTracker.GetRaceVictoryCount();
+                    if (raceWinCount == 16)
                     {
                         GarfieldKartAPMod.APClient.GetSession().SetGoalAchieved();
                     }

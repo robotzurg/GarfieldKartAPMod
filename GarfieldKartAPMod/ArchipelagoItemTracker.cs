@@ -109,8 +109,24 @@ namespace GarfieldKartAPMod
             return cupVictories.Count(loc => HasLocation(loc));
         }
 
+        public static int GetRaceVictoryCount()
+        {
+            int count = 0;
+
+            for (int i = 0; i < 16; i++)
+            {
+                if (HasLocation(i))
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
         public static long[] GetAvailableCups()
         {
+
             long[] cupUnlocks =
             [
                 ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA,
@@ -137,7 +153,7 @@ namespace GarfieldKartAPMod
             {
                 long raceId = startRaceId + i;
                 Log.Info($"Checking race {raceId} for cup {cupId}");
-                if (HasItem(raceId))
+                if (HasItem(raceId) || HasItem(cupId))
                 {
                     Log.Info($"Found race {raceId} in cup {cupId}");
                     return true;
@@ -164,6 +180,24 @@ namespace GarfieldKartAPMod
             }
             return count;
         }
+
+        public static int GetPuzzleLocationCount(string startScene)
+        {
+            long basePuzzlePieceId = ArchipelagoConstants.GetPuzzlePieceLoc(startScene, 0);
+            if (basePuzzlePieceId == -1)
+                return 0;
+
+            int count = 0;
+            for (int i = 0; i < 3; i++)
+            {
+                if (HasLocation(basePuzzlePieceId + i))
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+
 
         public static int GetOverallPuzzlePieceCount()
         {
