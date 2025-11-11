@@ -166,7 +166,8 @@ namespace GarfieldKartAPMod
                         string spriteName = image.sprite.name.ToLower();
                         string objName = image.gameObject.name.ToLower();
 
-                        if (spriteName.Contains("icnpuzzle") || objName.Contains("icnpuzzle"))
+                        if (spriteName.Contains("icnpuzzle") || objName.Contains("icnpuzzle") ||
+                            spriteName.Contains("icnpuzzlefull") || objName.Contains("icnpuzzlefull"))
                         {
                             image.sprite = archipelagoSprite;
                             swapCount++;

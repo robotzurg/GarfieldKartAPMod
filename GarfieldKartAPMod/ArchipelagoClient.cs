@@ -2,6 +2,7 @@
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Packets;
+using Aube.AnimatorData;
 using System;
 using System.Collections.Generic;
 
@@ -120,7 +121,6 @@ namespace GarfieldKartAPMod
                 ArchipelagoItemTracker.AddCheckedLocation(locationId);
                 session.Locations.CompleteLocationChecks(locationId);
                 Log.Message($"Sent location check: {locationId}");
-
             }
         }
 

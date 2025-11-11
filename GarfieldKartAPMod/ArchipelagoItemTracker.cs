@@ -141,7 +141,7 @@ namespace GarfieldKartAPMod
         private static bool HasAllRacesInCup(int cupIndex)
         {
             int startRace = 101 + (cupIndex * 4);
-            return Enumerable.Range(startRace, 4).All(raceLoc => HasItem(raceLoc));
+            return (Enumerable.Range(startRace, 4).All(raceLoc => HasItem(raceLoc)) || HasItem(cupIndex + 201));
         }
 
         public static bool HasRaceInCup(long cupId)
