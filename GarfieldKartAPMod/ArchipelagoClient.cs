@@ -34,7 +34,7 @@ namespace GarfieldKartAPMod
                     "Garfield Kart - Furious Racing",
                     slotName,
                     ItemsHandlingFlags.AllItems,
-                    new Version(0, 6, 3),
+                    new Version(0, 6, 4),
                     password: string.IsNullOrEmpty(password) ? null : password
                 );
 
