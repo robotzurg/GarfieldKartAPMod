@@ -62,28 +62,41 @@ namespace GarfieldKartAPMod
         // Safe to call from background threads because collections are concurrent.
         public static void LoadFromServer()
         {
-            var session = GarfieldKartAPMod.APClient.GetSession();
-            if (session == null)
-                return;
-
-            Clear();
-
-            // Load items
-            var items = session.Items.AllItemsReceived;
-            Log.Message($"[AP] Loading {items.Count} items from server");
-            foreach (var item in items)
+            try
             {
-                Log.Message($"[AP] Item: {item.ItemName} (ID: {item.ItemId})");
-                receivedItems.AddOrUpdate(item.ItemId, 1, (_, existing) => existing + 1);
+                var session = GarfieldKartAPMod.APClient.GetSession();
+                if (session == null)
+                    return;
+
+                Clear();
+
+                // Load items
+                var itemsList = session.Items.AllItemsReceived?.ToList();
+                if (itemsList != null)
+                {
+                    Log.Message($"[AP] Loading {itemsList.Count} items from server");
+                    foreach (var item in itemsList)
+                    {
+                        Log.Message($"[AP] Item: {item.ItemName} (ID: {item.ItemId})");
+                        receivedItems.AddOrUpdate(item.ItemId, 1, (_, existing) => existing + 1);
+                    }
+                }
+
+                // Load locations
+                var locationsList = session.Locations.AllLocationsChecked?.ToList();
+                if (locationsList != null)
+                {
+                    Log.Message($"[AP] Loading {locationsList.Count} checked locations from server");
+                    foreach (var locationId in locationsList)
+                    {
+                        Log.Message($"[AP] Location checked: {locationId}");
+                        checkedLocations.TryAdd(locationId, 0);
+                    }
+                }
             }
-
-            // Load locations
-            var locations = session.Locations.AllLocationsChecked;
-            Log.Message($"[AP] Loading {locations.Count} checked locations from server");
-            foreach (var locationId in locations)
+            catch (System.Exception ex)
             {
-                Log.Message($"[AP] Location checked: {locationId}");
-                checkedLocations.TryAdd(locationId, 0);
+                Log.Error($"[AP] LoadFromServer exception: {ex.ToString()}");
             }
         }
 
@@ -98,7 +111,7 @@ namespace GarfieldKartAPMod
 
         public static int GetCupVictoryCount()
         {
-            long[] cupVictories = new[]
+            var cupVictories = new System.Collections.Generic.List<long>
             {
                 ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY,
                 ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY,
@@ -124,18 +137,23 @@ namespace GarfieldKartAPMod
             return count;
         }
 
-        public static long[] GetAvailableCups()
+        public static int GetTimeTrialVictoryCount()
         {
+            // Not implemented
+            return 0;
+        }
 
-            long[] cupUnlocks =
-            [
+        public static System.Collections.Generic.List<long> GetAvailableCups()
+        {
+            var cupUnlocks = new System.Collections.Generic.List<long>
+            {
                 ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA,
                 ArchipelagoConstants.ITEM_CUP_UNLOCK_PIZZA,
                 ArchipelagoConstants.ITEM_CUP_UNLOCK_BURGER,
                 ArchipelagoConstants.ITEM_CUP_UNLOCK_ICE_CREAM
-            ];
+            };
 
-            return [.. cupUnlocks.Where((cupUnlock, index) => HasItem(cupUnlock) || HasAllRacesInCup(index))];
+            return cupUnlocks.Where((cupUnlock, index) => HasItem(cupUnlock) || HasAllRacesInCup(index)).ToList();
         }
 
         private static bool HasAllRacesInCup(int cupIndex)
@@ -201,7 +219,7 @@ namespace GarfieldKartAPMod
 
         public static int GetOverallPuzzlePieceCount()
         {
-            var tracks = new[]
+            var tracks = new System.Collections.Generic.List<string>
             {
                 "E2C1", "E4C1", "E3C1", "E1C1", // Lasagna Cup
                 "E3C2", "E2C2", "E1C2", "E4C2", // Pizza Cup

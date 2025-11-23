@@ -66,7 +66,7 @@ namespace GarfieldKartAPMod
             }
             catch (Exception ex)
             {
-                Log.Error($"Connection exception: {ex.Message}");
+                Log.Error($"Connection exception: {ex.ToString()}");
                 OnConnectionFailed?.Invoke(ex.Message);
                 session = null;
             }

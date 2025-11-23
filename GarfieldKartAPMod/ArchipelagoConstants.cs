@@ -1,4 +1,6 @@
-﻿using System.Runtime.Remoting.Messaging;
+﻿using HarmonyLib;
+using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.SceneManagement;
 
@@ -695,6 +697,113 @@ namespace GarfieldKartAPMod
                 case "E3C4": return LOC_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex;
                 default: return -1;
             }
+        }
+
+        public static System.Collections.Generic.List<long> GetSpoilerLoc(int cupId, Difficulty difficulty)
+        {
+            int diffIndex = (int)difficulty;
+            var returnedList = new System.Collections.Generic.List<long>();
+
+            switch (cupId)
+            {
+                case 0: // Lasagna Cup
+                    // Combined tier (both variants)
+                    returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SPOILER_1);
+                    returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SPOILER_2);
+
+                    if (diffIndex >= 0)
+                    {
+                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_BRONZE_SPOILER_1);
+                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_BRONZE_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 1)
+                    {
+                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SILVER_SPOILER_1);
+                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SILVER_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 2)
+                    {
+                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_GOLD_SPOILER_1);
+                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_GOLD_SPOILER_2);
+                    }
+                    break;
+
+                case 1: // Pizza Cup
+                    returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SPOILER_1);
+                    returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SPOILER_2);
+
+                    if (diffIndex >= 0)
+                    {
+                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_BRONZE_SPOILER_1);
+                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_BRONZE_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 1)
+                    {
+                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SILVER_SPOILER_1);
+                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SILVER_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 2)
+                    {
+                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_GOLD_SPOILER_1);
+                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_GOLD_SPOILER_2);
+                    }
+                    break;
+
+                case 2: // Burger Cup
+                    returnedList.Add(LOC_BURGER_CUP_UNLOCK_SPOILER_1);
+                    returnedList.Add(LOC_BURGER_CUP_UNLOCK_SPOILER_2);
+
+                    if (diffIndex >= 0)
+                    {
+                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_BRONZE_SPOILER_1);
+                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_BRONZE_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 1)
+                    {
+                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_SILVER_SPOILER_1);
+                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_SILVER_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 2)
+                    {
+                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_GOLD_SPOILER_1);
+                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_GOLD_SPOILER_2);
+                    }
+                    break;
+
+                case 3: // Ice Cream Cup
+                    returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SPOILER_1);
+                    returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SPOILER_2);
+
+                    if (diffIndex >= 0)
+                    {
+                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_BRONZE_SPOILER_1);
+                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_BRONZE_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 1)
+                    {
+                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SILVER_SPOILER_1);
+                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SILVER_SPOILER_2);
+                    }
+
+                    if (diffIndex >= 2)
+                    {
+                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_GOLD_SPOILER_1);
+                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_GOLD_SPOILER_2);
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+            return returnedList;
         }
     }
 }
