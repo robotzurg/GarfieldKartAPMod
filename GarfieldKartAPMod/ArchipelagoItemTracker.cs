@@ -83,7 +83,7 @@ namespace GarfieldKartAPMod
                 }
 
                 // Load locations
-                var locationsList = session.Locations.AllLocationsChecked?.ToList();
+                List<long> locationsList = session.Locations.AllLocationsChecked?.ToList();
                 if (locationsList != null)
                 {
                     Log.Message($"[AP] Loading {locationsList.Count} checked locations from server");
@@ -143,9 +143,9 @@ namespace GarfieldKartAPMod
             return 0;
         }
 
-        public static System.Collections.Generic.List<long> GetAvailableCups()
+        public static List<long> GetAvailableCups()
         {
-            var cupUnlocks = new System.Collections.Generic.List<long>
+            var cupUnlocks = new List<long>
             {
                 ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA,
                 ArchipelagoConstants.ITEM_CUP_UNLOCK_PIZZA,
@@ -219,7 +219,7 @@ namespace GarfieldKartAPMod
 
         public static int GetOverallPuzzlePieceCount()
         {
-            var tracks = new System.Collections.Generic.List<string>
+            var tracks = new List<string>
             {
                 "E2C1", "E4C1", "E3C1", "E1C1", // Lasagna Cup
                 "E3C2", "E2C2", "E1C2", "E4C2", // Pizza Cup
@@ -233,6 +233,33 @@ namespace GarfieldKartAPMod
                 count += GetPuzzlePieceCount(track);
             }
             return count;
+        }
+
+        public static bool HasBonusAvailable(BonusCategory bonus)
+        {
+            switch (bonus)
+            {
+                case BonusCategory.PIE:
+                    return HasItem(ArchipelagoConstants.ITEM_PIE);
+                case BonusCategory.AUTOLOCK_PIE:
+                    return HasItem(ArchipelagoConstants.ITEM_HOMING_PIE);
+                case BonusCategory.LASAGNA:
+                    return HasItem(ArchipelagoConstants.ITEM_LASAGNA);
+                case BonusCategory.SPRING:
+                    return HasItem(ArchipelagoConstants.ITEM_SPRING);
+                case BonusCategory.DIAMOND:
+                    return HasItem(ArchipelagoConstants.ITEM_DIAMOND);
+                case BonusCategory.UFO:
+                    return HasItem(ArchipelagoConstants.ITEM_UFO);
+                case BonusCategory.NAP:
+                    return HasItem(ArchipelagoConstants.ITEM_PILLOW);
+                case BonusCategory.PARFUME:
+                    return HasItem(ArchipelagoConstants.ITEM_PERFUME);
+                case BonusCategory.MAGIC:
+                    return HasItem(ArchipelagoConstants.ITEM_MAGIC_WAND);
+                default:
+                    return true;
+            }
         }
 
         // ========== DEBUG METHODS ==========

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Runtime.Remoting.Messaging;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 namespace GarfieldKartAPMod
 {
@@ -699,10 +700,278 @@ namespace GarfieldKartAPMod
             }
         }
 
-        public static System.Collections.Generic.List<long> GetSpoilerLoc(int cupId, Difficulty difficulty)
+        public static List<long> GetTimeTrialLocs(string startScene, E_TimeTrialMedal medal)
+        {
+            int diffIndex = (int)medal;
+            var returnedList = new List<long>();
+
+            if (diffIndex == 0)
+            {
+                return returnedList;
+            }
+
+            switch (startScene)
+            {
+                // LASAGNA CUP
+                case "E2C1":
+                    if (diffIndex >= 1) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E4C1":
+                    if (diffIndex >= 1) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E3C1":
+                    if (diffIndex >= 1) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E1C1":
+                    if (diffIndex >= 1) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_PLATINUM);
+                    break;
+
+                // PIZZA CUP
+                case "E3C2":
+                    if (diffIndex >= 1) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E2C2":
+                    if (diffIndex >= 1) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E1C2":
+                    if (diffIndex >= 1) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E4C2":
+                    if (diffIndex >= 1) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_PLATINUM);
+                    break;
+
+                // BURGER CUP
+                case "E1C3":
+                    if (diffIndex >= 1) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E3C3":
+                    if (diffIndex >= 1) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E4C3":
+                    if (diffIndex >= 1) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E2C3":
+                    if (diffIndex >= 1) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_PLATINUM);
+                    break;
+
+                // ICE CREAM CUP
+                case "E4C4":
+                    if (diffIndex >= 1) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E1C4":
+                    if (diffIndex >= 1) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E2C4":
+                    if (diffIndex >= 1) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_PLATINUM);
+                    break;
+                case "E3C4":
+                    if (diffIndex >= 1) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_BRONZE);
+                    if (diffIndex >= 2) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_SILVER);
+                    if (diffIndex >= 3) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_GOLD);
+                    if (diffIndex >= 4) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_PLATINUM);
+                    break;
+
+                default:
+                    break;
+            }
+
+            return returnedList;
+        }
+
+        public static List<long> GetHatLocs(string startScene, Difficulty difficulty)
         {
             int diffIndex = (int)difficulty;
-            var returnedList = new System.Collections.Generic.List<long>();
+            var returnedList = new List<long>();
+
+            switch (startScene)
+            {
+                // LASAGNA CUP
+                case "E2C1":
+                    returnedList.Add(LOC_CATZ_IN_THE_HOOD_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_CATZ_IN_THE_HOOD_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_CATZ_IN_THE_HOOD_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CATZ_IN_THE_HOOD_GOLD_HAT_UNLOCK);
+                    break;
+                case "E4C1":
+                    returnedList.Add(LOC_CRAZY_DUNES_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_CRAZY_DUNES_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_CRAZY_DUNES_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CRAZY_DUNES_GOLD_HAT_UNLOCK);
+                    break;
+                case "E3C1":
+                    returnedList.Add(LOC_PALEROCK_LAKE_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_PALEROCK_LAKE_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_PALEROCK_LAKE_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_PALEROCK_LAKE_GOLD_HAT_UNLOCK);
+                    break;
+                case "E1C1":
+                    returnedList.Add(LOC_CITY_SLICKER_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_CITY_SLICKER_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_CITY_SLICKER_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CITY_SLICKER_GOLD_HAT_UNLOCK);
+                    break;
+
+                // PIZZA CUP
+                case "E3C2":
+                    returnedList.Add(LOC_COUNTRY_BUMPKIN_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_COUNTRY_BUMPKIN_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_COUNTRY_BUMPKIN_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_COUNTRY_BUMPKIN_GOLD_HAT_UNLOCK);
+                    break;
+                case "E2C2":
+                    returnedList.Add(LOC_SPOOKY_MANOR_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_SPOOKY_MANOR_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_SPOOKY_MANOR_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_SPOOKY_MANOR_GOLD_HAT_UNLOCK);
+                    break;
+                case "E1C2":
+                    returnedList.Add(LOC_MALLY_MARKET_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_MALLY_MARKET_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_MALLY_MARKET_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_MALLY_MARKET_GOLD_HAT_UNLOCK);
+                    break;
+                case "E4C2":
+                    returnedList.Add(LOC_VALLEY_OF_THE_KINGS_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_GOLD_HAT_UNLOCK);
+                    break;
+
+                // BURGER CUP
+                case "E1C3":
+                    returnedList.Add(LOC_MISTY_FOR_ME_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_MISTY_FOR_ME_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_MISTY_FOR_ME_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_MISTY_FOR_ME_GOLD_HAT_UNLOCK);
+                    break;
+                case "E3C3":
+                    returnedList.Add(LOC_SNEAK_A_PEAK_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_SNEAK_A_PEAK_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_SNEAK_A_PEAK_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_SNEAK_A_PEAK_GOLD_HAT_UNLOCK);
+                    break;
+                case "E4C3":
+                    returnedList.Add(LOC_BLAZING_OASIS_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_BLAZING_OASIS_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_BLAZING_OASIS_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_BLAZING_OASIS_GOLD_HAT_UNLOCK);
+                    break;
+                case "E2C3":
+                    returnedList.Add(LOC_PASTACOSI_FACTORY_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_PASTACOSI_FACTORY_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_PASTACOSI_FACTORY_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_PASTACOSI_FACTORY_GOLD_HAT_UNLOCK);
+                    break;
+
+                // ICE CREAM CUP
+                case "E4C4":
+                    returnedList.Add(LOC_MYSTERIOUS_TEMPLE_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_GOLD_HAT_UNLOCK);
+                    break;
+                case "E1C4":
+                    returnedList.Add(LOC_PROHIBITED_SITE_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_PROHIBITED_SITE_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_PROHIBITED_SITE_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_PROHIBITED_SITE_GOLD_HAT_UNLOCK);
+                    break;
+                case "E2C4":
+                    returnedList.Add(LOC_CASKOU_PARK_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_CASKOU_PARK_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_CASKOU_PARK_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_CASKOU_PARK_GOLD_HAT_UNLOCK);
+                    break;
+                case "E3C4":
+                    returnedList.Add(LOC_LOOPY_LAGOON_HAT_UNLOCK);
+                    if (diffIndex >= 0) returnedList.Add(LOC_LOOPY_LAGOON_BRONZE_HAT_UNLOCK);
+                    if (diffIndex >= 1) returnedList.Add(LOC_LOOPY_LAGOON_SILVER_HAT_UNLOCK);
+                    if (diffIndex >= 2) returnedList.Add(LOC_LOOPY_LAGOON_GOLD_HAT_UNLOCK);
+                    break;
+
+                default:
+                    break;
+            }
+
+            return returnedList;
+        }
+
+        public static long GetHatItemId(string hat)
+        {
+            switch (hat)
+            {
+                // LASAGNA CUP
+                case "EgyptPriestHatN": return ITEM_APPRENTICE_SORCERER_BRONZE;
+                case "E4C1": return LOC_CRAZY_DUNES_PUZZLE_PIECE_1;
+                case "E3C1": return LOC_PALEROCK_LAKE_PUZZLE_PIECE_1;
+                case "E1C1": return LOC_CITY_SLICKER_PUZZLE_PIECE_1;
+                // PIZZA CUP
+                case "E3C2": return LOC_COUNTRY_BUMPKIN_PUZZLE_PIECE_1;
+                case "E2C2": return LOC_SPOOKY_MANOR_PUZZLE_PIECE_1;
+                case "E1C2": return LOC_MALLY_MARKET_PUZZLE_PIECE_1;
+                case "E4C2": return LOC_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1;
+                // BURGER CUP
+                case "E1C3": return LOC_MISTY_FOR_ME_PUZZLE_PIECE_1;
+                case "E3C3": return LOC_SNEAK_A_PEAK_PUZZLE_PIECE_1;
+                case "E4C3": return LOC_BLAZING_OASIS_PUZZLE_PIECE_1;
+                case "E2C3": return LOC_PASTACOSI_FACTORY_PUZZLE_PIECE_1;
+                // ICE CREAM CUP
+                case "E4C4": return LOC_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1;
+                case "E1C4": return LOC_PROHIBITED_SITE_PUZZLE_PIECE_1;
+                case "E2C4": return LOC_CASKOU_PARK_PUZZLE_PIECE_1;
+                case "E3C4": return LOC_LOOPY_LAGOON_PUZZLE_PIECE_1;
+            }
+        }
+
+        public static List<long> GetSpoilerLocs(int cupId, Difficulty difficulty)
+        {
+            int diffIndex = (int)difficulty;
+            var returnedList = new List<long>();
 
             switch (cupId)
             {

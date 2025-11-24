@@ -21,7 +21,7 @@ namespace GarfieldKartAPMod
             }
         }
 
-        public void WriteData((long itemId, int playerId, string itemName, string playerName) notification)
+        public void WriteNotificationData((long itemId, int playerId, string itemName, string playerName) notification)
         {
             if (GarfieldKartAPMod.APClient.IsConnected)
             {

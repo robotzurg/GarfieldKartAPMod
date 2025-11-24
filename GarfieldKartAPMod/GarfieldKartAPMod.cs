@@ -1,20 +1,12 @@
 using Aube;
-using Aube.AnimatorData;
 using BepInEx;
 using HarmonyLib;
-using Steamworks;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Playables;
-using UnityEngine.UI;
-using static Cinemachine.CinemachineTriggerAction.ActionSettings;
 using static MenuHDTrackSelection;
-using static Mono.Security.X509.X520;
-using static Rewired.Controller;
 
 #if DEBUG
 using UnityHotReloadNS;
@@ -117,7 +109,7 @@ namespace GarfieldKartAPMod
             if (APClient != null && APClient.HasPendingNotifications())
             {
                 var notification = APClient.DequeuePendingNotification();
-                fileWriter.WriteData(notification);
+                fileWriter.WriteNotificationData(notification);
             }
         }
 
@@ -192,44 +184,14 @@ namespace GarfieldKartAPMod.Patches
 
         public static bool IsPuzzleRandomizationEnabled()
         {
-            if (!IsConnectedAndEnabled) return false;
-
-            var puzzleCheck = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
-            return puzzleCheck != null &&
-                   (puzzleCheck.ToString() == "true" || puzzleCheck.ToString() == "1");
+            var pcs = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
+            return pcs.ToString() == "true" || pcs.ToString() == "1";
         }
 
         public static bool IsProgressiveCupsEnabled()
         {
-            if (!GarfieldKartAPMod.sessionSlotData.TryGetValue("progressive_cups", out var pcs))
-                return false;
+            var pcs = GarfieldKartAPMod.APClient.GetSlotDataValue("progressive_cups");
             return pcs.ToString() == "true" || pcs.ToString() == "1";
-        }
-
-        public static T GetSlotDataValue<T>(string key, T defaultValue = default)
-        {
-            if (GarfieldKartAPMod.sessionSlotData == null ||
-                !GarfieldKartAPMod.sessionSlotData.TryGetValue(key, out var value))
-            {
-                return defaultValue;
-            }
-
-            if (typeof(T) == typeof(bool))
-            {
-                return (T)(object)(value.ToString() == "true" || value.ToString() == "1");
-            }
-
-            if (typeof(T) == typeof(long) && value is int intValue)
-            {
-                return (T)(object)(long)intValue;
-            }
-
-            return (T)Convert.ChangeType(value, typeof(T));
-        }
-
-        public static string GetRandomizeRacesMode()
-        {
-            return GetSlotDataValue("randomize_races", "off");
         }
     }
 
@@ -320,9 +282,9 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            var goalId = ArchipelagoHelper.GetSlotDataValue("goal", ArchipelagoConstants.GOAL_GRAND_PRIX);
+            GarfieldKartAPMod.sessionSlotData.TryGetValue("goal", out var goalId);
 
-            switch (goalId)
+            switch ((long)goalId)
             {
                 case ArchipelagoConstants.GOAL_GRAND_PRIX:
                     CheckGrandPrixGoal();
@@ -337,7 +299,7 @@ namespace GarfieldKartAPMod.Patches
                     CheckTimeTrialsGoal();
                     break;
                 default:
-                    Log.Debug($"Unknown goal ID: {goalId}");
+                    Log.Debug($"Unknown goal ID: {(long)goalId}");
                     break;
             }
         }
@@ -353,10 +315,10 @@ namespace GarfieldKartAPMod.Patches
 
         private static void CheckPuzzlePieceGoal()
         {
-            int reqPuzzleCount = ArchipelagoHelper.GetSlotDataValue("puzzle_piece_count", 48);
+            GarfieldKartAPMod.sessionSlotData.TryGetValue("puzzle_piece_count", out var reqPuzzleCount);
             int puzzlePieceCount = ArchipelagoItemTracker.GetOverallPuzzlePieceCount();
 
-            if (puzzlePieceCount >= reqPuzzleCount)
+            if (puzzlePieceCount >= (int)reqPuzzleCount)
             {
                 CompleteGoal();
             }
@@ -622,10 +584,65 @@ namespace GarfieldKartAPMod.Patches
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
 #if DEBUG
-            __instance.SetRaceNbLap(0); // For testing, set laps to 1
+            __instance.SetRaceNbLap(1); // For testing, set laps to 1
 #endif
         }
     }
+
+    [HarmonyPatch(typeof(KartBonusMgr), "SetItem")]
+    public class KartBonusMgr_SetItem_Patch
+    {
+        static bool Prefix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
+
+            if (ArchipelagoItemTracker.HasBonusAvailable(bonus) && ___m_kart.Driver.IsHuman)
+            {
+                return true;
+            }
+
+            return false;
+        }
+        
+        static void Postfix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+
+            if (___m_kart.Driver.IsHuman && ArchipelagoItemTracker.HasBonusAvailable(bonus))
+            {
+                switch (bonus)
+                {
+                    case BonusCategory.PIE:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PIE);
+                        break;
+                    case BonusCategory.AUTOLOCK_PIE:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_HOMING_PIE);
+                        break;
+                    case BonusCategory.LASAGNA:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_LASAGNA);
+                        break;
+                    case BonusCategory.SPRING:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_SPRING);
+                        break;
+                    case BonusCategory.DIAMOND:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_DIAMOND);
+                        break;
+                    case BonusCategory.MAGIC:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_MAGIC_WAND);
+                        break;
+                    case BonusCategory.NAP:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PILLOW);
+                        break;
+                    case BonusCategory.PARFUME:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PERFUME);
+                        break;
+                    case BonusCategory.UFO:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_UFO);
+                        break;
+                }
+            }
+        }
+     }
 
     [HarmonyPatch(typeof(RacePuzzlePiece), "DoTrigger")]
     public class RacePuzzlePiece_DoTrigger_Patch
@@ -673,6 +690,7 @@ namespace GarfieldKartAPMod.Patches
     {
         static bool Prefix(HD_TrackSelection_Item __instance, int value, TextMeshProUGUI ___m_puzzleText, GameObject ___m_boardPuzzle, GameObject ___m_boardPuzzleFull, int ___m_maxPuzzleValue)
         {
+            Log.Info(ArchipelagoHelper.IsPuzzleRandomizationEnabled());
             if (!ArchipelagoHelper.IsConnectedAndEnabled || !ArchipelagoHelper.IsPuzzleRandomizationEnabled())
             {
                 return true;
@@ -701,6 +719,21 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    [HarmonyPatch(typeof(GameSaveManager), "GetHatState")]
+    public class GameSaveManager_GetHatState_Patch
+    {
+        static bool Prefix(GameSaveManager __instance, string hat)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled)
+                return true;
+
+            if (ArchipelagoItemTracker.HasItem(ArchipelagoConstants.GetHatItemId(hat)))
+            {
+                return true;
+            }
+        }
+    }
+
     // ========== REWARD PATCHES ==========
 
     [HarmonyPatch(typeof(RewardManager), "EarnReward")]
@@ -716,23 +749,42 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
+            Difficulty difficulty = Singleton<GameConfigurator>.Instance.Difficulty;
 
             if (gameMode == E_GameModeType.SINGLE && rank == 0)
             {
                 GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
                 GoalManager.CheckAndCompleteGoal();
+                var hatLocs = ArchipelagoConstants.GetHatLocs(track, difficulty);
+                foreach (var loc in hatLocs)
+                {
+                    GarfieldKartAPMod.APClient.SendLocation(loc);
+                }
 
-                // TODO: Add Hats here
             }
 
             if (gameMode == E_GameModeType.TIME_TRIAL && medal != E_TimeTrialMedal.None)
             {
-                // TODO: Add Hats here, and maybe time trial stuff too
+
+                var timeTrialLocs = ArchipelagoConstants.GetTimeTrialLocs(track, medal);
+                foreach (var loc in timeTrialLocs)
+                {
+                    GarfieldKartAPMod.APClient.SendLocation(loc);
+                }
+
+                // We do -1 here because medals go from 1 to 3 and difficulties from 0 to 2
+                Difficulty medalDiff = (Difficulty)((int)difficulty - 1);
+
+                var hatLocs = ArchipelagoConstants.GetHatLocs(track, medalDiff);
+                foreach (var loc in hatLocs)
+                {
+                    GarfieldKartAPMod.APClient.SendLocation(loc);
+                }
             }
 
             if (gameMode == E_GameModeType.CHAMPIONSHIP && nbFirstPlace == 4)
             {
-                var spoilerLocs = ArchipelagoConstants.GetSpoilerLoc(cup, Singleton<GameConfigurator>.Instance.Difficulty);
+                var spoilerLocs = ArchipelagoConstants.GetSpoilerLocs(cup, difficulty);
                 foreach (var loc in spoilerLocs)
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
@@ -740,30 +792,6 @@ namespace GarfieldKartAPMod.Patches
             }
         }
     }
-
-    //[HarmonyPatch(typeof(MenuHDKartSelection), "OnSubmitAction")]
-    //public class MenuHDKartSelection_Patch
-    //{
-    //    static bool Prefix(MenuHDKartSelection __instance, KartSelectionNavigation ___m_navigation)
-    //    {
-    //        if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
-
-    //        // Get selected characteristics
-    //        var selectedCharacter = ___m_navigation.GetSelectedCarac<CharacterCarac>(MenuHDKartSelection.KARTSELECT_TYPE.CHARACTER);
-    //        var selectedKart = ___m_navigation.GetSelectedCarac<KartCarac>(MenuHDKartSelection.KARTSELECT_TYPE.KART);
-    //        var selectedHat = ___m_navigation.GetSelectedCarac<BonusCustom>(MenuHDKartSelection.KARTSELECT_TYPE.HAT);
-    //        var selectedCustom = ___m_navigation.GetSelectedCarac<KartCustom>(MenuHDKartSelection.KARTSELECT_TYPE.CUSTOM);
-
-    //        // The .Owner property likely gives you the ID/enum value
-    //        var characterId = selectedCharacter.Owner;
-    //        var kartId = selectedKart.Owner;
-
-    //        Log.Info(selectedHat);
-    //        Log.Info(selectedCustom);
-
-    //        return true;
-    //    }
-    //}
 
     [HarmonyPatch(typeof(RewardManager), "EndChampionShip")]
     public class RewardManager_EndChampionShip_Patch
