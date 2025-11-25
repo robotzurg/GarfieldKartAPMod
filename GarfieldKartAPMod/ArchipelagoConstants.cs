@@ -941,30 +941,83 @@ namespace GarfieldKartAPMod
             return returnedList;
         }
 
-        public static long GetHatItemId(string hat)
+        public static List<long> GetHatItemIds(string hat)
         {
             switch (hat)
             {
                 // LASAGNA CUP
-                case "EgyptPriestHatN": return ITEM_APPRENTICE_SORCERER_BRONZE;
-                case "E4C1": return LOC_CRAZY_DUNES_PUZZLE_PIECE_1;
-                case "E3C1": return LOC_PALEROCK_LAKE_PUZZLE_PIECE_1;
-                case "E1C1": return LOC_CITY_SLICKER_PUZZLE_PIECE_1;
+                // CATZ IN THE HOOD
+                case "EgyptPriestHatN":
+                case "EgyptPriestHatR": 
+                case "EgyptPriestHatU": return [ITEM_UNLOCK_TIC_TOQUE, ITEM_PROGRESSIVE_TIC_TOQUE];
+                // CRAZY DUNES
+                case "SleepingHatN": 
+                case "SleepingHatR": 
+                case "SleepingHatU": return [ITEM_UNLOCK_BEDDY_BYE_CAP, ITEM_PROGRESSIVE_BEDDY_BYE_CAP];
+                // PALEROCK LAKE
+                case "PharaonHatN": 
+                case "PharaonHatR":
+                case "PharaonHatU": return [ITEM_UNLOCK_TOUTANKHAMEOW, ITEM_PROGRESSIVE_TOUTANKHAMEOW];
+                // CITY SLICKER
+                case "BeautyHatN": 
+                case "BeautyHatR":
+                case "BeautyHatU": return [ITEM_UNLOCK_ARISTO_CATIC_BICORN, ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN];
+
                 // PIZZA CUP
-                case "E3C2": return LOC_COUNTRY_BUMPKIN_PUZZLE_PIECE_1;
-                case "E2C2": return LOC_SPOOKY_MANOR_PUZZLE_PIECE_1;
-                case "E1C2": return LOC_MALLY_MARKET_PUZZLE_PIECE_1;
-                case "E4C2": return LOC_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1;
+                // COUNTRY BUMPKIN
+                case "PiratHatN": 
+                case "PiratHatR":
+                case "PiratHatU": return [ITEM_UNLOCK_STINK_O_RAMA, ITEM_PROGRESSIVE_STINK_O_RAMA];
+                // SPOOKY MANOR
+                case "FootballHelmetN": 
+                case "FootballHelmetR":
+                case "FootballHelmetU": return [ITEM_UNLOCK_JOE_MONTAGNA, ITEM_PROGRESSIVE_JOE_MONTAGNA];
+                // MALLY MARKET
+                case "ChickenHatN":
+                case "ChickenHatR":
+                case "ChickenHatU": return [ITEM_UNLOCK_ELASTO_HAT, ITEM_PROGRESSIVE_ELASTO_HAT];
+                // VALLEY OF THE KINGS
+                case "SpaceHelmetN":
+                case "SpaceHelmetR":
+                case "SpaceHelmetU": return [ITEM_UNLOCK_SPACE_BUBBLE, ITEM_PROGRESSIVE_SPACE_BUBBLE];
+
                 // BURGER CUP
-                case "E1C3": return LOC_MISTY_FOR_ME_PUZZLE_PIECE_1;
-                case "E3C3": return LOC_SNEAK_A_PEAK_PUZZLE_PIECE_1;
-                case "E4C3": return LOC_BLAZING_OASIS_PUZZLE_PIECE_1;
-                case "E2C3": return LOC_PASTACOSI_FACTORY_PUZZLE_PIECE_1;
+                // PLAY MISTY FOR ME
+                case "CrownHatN":
+                case "CrownHatR":
+                case "CrownHatU": return [ITEM_UNLOCK_CUTIE_PIE_CROWN, ITEM_PROGRESSIVE_CUTIE_PIE_CROWN];
+                // SNEAK-A-PEAK
+                case "PizzaioloHatN": 
+                case "PizzaioloHatR": 
+                case "PizzaioloHatU": return [ITEM_UNLOCK_PIZZAIOLO_HAT, ITEM_PROGRESSIVE_PIZZAIOLO_HAT];
+                // BLAZING OASIS
+                case "VikingHelmetN":
+                case "VikingHelmetR":
+                case "VikingHelmetU": return [ITEM_UNLOCK_VIKING_HELMET, ITEM_PROGRESSIVE_VIKING_HELMET];
+                // PASTACOSI FACTORY
+                case "MagicHatN":
+                case "MagicHatR":
+                case "MagicHatU": return [ITEM_UNLOCK_WHIZZY_WIZARD, ITEM_PROGRESSIVE_WHIZZY_WIZARD];
+
                 // ICE CREAM CUP
-                case "E4C4": return LOC_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1;
-                case "E1C4": return LOC_PROHIBITED_SITE_PUZZLE_PIECE_1;
-                case "E2C4": return LOC_CASKOU_PARK_PUZZLE_PIECE_1;
-                case "E3C4": return LOC_LOOPY_LAGOON_PUZZLE_PIECE_1;
+                // MYSTERIOUS TEMPLE
+                case "WizardHatN":
+                case "WizardHatR":
+                case "WizardHatU": return [ITEM_UNLOCK_APPRENTICE_SORCERER, ITEM_PROGRESSIVE_APPRENTICE_SORCERER];
+                // PROHIBITED SITE
+                case "DunkeyHatN":
+                case "DunkeyHatR":
+                case "DunkeyHatU": return [ITEM_UNLOCK_MULE_HEAD, ITEM_PROGRESSIVE_MULE_HEAD];
+                // CASKOU PARK
+                case "PastryHatN":
+                case "PastryHatR":
+                case "PastryHatU": return [ITEM_UNLOCK_CHEFS_SPECIAL, ITEM_PROGRESSIVE_CHEFS_SPECIAL];
+                // LOOPY LAGOON
+                case "RabbitHatN":
+                case "RabbitHatR":
+                case "RabbitHatU": return [ITEM_UNLOCK_BUNNY_BAND, ITEM_PROGRESSIVE_BUNNY_BAND];
+
+                default: return [];
             }
         }
 
@@ -1073,6 +1126,50 @@ namespace GarfieldKartAPMod
             }
 
             return returnedList;
+        }
+
+        public static List<long> GetSpoilerItemIds(string custom)
+        {
+            switch (custom)
+            {
+                // LASAGNA CUP
+                case "KGC_ManiabilityN":
+                case "KGC_ManiabilityR":
+                case "KGC_ManiabilityU": return [ITEM_UNLOCK_BOMBASTIC_SPOILER, ITEM_PROGRESSIVE_BOMBASTIC_SPOILER];
+
+                case "KJC_SpeedN":
+                case "KJC_SpeedR":
+                case "KJC_SpeedU": return [ITEM_UNLOCK_WHACKY_SPOILER, ITEM_PROGRESSIVE_WHACKY_SPOILER];
+
+                // PIZZA CUP
+                case "KLC_AccelerationN":
+                case "KLC_AccelerationR":
+                case "KLC_AccelerationU": return [ITEM_UNLOCK_SUPERFIT_SPOILER, ITEM_PROGRESSIVE_SUPERFIT_SPOILER];
+
+                case "KOC_AccelerationN":
+                case "KOC_AccelerationR":
+                case "KOC_AccelerationU": return [ITEM_UNLOCK_CYCLOBONE_SPOILER, ITEM_PROGRESSIVE_CYCLOBONE_SPOILER];
+
+                // BURGER CUP
+                case "KAC_AccelerationN":
+                case "KAC_AccelerationR":
+                case "KAC_AccelerationU": return [ITEM_UNLOCK_FOXY_SPOILER, ITEM_PROGRESSIVE_FOXY_SPOILER];
+
+                case "KNC_AccelerationN":
+                case "KNC_AccelerationR":
+                case "KNC_AccelerationU": return [ITEM_UNLOCK_SHIMMERING_SPOILER, ITEM_PROGRESSIVE_SHIMMERING_SPOILER];
+
+                // ICE CREAM CUP
+                case "KSC_ManiabilityN":
+                case "KSC_ManiabilityR":
+                case "KSC_ManiabilityU": return [ITEM_UNLOCK_HOLEY_MOLEY_SPOILER, ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER];
+
+                case "KHC_SpeedN":
+                case "KHC_SpeedR":
+                case "KHC_SpeedU": return [ITEM_UNLOCK_STAINED_SPOILER, ITEM_PROGRESSIVE_STAINED_SPOILER];
+
+                default: return [];
+            }
         }
     }
 }

@@ -678,8 +678,8 @@ namespace GarfieldKartAPMod.Patches
             int pieceIndex;
             Int32.TryParse(pieceData[1], out pieceIndex);
 
-            __result = ArchipelagoItemTracker.HasLocation(
-                ArchipelagoConstants.GetPuzzlePieceLoc(pieceData[0], pieceIndex));
+            __result = ArchipelagoItemTracker.HasItem(
+                ArchipelagoConstants.GetPuzzlePiece(pieceData[0], pieceIndex));
 
             return false;
         }
@@ -722,17 +722,82 @@ namespace GarfieldKartAPMod.Patches
     [HarmonyPatch(typeof(GameSaveManager), "GetHatState")]
     public class GameSaveManager_GetHatState_Patch
     {
-        static bool Prefix(GameSaveManager __instance, string hat)
+        static bool Prefix(GameSaveManager __instance, string hat, ref UnlockableItemSate __result)
         {
-            if (!ArchipelagoHelper.IsConnectedAndEnabled)
+            var hatRando = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_hats");
+            if (hatRando == null) return true;
+
+            if (!ArchipelagoHelper.IsConnectedAndEnabled || hatRando.ToString() == "false")
                 return true;
 
-            if (ArchipelagoItemTracker.HasItem(ArchipelagoConstants.GetHatItemId(hat)))
+            // [Main Unlock, Prog Unlock]
+            List<long> hatItemIds = ArchipelagoConstants.GetHatItemIds(hat);
+            if (hatItemIds.Count == 0) return true;
+
+            if (ArchipelagoItemTracker.HasItem(hatItemIds[0]) || ArchipelagoItemTracker.HasItem(hatItemIds[1]))
             {
+                __result = UnlockableItemSate.UNLOCKED; 
+            }
+            else
+            {
+                __result = UnlockableItemSate.LOCKED;
+            }
+
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(GameSaveManager), "GetCustomState")]
+    public class GameSaveManager_GetCustomState_Patch
+    {
+        static bool Prefix(GameSaveManager __instance, string custom, ref UnlockableItemSate __result)
+        {
+            var spoilerRando = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_spoilers");
+            if (spoilerRando == null) return true;
+
+            if (!ArchipelagoHelper.IsConnectedAndEnabled || spoilerRando.ToString() == "false")
                 return true;
+
+            // [Main Unlock, Prog Unlock]
+            List<long> customItemIds = ArchipelagoConstants.GetSpoilerItemIds(custom);
+            if (customItemIds.Count == 0) return true;
+
+            if (ArchipelagoItemTracker.HasItem(customItemIds[0]) || ArchipelagoItemTracker.HasItem(customItemIds[1]))
+            {
+                __result = UnlockableItemSate.UNLOCKED;
+            }
+            else
+            {
+                __result = UnlockableItemSate.LOCKED;
+            }
+
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(Localization), "Get")]
+    public class Localization_Get_Patch
+    {
+        static void Postfix(string key, ref string __result)
+        {
+            switch (key)
+            {
+                case "MENU_GARAGE_UNLOCK_SINGLE_RACE":
+                    __result = "Receive the Archipelago item for this hat to utilize it!";
+                    break;
+                case "MENU_GARAGE_UNLOCK_GRAND_PRIX":
+                    __result = "Receive the Archipelago item for this spoiler to utilize it!";
+                    break;
+                case "MENU_GARAGE_UNLOCK_TIME_TRIAL":
+                    __result = "";
+                    break;
+                case "MENU_GARAGE_UNLOCK_OR":
+                    __result = "";
+                    break;
             }
         }
     }
+
 
     // ========== REWARD PATCHES ==========
 

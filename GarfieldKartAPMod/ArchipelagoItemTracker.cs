@@ -184,14 +184,14 @@ namespace GarfieldKartAPMod
 
         public static int GetPuzzlePieceCount(string startScene)
         {
-            long basePuzzlePieceId = ArchipelagoConstants.GetPuzzlePiece(startScene, 0);
+            long basePuzzlePieceId = ArchipelagoConstants.GetPuzzlePieceLoc(startScene, 0);
             if (basePuzzlePieceId == -1)
                 return 0;
 
             int count = 0;
             for (int i = 0; i < 3; i++)
             {
-                if (HasItem(basePuzzlePieceId + i))
+                if (HasLocation(basePuzzlePieceId + i))
                 {
                     count++;
                 }
