@@ -264,28 +264,39 @@ namespace GarfieldKartAPMod
 
         public static bool HasBonusAvailable(BonusCategory bonus)
         {
-            switch (bonus)
+            var randoCheck = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_items");
+            if (randoCheck == null) return true;
+
+            string randoCheckStr = randoCheck.ToString();
+
+            if (randoCheckStr == "true")
             {
-                case BonusCategory.PIE:
-                    return HasItem(ArchipelagoConstants.ITEM_PIE);
-                case BonusCategory.AUTOLOCK_PIE:
-                    return HasItem(ArchipelagoConstants.ITEM_HOMING_PIE);
-                case BonusCategory.LASAGNA:
-                    return HasItem(ArchipelagoConstants.ITEM_LASAGNA);
-                case BonusCategory.SPRING:
-                    return HasItem(ArchipelagoConstants.ITEM_SPRING);
-                case BonusCategory.DIAMOND:
-                    return HasItem(ArchipelagoConstants.ITEM_DIAMOND);
-                case BonusCategory.UFO:
-                    return HasItem(ArchipelagoConstants.ITEM_UFO);
-                case BonusCategory.NAP:
-                    return HasItem(ArchipelagoConstants.ITEM_PILLOW);
-                case BonusCategory.PARFUME:
-                    return HasItem(ArchipelagoConstants.ITEM_PERFUME);
-                case BonusCategory.MAGIC:
-                    return HasItem(ArchipelagoConstants.ITEM_MAGIC_WAND);
-                default:
-                    return true;
+                switch (bonus)
+                {
+                    case BonusCategory.PIE:
+                        return HasItem(ArchipelagoConstants.ITEM_PIE);
+                    case BonusCategory.AUTOLOCK_PIE:
+                        return HasItem(ArchipelagoConstants.ITEM_HOMING_PIE);
+                    case BonusCategory.LASAGNA:
+                        return HasItem(ArchipelagoConstants.ITEM_LASAGNA);
+                    case BonusCategory.SPRING:
+                        return HasItem(ArchipelagoConstants.ITEM_SPRING);
+                    case BonusCategory.DIAMOND:
+                        return HasItem(ArchipelagoConstants.ITEM_DIAMOND);
+                    case BonusCategory.UFO:
+                        return HasItem(ArchipelagoConstants.ITEM_UFO);
+                    case BonusCategory.NAP:
+                        return HasItem(ArchipelagoConstants.ITEM_PILLOW);
+                    case BonusCategory.PARFUME:
+                        return HasItem(ArchipelagoConstants.ITEM_PERFUME);
+                    case BonusCategory.MAGIC:
+                        return HasItem(ArchipelagoConstants.ITEM_MAGIC_WAND);
+                    default:
+                        return true;
+                }
+            } else
+            {
+                return false;
             }
         }
 
