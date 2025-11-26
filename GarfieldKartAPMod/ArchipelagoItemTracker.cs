@@ -1,6 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using UnityEngine;
 
 namespace GarfieldKartAPMod
 {
@@ -137,10 +139,35 @@ namespace GarfieldKartAPMod
             return count;
         }
 
+        // Time-trial wins are stored in a per-session file by FileWriter. Only count wins for the active session.
         public static int GetTimeTrialVictoryCount()
         {
-            // Not implemented
-            return 0;
+            try
+            {
+                var session = GarfieldKartAPMod.APClient?.GetSession();
+                if (session == null)
+                    return 0;
+
+                string sessionSeed = session.RoomState.Seed;
+                if (string.IsNullOrWhiteSpace(sessionSeed))
+                    return 0;
+
+                string path = Application.persistentDataPath + $"/{sessionSeed}_timetrials.txt";
+                if (!File.Exists(path))
+                    return 0;
+
+                var lines = File.ReadAllLines(path)
+                                .Where(l => !string.IsNullOrWhiteSpace(l))
+                                .Select(l => l.Trim())
+                                .Distinct();
+
+                return lines.Count();
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"Failed to read time-trial file: {ex.Message}");
+                return 0;
+            }
         }
 
         public static List<long> GetAvailableCups()

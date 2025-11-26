@@ -30,6 +30,36 @@ namespace GarfieldKartAPMod
             apClient.OnConnectionFailed += (error) => statusMessage = $"Failed: {error}";
             apClient.OnDisconnected += () => statusMessage = "Disconnected";
 
+            // When connected, persist the connection info so it can be used as default next time
+            apClient.OnConnected += () =>
+            {
+                var fw = GameObject.FindObjectOfType<FileWriter>();
+                if (fw != null)
+                {
+                    int.TryParse(port, out int p);
+                    fw.WriteLastConnection(hostname, p, slotName, password);
+                }
+            };
+
+            // Try to prefill fields from last saved connection
+            var last = FileWriter.ReadLastConnection();
+            if (!string.IsNullOrEmpty(last.host))
+            {
+                hostname = last.host;
+            }
+            if (!string.IsNullOrEmpty(last.port))
+            {
+                port = last.port;
+            }
+            if (!string.IsNullOrEmpty(last.slotName))
+            {
+                slotName = last.slotName;
+            }
+            if (!string.IsNullOrEmpty(last.password))
+            {
+                password = last.password;
+            }
+
             originalCursorVisible = Cursor.visible;
             originalLockMode = Cursor.lockState;
             Cursor.visible = true;

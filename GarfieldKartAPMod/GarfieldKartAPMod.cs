@@ -249,10 +249,13 @@ namespace GarfieldKartAPMod.Patches
                     }
 
                     long raceItemIdx = 101 + (4 * currentCupIndex) + i; // Race IDs
+                    object raceCheck = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_races");
+                    string raceCheckStr = raceCheck.ToString();
 
-                    Log.Info($"{raceItemIdx}: {ArchipelagoItemTracker.HasItem(raceItemIdx)}, {currentCupIndex + 201}: {ArchipelagoItemTracker.HasItem(currentCupIndex + 201)}");
+                    bool intCheck = !ArchipelagoItemTracker.HasItem(raceItemIdx) && !ArchipelagoItemTracker.HasItem(currentCupIndex + 201);
+                    if (raceCheckStr == "cups_and_races") intCheck = !ArchipelagoItemTracker.HasItem(raceItemIdx);
 
-                    if (!ArchipelagoItemTracker.HasItem(raceItemIdx) && !ArchipelagoItemTracker.HasItem(currentCupIndex + 201))
+                    if (intCheck)
                     {
                         if (button != null)
                         {
@@ -278,6 +281,15 @@ namespace GarfieldKartAPMod.Patches
     // Goal Helper Classs
     public static class GoalManager
     {
+        public static string GetGoal()
+        {
+            GarfieldKartAPMod.sessionSlotData.TryGetValue("goal", out var goalId);
+            if (goalId != null)
+                return goalId.ToString();
+            else
+                return null;
+        }
+
         public static void CheckAndCompleteGoal()
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
@@ -599,7 +611,7 @@ namespace GarfieldKartAPMod.Patches
             if (ArchipelagoItemTracker.HasBonusAvailable(bonus) && ___m_kart.Driver.IsHuman)
             {
                 return true;
-            }
+            } 
 
             return false;
         }
@@ -818,6 +830,25 @@ namespace GarfieldKartAPMod.Patches
 
             if (gameMode == E_GameModeType.SINGLE && rank == 0)
             {
+                string ccReqString = "any";
+                if (GoalManager.GetGoal() == "grand_prix" || GoalManager.GetGoal() == "races")
+                {
+                    GarfieldKartAPMod.sessionSlotData.TryGetValue("cc_requirement", out var ccReq);
+                    if (ccReq != null)
+                        ccReqString = ccReq.ToString();
+                }
+
+                if (ccReqString != "any")
+                {
+                    if ((ccReqString == "easy" && difficulty != Difficulty.EASY) ||
+                        (ccReqString == "normal" && difficulty != Difficulty.NORMAL) ||
+                        (ccReqString == "hard" && difficulty != Difficulty.HARD))
+                    {
+                        Log.Message($"Skipping cup victory location send due to CC requirement ({ccReqString})");
+                        return;
+                    }
+                }
+
                 GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
                 GoalManager.CheckAndCompleteGoal();
                 var hatLocs = ArchipelagoConstants.GetHatLocs(track, difficulty);
@@ -832,10 +863,32 @@ namespace GarfieldKartAPMod.Patches
             {
 
                 var timeTrialLocs = ArchipelagoConstants.GetTimeTrialLocs(track, medal);
+
+                string ttReqString = "bronze";
+                if (GoalManager.GetGoal() == "time_trials")
+                {
+                    GarfieldKartAPMod.sessionSlotData.TryGetValue("time_trial_goal_grade", out var ttReq);
+                    if (ttReq != null)
+                        ttReqString = ttReq.ToString();
+                }
+
+                if ((ttReqString == "bronze" && medal != E_TimeTrialMedal.Bronze) ||
+                    (ttReqString == "silver" && medal != E_TimeTrialMedal.Silver) ||
+                    (ttReqString == "gold" && medal != E_TimeTrialMedal.Gold) ||
+                    (ttReqString == "platinum" && medal != E_TimeTrialMedal.Platinium))
+                {
+                    Log.Message($"Skipping cup victory location send due to CC requirement ({ttReqString})");
+                    return;
+                }
+
                 foreach (var loc in timeTrialLocs)
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
+
+                // Persist the completed time trial locally since there is no AP location for the goal
+                var fw = GameObject.FindObjectOfType<FileWriter>();
+                fw?.WriteTimeTrialData(track);
 
                 // We do -1 here because medals go from 1 to 3 and difficulties from 0 to 2
                 Difficulty medalDiff = (Difficulty)((int)difficulty - 1);
@@ -845,6 +898,9 @@ namespace GarfieldKartAPMod.Patches
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
+
+                // Re-check goals after persisting
+                GoalManager.CheckAndCompleteGoal();
             }
 
             if (gameMode == E_GameModeType.CHAMPIONSHIP && nbFirstPlace == 4)
@@ -864,7 +920,6 @@ namespace GarfieldKartAPMod.Patches
         static void Postfix(RewardManager __instance, int pFinalRank, int pNbFirstPlace, bool save)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled || pFinalRank != 0) return;
-
             SendCupVictoryLocation();
             GoalManager.CheckAndCompleteGoal();
         }
@@ -872,6 +927,25 @@ namespace GarfieldKartAPMod.Patches
         private static void SendCupVictoryLocation()
         {
             string name = Singleton<GameConfigurator>.Instance.ChampionShipData.ChampionShipNameId;
+            string ccReqString = "any";
+            if (GoalManager.GetGoal() == "grand_prix" || GoalManager.GetGoal() == "races")
+            {
+                GarfieldKartAPMod.sessionSlotData.TryGetValue("cc_requirement", out var ccReq);
+                if (ccReq != null)
+                    ccReqString = ccReq.ToString();
+            }
+
+            if (ccReqString != "any")
+            {
+                Difficulty difficulty = Singleton<GameConfigurator>.Instance.Difficulty;
+                if ((ccReqString == "easy" && difficulty != Difficulty.EASY) ||
+                    (ccReqString == "normal" && difficulty != Difficulty.NORMAL) ||
+                    (ccReqString == "hard" && difficulty != Difficulty.HARD))
+                {
+                    Log.Message($"Skipping cup victory location send due to CC requirement ({ccReqString})");
+                    return;
+                }
+            }
 
             switch (name)
             {
