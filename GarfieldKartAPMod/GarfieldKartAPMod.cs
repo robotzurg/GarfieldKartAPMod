@@ -1,5 +1,6 @@
 using Aube;
 using BepInEx;
+using GarfieldKartAPMod.Helpers;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;
@@ -177,6 +178,7 @@ namespace GarfieldKartAPMod
 namespace GarfieldKartAPMod.Patches
 {
     // Button Helper Class
+    // TODO: Maybe move this class to its own file, but it's probably fine here
     public static class ButtonHelper
     {
         public static void DisableButtonsByIndices(object buttonsArray, params int[] indices)
@@ -236,17 +238,17 @@ namespace GarfieldKartAPMod.Patches
 
 
                     if (!ArchipelagoItemTracker.HasRace(raceId))
-                        {
-                            button.interactable = false;
+                    {
+                        button.interactable = false;
                         continue;
-                        }
-
-                        button.interactable = true;
-                        GkEventSystem.Current.SelectButton(button);
-                        if (instance is MenuHDTrackSelection)
-                            (instance as MenuHDTrackSelection).UpdateRacesButtons(currentCupIndex);
                     }
+
+                    button.interactable = true;
+                    GkEventSystem.Current.SelectButton(button);
+                    if (instance is MenuHDTrackSelection)
+                        (instance as MenuHDTrackSelection).UpdateRacesButtons(currentCupIndex);
                 }
+            }
             catch (Exception ex)
             {
                 // TODO: Figure out what errors can throw here and prevent them instead of try catching
@@ -291,8 +293,8 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
 
-            var cupsList2 = ArchipelagoItemTracker.GetAvailableCups();
-            if (cupsList2.Count == 0)
+            var cupList = ArchipelagoItemTracker.GetAvailableCups();
+            if (cupList.Count == 0)
             {
                 PopupManager.OpenPopup("You haven't unlocked any cups!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
                 return false;
@@ -341,41 +343,36 @@ namespace GarfieldKartAPMod.Patches
         {
             int foundTab = -1;
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
-            var availableCupsList = ArchipelagoItemTracker.GetAvailableCups();
-            int progCups = ArchipelagoItemTracker.AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK);
 
             for (int i = 0; i < tabs.Length; i++)
             {
-                int cupItemIdx = 201 + i;
-                bool activateButton = false;
-
-                if (ArchipelagoItemTracker.HasItem(cupItemIdx) ||
-                    ArchipelagoItemTracker.HasRaceInCup(cupItemIdx) ||
-                    (progCups - 1) == i)
-                {
-                    if (gameMode == E_GameModeType.CHAMPIONSHIP && (availableCupsList.Contains(cupItemIdx) || (progCups - 1) == i))
-                        activateButton = true;
-                    else if (gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.TIME_TRIAL)
-                        activateButton = true;
-
-                    if (activateButton)
-                    {
-                        tabs[i].gameObject.SetActive(true);
-                        if (foundTab == -1)
-                        {
-                            GkEventSystem.Current.SelectTab(tabs[i]);
-                            foundTab = i;
-                        }
-                    }
-                    else
-                    {
-                        tabs[i].gameObject.SetActive(false);
-                    }
-                }
-                else
+                if (!ArchipelagoItemTracker.HasCup(i))
                 {
                     tabs[i].gameObject.SetActive(false);
+                    continue;
                 }
+
+                bool activateButton = false;
+
+                if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i))
+                    activateButton = true;
+
+                else if (gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.TIME_TRIAL)
+                    activateButton = true;
+
+                if (!activateButton)
+                {
+                    tabs[i].gameObject.SetActive(false);
+                    continue;
+                }
+
+                if (foundTab == -1)
+                {
+                    GkEventSystem.Current.SelectTab(tabs[i]);
+                    foundTab = i;
+                }
+
+                tabs[i].gameObject.SetActive(true);
             }
 
             return foundTab;
@@ -404,22 +401,15 @@ namespace GarfieldKartAPMod.Patches
                 return true;
             }
 
-            bool progressiveCups = ArchipelagoHelper.IsProgressiveCupsEnabled();
-            long cupItemIdx = 201 + ___m_currentChampionshipIndex;
-            long raceItemIdx = 101 + (4 * ___m_currentChampionshipIndex) + ___m_currentSelectedButton;
-            long progCups = ArchipelagoItemTracker.AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK);
+            int cupId = ___m_currentChampionshipIndex;
 
-            bool unlock = ArchipelagoItemTracker.HasItem(cupItemIdx) ||
-                         ArchipelagoItemTracker.HasItem(raceItemIdx) ||
-                         (progressiveCups && cupItemIdx <= (201 + progCups));
-
-            if (unlock)
+            if (ArchipelagoItemTracker.HasCup(cupId))
             {
-                Log.Message($"[AP] Cup '{cupItemIdx}' is unlocked - allowing selection");
+                Log.Message($"[AP] Cup '{cupId}' is unlocked - allowing selection");
                 return true;
             }
 
-            Log.Message($"[AP] Cup '{cupItemIdx}' is LOCKED - showing popup");
+            Log.Message($"[AP] Cup '{cupId}' is LOCKED - showing popup");
             PopupManager.OpenPopup("You haven't unlocked this!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
             return false;
         }
@@ -490,6 +480,8 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
+            int lapCount = ArchipelagoHelper.GetLapCount();
+            __instance.SetRaceNbLap(lapCount);
 #if DEBUG
             __instance.SetRaceNbLap(1); // For testing, set laps to 1
 #endif
@@ -660,7 +652,7 @@ namespace GarfieldKartAPMod.Patches
         static bool Prefix(GameSaveManager __instance, string custom, /*long hatTier,*/ ref UnlockableItemSate __result)
         {
             bool spoilerRando = ArchipelagoHelper.IsSpoilerRandomizerEnabled();
-
+            
             if (!spoilerRando || !ArchipelagoHelper.IsConnectedAndEnabled) 
                 return true;
 
@@ -727,8 +719,8 @@ namespace GarfieldKartAPMod.Patches
             if (gameMode == E_GameModeType.SINGLE && rank == 0)
             {
                 string ccReqString = "any";
-                if (GoalManager.GetGoalId() == ArchipelagoConstants.GOAL_GRAND_PRIX || 
-                    GoalManager.GetGoalId() == ArchipelagoConstants.GOAL_RACES)
+                if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_GRAND_PRIX || 
+                    ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_RACES)
                 {
                     ccReqString = ArchipelagoHelper.GetCCRequirement();
                 }
@@ -746,7 +738,7 @@ namespace GarfieldKartAPMod.Patches
                 }
 
                 GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
-                GoalManager.CheckAndCompleteGoal();
+                ArchipelagoGoalManager.CheckAndCompleteGoal();
                 var hatLocs = ArchipelagoConstants.GetHatLocs(track, difficulty);
                 foreach (var loc in hatLocs)
                 {
@@ -761,7 +753,7 @@ namespace GarfieldKartAPMod.Patches
                 var timeTrialLocs = ArchipelagoConstants.GetTimeTrialLocs(track, medal);
 
                 string ttReqString = "bronze";
-                if (GoalManager.GetGoalId() == ArchipelagoConstants.GOAL_TIME_TRIALS)
+                if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_TIME_TRIALS)
                 {
                     ttReqString = ArchipelagoHelper.GetTimeTrialGoalGrade();
                 }
@@ -794,7 +786,7 @@ namespace GarfieldKartAPMod.Patches
                 }
 
                 // Re-check goals after persisting
-                GoalManager.CheckAndCompleteGoal();
+                ArchipelagoGoalManager.CheckAndCompleteGoal();
             }
 
             if (gameMode == E_GameModeType.CHAMPIONSHIP && nbFirstPlace == 4)
@@ -815,15 +807,15 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled || pFinalRank != 0) return;
             SendCupVictoryLocation();
-            GoalManager.CheckAndCompleteGoal();
+            ArchipelagoGoalManager.CheckAndCompleteGoal();
         }
 
         private static void SendCupVictoryLocation()
         {
             string name = Singleton<GameConfigurator>.Instance.ChampionShipData.ChampionShipNameId;
             string ccReqString = "any";
-            if (GoalManager.GetGoalId() == ArchipelagoConstants.GOAL_GRAND_PRIX || 
-                GoalManager.GetGoalId() == ArchipelagoConstants.GOAL_RACES)
+            if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_GRAND_PRIX || 
+                ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_RACES)
             {
                 ccReqString = ArchipelagoHelper.GetCCRequirement();
             }

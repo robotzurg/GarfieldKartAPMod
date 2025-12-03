@@ -136,7 +136,8 @@ namespace GarfieldKartAPMod
             {
                     return GarfieldKartAPMod.sessionSlotData[key].ToString();
                 }
-                else if (defaultSlotData.ContainsKey(key)) {
+                else if (defaultSlotData.ContainsKey(key)) 
+                {
                     return defaultSlotData[key].ToString();
                 }
                 else

@@ -69,16 +69,30 @@ namespace GarfieldKartAPMod.Helpers
             return requirement;
         }
 
-        public static long GetPuzzlePieceCount()
+        public static int GetPuzzlePieceCount()
         {
             string puzzleCountString = GarfieldKartAPMod.APClient.GetSlotDataValue("puzzle_piece_count");
 
-            if (!Int64.TryParse(puzzleCountString, out long reqPuzzleCount))
+            if (!Int32.TryParse(puzzleCountString, out int reqPuzzleCount))
             {
-                throw new SlotDataException("Invalid puzzle piece goal value passed from slot data");
+                throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {puzzleCountString}");
             }
 
             return reqPuzzleCount;
+        }
+
+        internal static int GetLapCount()
+        {
+            string lapCountString = GarfieldKartAPMod.APClient.GetSlotDataValue("lap_count");
+
+            if (lapCountString == null) return 3;
+
+            if (!Int32.TryParse(lapCountString, out int lapCount))
+            {
+                throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {lapCountString}");
+            }
+
+            return lapCount;
         }
     }
 }
