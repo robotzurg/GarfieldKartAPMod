@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GarfieldKartAPMod
+namespace GarfieldKartAPMod.Helpers
 {
     // General Helper Class
     public static class ArchipelagoHelper
