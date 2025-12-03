@@ -222,6 +222,7 @@ namespace GarfieldKartAPMod.Patches
                 for (int i = 0; i < length; i++)
                 {
                     var button = indexerProp.GetValue(m_buttons, new object[] { i }) as BetterButton;
+                    if (button == null) continue;
 
                     if (i == 4)
                     {
@@ -229,40 +230,26 @@ namespace GarfieldKartAPMod.Patches
                         continue; // Skip the last button
                     }
 
-                    long raceItemIdx = 101 + (4 * currentCupIndex) + i; // Race IDs
+                    int raceId = 4 * currentCupIndex + i; // Race IDs
                     bool randomizeCups = ArchipelagoHelper.IsCupsRandomized();
                     bool randomizeRaces = ArchipelagoHelper.IsRacesRandomized();
 
-                    // TODO: Add and use HasRace helper function
-                    bool hasRace = true;
-                    if (randomizeCups)
-                    {
-                        // I'll be completely honest I'm not sure if this is the right item check
-                        hasRace = hasRace && !ArchipelagoItemTracker.HasItem(currentCupIndex + 201);
-                    }
-                    if (randomizeRaces)
-                    {
-                        hasRace = hasRace && !ArchipelagoItemTracker.HasItem(raceItemIdx);
-                    }
 
-                    if (!hasRace)
-                    {
-                        if (button != null)
+                    if (!ArchipelagoItemTracker.HasRace(raceId))
                         {
                             button.interactable = false;
+                        continue;
                         }
-                    }
-                    else
-                    {
+
                         button.interactable = true;
                         GkEventSystem.Current.SelectButton(button);
                         if (instance is MenuHDTrackSelection)
                             (instance as MenuHDTrackSelection).UpdateRacesButtons(currentCupIndex);
                     }
                 }
-            }
             catch (Exception ex)
             {
+                // TODO: Figure out what errors can throw here and prevent them instead of try catching
                 Log.Error($"Failed to disable race buttons: {ex}");
             }
         }
