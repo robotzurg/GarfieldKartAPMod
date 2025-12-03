@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEngine;
+using GarfieldKartAPMod.Patches;
 
 namespace GarfieldKartAPMod
 {
@@ -264,13 +265,11 @@ namespace GarfieldKartAPMod
 
         public static bool HasBonusAvailable(BonusCategory bonus)
         {
-            var randoCheck = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_items");
-            if (randoCheck == null) return true;
+            bool randomizeItems = ArchipelagoHelper.IsItemRandomizerEnabled();
 
-            string randoCheckStr = randoCheck.ToString();
+            if (!randomizeItems) 
+                return true;
 
-            if (randoCheckStr == "true")
-            {
                 switch (bonus)
                 {
                     case BonusCategory.PIE:
@@ -293,10 +292,6 @@ namespace GarfieldKartAPMod
                         return HasItem(ArchipelagoConstants.ITEM_MAGIC_WAND);
                     default:
                         return true;
-                }
-            } else
-            {
-                return false;
             }
         }
 
