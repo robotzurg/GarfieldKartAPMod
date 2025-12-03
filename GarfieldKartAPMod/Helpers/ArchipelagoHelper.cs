@@ -45,13 +45,17 @@ namespace GarfieldKartAPMod.Helpers
         public static bool IsRacesRandomized()
         {
             string raceRandomizerString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_races");
-            return raceRandomizerString == "cups_and_races" || raceRandomizerString == "races";
+
+            Int32.TryParse(raceRandomizerString, out int raceRandomizer);
+            return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_RACES || raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
         public static bool IsCupsRandomized()
         {
             string raceRandomizerString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_races");
-            return raceRandomizerString == "cups_and_races" || raceRandomizerString == "cups";
+
+            Int32.TryParse(raceRandomizerString, out int raceRandomizer);
+            return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_CUPS || raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
         public static string GetTimeTrialGoalGrade()

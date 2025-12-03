@@ -589,7 +589,6 @@ namespace GarfieldKartAPMod.Patches
     {
         static bool Prefix(HD_TrackSelection_Item __instance, int value, TextMeshProUGUI ___m_puzzleText, GameObject ___m_boardPuzzle, GameObject ___m_boardPuzzleFull, int ___m_maxPuzzleValue)
         {
-            Log.Info(ArchipelagoHelper.IsPuzzleRandomizationEnabled());
             if (!ArchipelagoHelper.IsConnectedAndEnabled || !ArchipelagoHelper.IsPuzzleRandomizationEnabled())
             {
                 return true;

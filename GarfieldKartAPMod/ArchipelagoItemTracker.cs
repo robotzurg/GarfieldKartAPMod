@@ -211,19 +211,24 @@ namespace GarfieldKartAPMod
 
         public static bool HasCup(int cupId)
         {
+            Log.Message($"Checking cup access for {cupId}");
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
 
+            Log.Message($"Cup randomizer is {cupRando}");
             if (!cupRando) 
                 return true;
 
             bool progressiveCups = ArchipelagoHelper.IsProgressiveCupsEnabled();
 
+            Log.Message($"Progressive cups are {progressiveCups}");
             if (progressiveCups) 
                 return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
 
             var baseCupId = ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA;
             var cupItemId = baseCupId + cupId;
 
+            Log.Message($"Cup item ID: {cupItemId}");
+            Log.Message($"Item present: {HasItem(cupItemId)}");
             return HasItem(cupItemId);
         }
 
