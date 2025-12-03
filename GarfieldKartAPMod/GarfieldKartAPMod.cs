@@ -521,7 +521,7 @@ namespace GarfieldKartAPMod.Patches
 
             for (int i = 0; i < tabs.Length; i++)
             {
-                long cupItemIdx = 201 + i;
+                int cupItemIdx = 201 + i;
                 bool activateButton = false;
 
                 if (ArchipelagoItemTracker.HasItem(cupItemIdx) ||
