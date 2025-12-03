@@ -260,7 +260,6 @@ namespace GarfieldKartAPMod.Patches
     {
         public static long GetGoalId()
         {
-            // TODO: Use default value to never return null
             string goalString = GarfieldKartAPMod.APClient.GetSlotDataValue("goal");
             Int64.TryParse(goalString, out long goalId);
 
