@@ -240,7 +240,7 @@ namespace GarfieldKartAPMod
 
         public static bool HasRaceInCup(int cupItemId)
         {
-            int cupId = cupItemId - 201; // Convert 201-204 to 0-3
+            int cupId = cupItemId - (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA; // Convert 201-204 to 0-3
             int startRaceId = cupId * 4; // 0, 4, 8, 12
 
             for (int raceId = startRaceId; raceId < startRaceId + 4; raceId++)
