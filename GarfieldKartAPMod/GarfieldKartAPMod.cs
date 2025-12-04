@@ -593,21 +593,13 @@ namespace GarfieldKartAPMod.Patches
     [HarmonyPatch(typeof(RacePuzzlePiece), "Awake")]
     public class RacePuzzlePiece_Awake_Patch
     {
-        static Material originalMaterial;
-
-        static void Prefix(RacePuzzlePiece __instance)
-        {
-            // Store material in prefix to restore it later
-            originalMaterial = __instance.GetComponent<Renderer>().materials[0];
-        }
-
         static void Postfix(RacePuzzlePiece __instance)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             if (!ArchipelagoHelper.IsPuzzleRandomizationEnabled()) return;
 
             // Restore the original material so we can fuck with it
-            __instance.GetComponent<Renderer>().materials[0] = originalMaterial;
+            __instance.GetComponent<Renderer>().materials[0] = null;
 
             long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, __instance.Index);
             bool hasPuzzlePiece = ArchipelagoItemTracker.HasLocation(puzzlePieceLocation);
