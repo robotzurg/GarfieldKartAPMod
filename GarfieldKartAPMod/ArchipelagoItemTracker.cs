@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using UnityEngine;
+using GarfieldKartAPMod.Helpers;
 
 namespace GarfieldKartAPMod
 {
@@ -113,7 +114,7 @@ namespace GarfieldKartAPMod
 
         public static int GetCupVictoryCount()
         {
-            var cupVictories = new System.Collections.Generic.List<long>
+            var cupVictories = new List<long>
             {
                 ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY,
                 ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY,
@@ -172,40 +173,86 @@ namespace GarfieldKartAPMod
 
         public static List<long> GetAvailableCups()
         {
-            var cupUnlocks = new List<long>
+            var cupUnlocks = new List<long>();
+
+            for (int cupId = 0; cupId < 4; cupId++)
             {
-                ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA,
-                ArchipelagoConstants.ITEM_CUP_UNLOCK_PIZZA,
-                ArchipelagoConstants.ITEM_CUP_UNLOCK_BURGER,
-                ArchipelagoConstants.ITEM_CUP_UNLOCK_ICE_CREAM
-            };
-
-            return cupUnlocks.Where((cupUnlock, index) => HasItem(cupUnlock) || HasAllRacesInCup(index)).ToList();
-        }
-
-        private static bool HasAllRacesInCup(int cupIndex)
-        {
-            int startRace = 101 + (cupIndex * 4);
-            return (Enumerable.Range(startRace, 4).All(raceLoc => HasItem(raceLoc)) || HasItem(cupIndex + 201));
-        }
-
-        public static bool HasRaceInCup(long cupId)
-        {
-            int cupIndex = (int)(cupId - 201); // Convert 201-204 to 0-3
-            int startRaceId = 101 + (cupIndex * 4); // 101, 105, 109, 113
-
-            for (int i = 0; i < 4; i++)
-            {
-                long raceId = startRaceId + i;
-                Log.Info($"Checking race {raceId} for cup {cupId}");
-                if (HasItem(raceId) || HasItem(cupId))
-                {
-                    Log.Info($"Found race {raceId} in cup {cupId}");
-                    return true;
-                }
+                if (HasCup(cupId)) cupUnlocks.Add(cupId);
             }
 
-            Log.Info($"No races found for cup {cupId}");
+            return cupUnlocks;
+        }
+
+        public static bool HasRace(int raceId)
+        {
+            // TODO: If we ever randomize which races are in which cups, this cupId -> raceId conversion will stop working
+            int cupId = raceId / 4;
+
+            bool raceRando = ArchipelagoHelper.IsRacesRandomized();
+            bool cupRando = ArchipelagoHelper.IsCupsRandomized();
+
+            if (!raceRando)
+            {
+                if (!cupRando) // This can never happen in settings but should be true if not connected
+                    return true;
+
+                return HasCup(cupId);
+            }
+            
+            var baseRaceId = ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD;
+            var raceItemId = baseRaceId + raceId;
+
+            bool hasRace = HasItem(raceItemId);
+
+            if (!cupRando) return hasRace;
+            
+            return hasRace && HasCup(cupId);
+        }
+
+        public static bool HasCup(int cupId)
+        {
+            Log.Message($"Checking cup access for {cupId}");
+            bool cupRando = ArchipelagoHelper.IsCupsRandomized();
+
+            Log.Message($"Cup randomizer is {cupRando}");
+            if (!cupRando) 
+                return true;
+
+            bool progressiveCups = ArchipelagoHelper.IsProgressiveCupsEnabled();
+
+            Log.Message($"Progressive cups are {progressiveCups}");
+            if (progressiveCups) 
+                return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
+
+            var baseCupId = ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA;
+            var cupItemId = baseCupId + cupId;
+
+            Log.Message($"Cup item ID: {cupItemId}");
+            Log.Message($"Item present: {HasItem(cupItemId)}");
+            return HasItem(cupItemId);
+        }
+
+        public static bool CanAccessCup(int cupId)
+        {
+            if (!HasCup(cupId)) return false;
+
+            for (int raceId = cupId * 4; raceId < cupId * 5; raceId++)
+            {
+                if (!HasRace(raceId)) return false;
+            }
+            return true;
+        }
+
+        public static bool HasRaceInCup(int cupItemId)
+        {
+            int cupId = cupItemId - (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA; // Convert 201-204 to 0-3
+            int startRaceId = cupId * 4; // 0, 4, 8, 12
+
+            for (int raceId = startRaceId; raceId < startRaceId + 4; raceId++)
+            {
+                if (HasRace(raceId)) return true;
+            }
+
             return false;
         }
 
@@ -264,39 +311,33 @@ namespace GarfieldKartAPMod
 
         public static bool HasBonusAvailable(BonusCategory bonus)
         {
-            var randoCheck = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_items");
-            if (randoCheck == null) return true;
+            bool randomizeItems = ArchipelagoHelper.IsItemRandomizerEnabled();
 
-            string randoCheckStr = randoCheck.ToString();
+            if (!randomizeItems) 
+                return true;
 
-            if (randoCheckStr == "true")
+            switch (bonus)
             {
-                switch (bonus)
-                {
-                    case BonusCategory.PIE:
-                        return HasItem(ArchipelagoConstants.ITEM_PIE);
-                    case BonusCategory.AUTOLOCK_PIE:
-                        return HasItem(ArchipelagoConstants.ITEM_HOMING_PIE);
-                    case BonusCategory.LASAGNA:
-                        return HasItem(ArchipelagoConstants.ITEM_LASAGNA);
-                    case BonusCategory.SPRING:
-                        return HasItem(ArchipelagoConstants.ITEM_SPRING);
-                    case BonusCategory.DIAMOND:
-                        return HasItem(ArchipelagoConstants.ITEM_DIAMOND);
-                    case BonusCategory.UFO:
-                        return HasItem(ArchipelagoConstants.ITEM_UFO);
-                    case BonusCategory.NAP:
-                        return HasItem(ArchipelagoConstants.ITEM_PILLOW);
-                    case BonusCategory.PARFUME:
-                        return HasItem(ArchipelagoConstants.ITEM_PERFUME);
-                    case BonusCategory.MAGIC:
-                        return HasItem(ArchipelagoConstants.ITEM_MAGIC_WAND);
-                    default:
-                        return true;
-                }
-            } else
-            {
-                return false;
+                case BonusCategory.PIE:
+                    return HasItem(ArchipelagoConstants.ITEM_PIE);
+                case BonusCategory.AUTOLOCK_PIE:
+                    return HasItem(ArchipelagoConstants.ITEM_HOMING_PIE);
+                case BonusCategory.LASAGNA:
+                    return HasItem(ArchipelagoConstants.ITEM_LASAGNA);
+                case BonusCategory.SPRING:
+                    return HasItem(ArchipelagoConstants.ITEM_SPRING);
+                case BonusCategory.DIAMOND:
+                    return HasItem(ArchipelagoConstants.ITEM_DIAMOND);
+                case BonusCategory.UFO:
+                    return HasItem(ArchipelagoConstants.ITEM_UFO);
+                case BonusCategory.NAP:
+                    return HasItem(ArchipelagoConstants.ITEM_PILLOW);
+                case BonusCategory.PARFUME:
+                    return HasItem(ArchipelagoConstants.ITEM_PERFUME);
+                case BonusCategory.MAGIC:
+                    return HasItem(ArchipelagoConstants.ITEM_MAGIC_WAND);
+                default:
+                    return true;
             }
         }
 

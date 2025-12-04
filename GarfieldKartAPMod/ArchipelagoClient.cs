@@ -124,12 +124,29 @@ namespace GarfieldKartAPMod
             }
         }
 
-        public object GetSlotDataValue(string key)
+        public string GetSlotDataValue(string key)
         {
-            if (session != null && GarfieldKartAPMod.sessionSlotData != null && GarfieldKartAPMod.sessionSlotData.ContainsKey(key))
+            // Sneaky default slot data variable to ensure temporary backwards compatibility
+            Dictionary<string, object> defaultSlotData = new() { 
+                ["lap_count"] = 3,
+            };
+            if (session != null && GarfieldKartAPMod.sessionSlotData != null)
             {
-                return GarfieldKartAPMod.sessionSlotData[key];
+                if (GarfieldKartAPMod.sessionSlotData.ContainsKey(key))
+            {
+                    return GarfieldKartAPMod.sessionSlotData[key].ToString();
+                }
+                else if (defaultSlotData.ContainsKey(key)) 
+                {
+                    return defaultSlotData[key].ToString();
+                }
+                else
+                {
+                    throw new SlotDataException($"Invalid option requested from apworld: {key}. Did you generate on the wrong version?");
             }
+            }
+
+            // Client is not connected
             return null;
         }
 

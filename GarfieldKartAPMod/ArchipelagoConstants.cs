@@ -586,6 +586,11 @@ namespace GarfieldKartAPMod
         public const long GOAL_TIME_TRIALS = 2;
         public const long GOAL_PUZZLE_PIECE = 3;
 
+        // Options
+        public const long OPTION_RANDOMIZE_RACES_CUPS = 0;
+        public const long OPTION_RANDOMIZE_RACES_RACES = 1;
+        public const long OPTION_RANDOMIZE_RACES_BOTH = 2;
+
         // ========== HELPER METHODS ==========
 
         public static string GetSceneNameFromTrackId(TrackId trackId)
