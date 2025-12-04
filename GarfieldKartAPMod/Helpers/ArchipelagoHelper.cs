@@ -58,6 +58,11 @@ namespace GarfieldKartAPMod.Helpers
             return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_CUPS || raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
+        public static bool IsCPUItemsDisabled()
+        {
+            string cpuItemString = GarfieldKartAPMod.APClient.GetSlotDataValue("disable_cpu_items");
+            return IsTrue(cpuItemString);
+        }
         public static string GetTimeTrialGoalGrade()
         {
             // TODO: It'd probably be nice to use an enum here
