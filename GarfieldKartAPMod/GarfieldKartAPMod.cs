@@ -628,7 +628,7 @@ namespace GarfieldKartAPMod.Patches
     [HarmonyPatch(typeof(HUDPositionHD), "TakePuzzlePiece")]
     public class HUDPositionHD_TakePuzzlePiece_Patch
     {
-        static bool Prefix(HUDPositionHD __instance, int iIndex)
+        static bool Prefix(HUDPositionHD __instance, int iIndex, List<Animation> ___m_puzzlesAnimation, List<Image> ___m_puzzleImages, int ___m_iLogPuzzle)
         {
             if (iIndex < 0 || iIndex >= 3)
             {
@@ -649,35 +649,24 @@ namespace GarfieldKartAPMod.Patches
                 }
             }
 
-            // Use access tools to grab the animation list
-            FieldInfo puzzlesAnimationAccessField = AccessTools.Field(typeof(HUDPositionHD), "m_puzzlesAnimation");
-            List<Animation> m_puzzlesAnimation = (List<Animation>)puzzlesAnimationAccessField.GetValue(__instance);
-
             if (flag)
             {
-                foreach (Animation item in m_puzzlesAnimation)
+                foreach (Animation item in ___m_puzzlesAnimation)
                 {
                     item.Play("PuzzlePiece_Turn");
                 }
             }
-            else if (m_puzzlesAnimation[iIndex] != null)
+            else if (___m_puzzlesAnimation[iIndex] != null)
             {
-                m_puzzlesAnimation[iIndex].Play("PuzzlePiece_Turn");
+                ___m_puzzlesAnimation[iIndex].Play("PuzzlePiece_Turn");
             }
 
-            // Again, use access tools
-            var puzzleImagesAccessField = AccessTools.Field(typeof(HUDPositionHD), "m_puzzleImages");
-            List<Image> m_puzzleImages = (List<Image>)puzzleImagesAccessField.GetValue(__instance);
-
-            if (m_puzzleImages[iIndex] != null)
+            if (___m_puzzleImages[iIndex] != null)
             {
-                m_puzzleImages[iIndex].sprite = UITextureSwapper.archipelagoSprite;
+                ___m_puzzleImages[iIndex].sprite = UITextureSwapper.archipelagoSprite;
                 if (LogManager.Instance != null)
                 {
-                    // Use access tools one last time
-                    var iLogPuzzleAccessField = AccessTools.Field(typeof(HUDPositionHD), "m_puzzleImages");
-                    int m_iLogPuzzle = (int)iLogPuzzleAccessField.GetValue(__instance);
-                    iLogPuzzleAccessField.SetValue(__instance, m_iLogPuzzle + 1);
+                    ___m_iLogPuzzle++;
                 }
             }
 
