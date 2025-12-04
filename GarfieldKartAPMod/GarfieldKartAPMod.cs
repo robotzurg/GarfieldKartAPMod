@@ -22,7 +22,7 @@ namespace GarfieldKartAPMod
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Jeffdev";
         public const string PluginName = "GarfieldKartAPMod";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "0.3.5";
 
         private Harmony harmony;
         public static Dictionary<string, object> sessionSlotData;
