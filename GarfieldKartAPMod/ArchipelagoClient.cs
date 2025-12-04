@@ -129,6 +129,7 @@ namespace GarfieldKartAPMod
             // Sneaky default slot data variable to ensure temporary backwards compatibility
             Dictionary<string, object> defaultSlotData = new() { 
                 ["lap_count"] = 3,
+                ["disable_cpu_items"] = 0,
             };
             if (session != null && GarfieldKartAPMod.sessionSlotData != null)
             {
