@@ -522,8 +522,9 @@ namespace GarfieldKartAPMod.Patches
         static bool Prefix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
+            if (!___m_kart.Driver.IsHuman) return true;
 
-            if (ArchipelagoItemTracker.HasBonusAvailable(bonus) && ___m_kart.Driver.IsHuman)
+            if (ArchipelagoItemTracker.HasBonusAvailable(bonus))
             {
                 return true;
             } 
