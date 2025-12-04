@@ -561,6 +561,41 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    [HarmonyPatch(typeof(RacePuzzlePiece), "Awake")]
+    public class RacePuzzlePiece_Awake_Patch
+    {
+        static Material originalMaterial;
+
+        static void PreFix(RacePuzzlePiece __instance)
+        {
+            // Store material in prefix to restore it later
+            originalMaterial = __instance.GetComponent<Renderer>().materials[0];
+        }
+
+        static bool PostFix(RacePuzzlePiece __instance)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
+            if (!ArchipelagoHelper.IsPuzzleRandomizationEnabled()) return true;
+
+            // Restore the original material so we can fuck with it
+            __instance.GetComponent<Renderer>().materials[0] = originalMaterial;
+
+            long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, __instance.Index);
+            Log.Message($"Checking collection state of puzzle piece {__instance.Index} for race {Singleton<GameConfigurator>.Instance.StartScene}!");
+            __instance.m_bAlreadyTaken = ArchipelagoItemTracker.HasLocation(puzzlePieceLocation);
+            if (__instance.m_bAlreadyTaken)
+            {
+                Log.Message($"Puzzle piece {puzzlePieceLocation} collected, trying to make the material transparent!");
+                __instance.GetComponent<Renderer>().materials[0] = __instance.TransparentMaterial;
+            }
+            else
+            {
+                Log.Message($"Puzzle piece {puzzlePieceLocation} not collected, leaving the material as solid!");
+            }
+
+            return false;
+        }
+    }
     // ========== SAVE/UNLOCK PATCHES ==========
 
     [HarmonyPatch(typeof(GameSaveManager), "IsPuzzlePieceUnlocked")]
