@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using static MenuHDTrackSelection;
 
 #if DEBUG
@@ -457,6 +458,33 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    [HarmonyPatch(typeof(MenuHDTrackPresentation), "InitPuzzlePieces")]
+    public class MenuHDTrackPresentation_InitPuzzlePieces_Patch
+    {
+        static bool Prefix(Image[] puzzlePiecesImages, string trackName, bool isTimeTrial)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
+            if (!ArchipelagoHelper.IsPuzzleRandomizationEnabled()) return true;
+
+            if (GkNetMgr.Instance.IsConnected)
+            {
+                puzzlePiecesImages[0].transform.parent.gameObject.SetActive(value: false);
+                return false;
+            }
+            puzzlePiecesImages[0].transform.parent.gameObject.SetActive(value: true);
+            for (int i = 0; i < puzzlePiecesImages.Length; i++)
+            {
+                puzzlePiecesImages[i].gameObject.SetActive(!isTimeTrial);
+
+                long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(trackName, i);
+                bool flag = ArchipelagoItemTracker.HasLocation(puzzlePieceLocation);
+                puzzlePiecesImages[i].sprite = (flag ? UITextureSwapper.archipelagoSprite : UISprites.PuzzlePieceSlotIcon);
+            }
+
+            return false;
+        }
+    }
+
     [HarmonyPatch(typeof(GkEventSystem), "OnSecondaryMove")]
     public class GkEventSystem_OnSecondaryMove_Patch
     {
@@ -572,30 +600,90 @@ namespace GarfieldKartAPMod.Patches
             originalMaterial = __instance.GetComponent<Renderer>().materials[0];
         }
 
-        static bool PostFix(RacePuzzlePiece __instance)
+        static void Postfix(RacePuzzlePiece __instance)
         {
-            if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
-            if (!ArchipelagoHelper.IsPuzzleRandomizationEnabled()) return true;
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (!ArchipelagoHelper.IsPuzzleRandomizationEnabled()) return;
 
             // Restore the original material so we can fuck with it
             __instance.GetComponent<Renderer>().materials[0] = originalMaterial;
 
             long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, __instance.Index);
-            Log.Message($"Checking collection state of puzzle piece {__instance.Index} for race {Singleton<GameConfigurator>.Instance.StartScene}!");
-            __instance.m_bAlreadyTaken = ArchipelagoItemTracker.HasLocation(puzzlePieceLocation);
-            if (__instance.m_bAlreadyTaken)
+            bool hasPuzzlePiece = ArchipelagoItemTracker.HasLocation(puzzlePieceLocation);
+
+            if (hasPuzzlePiece)
             {
-                Log.Message($"Puzzle piece {puzzlePieceLocation} collected, trying to make the material transparent!");
-                __instance.GetComponent<Renderer>().materials[0] = __instance.TransparentMaterial;
+                Material[] materials = __instance.GetComponent<Renderer>().materials;
+                if (materials.Length == 1)
+                {
+                    materials[0] = __instance.TransparentMaterial;
+                }
+                __instance.GetComponent<Renderer>().materials = materials;
             }
-            else
+        }
+
+    }
+
+    [HarmonyPatch(typeof(HUDPositionHD), "TakePuzzlePiece")]
+    public class HUDPositionHD_TakePuzzlePiece_Patch
+    {
+        static bool Prefix(HUDPositionHD __instance, int iIndex)
+        {
+            if (iIndex < 0 || iIndex >= 3)
             {
-                Log.Message($"Puzzle piece {puzzlePieceLocation} not collected, leaving the material as solid!");
+                return false;
+            }
+            bool flag = true;
+            for (int i = 0; i < 2; i++)
+            {
+                if (i != iIndex)
+                {
+                    long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, i);
+
+                    if (!ArchipelagoItemTracker.HasLocation(puzzlePieceLocation))
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+            }
+
+            // Use access tools to grab the animation list
+            FieldInfo puzzlesAnimationAccessField = AccessTools.Field(typeof(HUDPositionHD), "m_puzzlesAnimation");
+            List<Animation> m_puzzlesAnimation = (List<Animation>)puzzlesAnimationAccessField.GetValue(__instance);
+
+            if (flag)
+            {
+                foreach (Animation item in m_puzzlesAnimation)
+                {
+                    item.Play("PuzzlePiece_Turn");
+                }
+            }
+            else if (m_puzzlesAnimation[iIndex] != null)
+            {
+                m_puzzlesAnimation[iIndex].Play("PuzzlePiece_Turn");
+            }
+
+            // Again, use access tools
+            var puzzleImagesAccessField = AccessTools.Field(typeof(HUDPositionHD), "m_puzzleImages");
+            List<Image> m_puzzleImages = (List<Image>)puzzleImagesAccessField.GetValue(__instance);
+
+            if (m_puzzleImages[iIndex] != null)
+            {
+                m_puzzleImages[iIndex].sprite = UITextureSwapper.archipelagoSprite;
+                if (LogManager.Instance != null)
+                {
+                    // Use access tools one last time
+                    var iLogPuzzleAccessField = AccessTools.Field(typeof(HUDPositionHD), "m_puzzleImages");
+                    int m_iLogPuzzle = (int)iLogPuzzleAccessField.GetValue(__instance);
+                    iLogPuzzleAccessField.SetValue(__instance, m_iLogPuzzle + 1);
+                }
             }
 
             return false;
         }
     }
+
     // ========== SAVE/UNLOCK PATCHES ==========
 
     [HarmonyPatch(typeof(GameSaveManager), "IsPuzzlePieceUnlocked")]

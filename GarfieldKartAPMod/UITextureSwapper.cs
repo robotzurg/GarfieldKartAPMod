@@ -7,7 +7,7 @@ namespace GarfieldKartAPMod
 {
     public static class UITextureSwapper
     {
-        private static Sprite archipelagoSprite;
+        public static Sprite archipelagoSprite;
         private static bool initialized = false;
         private static bool hasSwappedThisMenu = false;
 
