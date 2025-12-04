@@ -595,7 +595,7 @@ namespace GarfieldKartAPMod.Patches
     {
         static Material originalMaterial;
 
-        static void PreFix(RacePuzzlePiece __instance)
+        static void Prefix(RacePuzzlePiece __instance)
         {
             // Store material in prefix to restore it later
             originalMaterial = __instance.GetComponent<Renderer>().materials[0];
