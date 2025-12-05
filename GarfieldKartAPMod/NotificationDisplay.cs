@@ -25,6 +25,8 @@ namespace GarfieldKartAPMod
             notificationText = textObj.AddComponent<TextMeshProUGUI>();
             notificationText.fontSize = 48;
             notificationText.alignment = TextAlignmentOptions.Top;
+            notificationText.autoSizeTextContainer = true;
+            notificationText.enableWordWrapping = true;
             notificationText.color = Color.white;
 
             // Position at top of screen

@@ -1,6 +1,7 @@
 ﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Packets;
 using Aube.AnimatorData;
 using System;
@@ -11,7 +12,7 @@ namespace GarfieldKartAPMod
     public class ArchipelagoClient
     {
         private ArchipelagoSession session;
-        private Queue<(long itemId, int playerId, string itemName, string playerName)> pendingNotifications = new Queue<(long, int, string, string)>();
+        private Queue<string> pendingNotifications = new Queue<string>();
         
         public bool IsConnected => session?.Socket.Connected ?? false;
 
@@ -44,8 +45,8 @@ namespace GarfieldKartAPMod
                     GarfieldKartAPMod.sessionSlotData = loginSuccess.SlotData;
                     Log.Message($"Connected successfully! Slot: {loginSuccess.Slot}");
 
-                    // Subscribe to item received events
-                    session.Items.ItemReceived += OnItemReceived;
+                    // Subscribe to message received
+                    session.MessageLog.OnMessageReceived += OnMessageReceived;
 
                     // Load items we already have
                     ArchipelagoItemTracker.LoadFromServer();
@@ -87,21 +88,30 @@ namespace GarfieldKartAPMod
             }
         }
 
-        private void OnItemReceived(ReceivedItemsHelper helper)
+        private void OnMessageReceived(LogMessage message)
         {
-            var item = helper.PeekItem();
-
-            string itemName = session.Items.GetItemName(item.ItemId);
-            string playerName = session.Players.GetPlayerName(item.Player);
-
-            Log.Message($"Item Received: {itemName} from {playerName}");
-
-            ArchipelagoItemTracker.AddReceivedItem(item.ItemId);
-
-            pendingNotifications.Enqueue((item.ItemId, item.Player, itemName, playerName));
-
-            helper.DequeueItem();
+            pendingNotifications.Enqueue(message.ToString());
+            if (notificationDisplay != null)
+            {
+                notificationDisplay.ShowNotification($"Received {notification.itemName} from {notification.playerName}!");
+            }
         }
+
+        //private void OnItemReceived(ReceivedItemsHelper helper)
+        //{
+        //    var item = helper.PeekItem();
+
+        //    string itemName = session.Items.GetItemName(item.ItemId);
+        //    string playerName = session.Players.GetPlayerName(item.Player);
+
+        //    Log.Message($"Item Received: {itemName} from {playerName}");
+
+        //    ArchipelagoItemTracker.AddReceivedItem(item.ItemId);
+
+        //    pendingNotifications.Enqueue((item.ItemId, item.Player, itemName, playerName));
+
+        //    helper.DequeueItem();
+        //}
 
         private void OnError(Exception ex, string message)
         {
