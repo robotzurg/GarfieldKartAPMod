@@ -1,5 +1,6 @@
 using Aube;
 using BepInEx;
+using BepInEx.Configuration;
 using GarfieldKartAPMod.Helpers;
 using HarmonyLib;
 using System;
@@ -24,6 +25,8 @@ namespace GarfieldKartAPMod
         public const string PluginName = "GarfieldKartAPMod";
         public const string PluginVersion = "0.3.5";
 
+        public static ConfigEntry<int> notificationTime;
+
         private Harmony harmony;
         public static Dictionary<string, object> sessionSlotData;
         public static ArchipelagoClient APClient { get; private set; }
@@ -34,6 +37,9 @@ namespace GarfieldKartAPMod
 
         public void Awake()
         {
+
+            notificationTime = Config.Bind("Archipelago", "Server Message On-Screen Time", 3, "How long to show archipelago server messages and checks on the screen, in seconds.");
+           
             InitializeLogging();
             InitializeAssemblyResolution();
             InitializeComponents();
@@ -111,7 +117,7 @@ namespace GarfieldKartAPMod
             if (APClient != null && APClient.HasPendingNotifications())
             {
                 var notification = APClient.DequeuePendingNotification();
-                fileWriter.WriteNotificationData(notification);
+                notificationDisplay.ShowNotification(notification);
             }
         }
 

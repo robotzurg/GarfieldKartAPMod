@@ -1,36 +1,12 @@
 ﻿using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Playables;
 
 namespace GarfieldKartAPMod
 {
     public class FileWriter : MonoBehaviour
     {
-        private NotificationDisplay notificationDisplay;
         private const string LastConnectionFileName = "last_connection.txt";
-
-        void Start()
-        {
-            notificationDisplay = FindObjectOfType<NotificationDisplay>();
-            if (notificationDisplay == null)
-            {
-                GameObject notifObj = new GameObject("NotificationDisplay");
-                notificationDisplay = notifObj.AddComponent<NotificationDisplay>();
-                notificationDisplay.Initialize();
-                DontDestroyOnLoad(notifObj);
-            }
-        }
-
-        public void DisplayNotificationData(string notification)
-        {
-            if (GarfieldKartAPMod.APClient.IsConnected) return;
-
-            if (notificationDisplay != null)
-            {
-                notificationDisplay.ShowNotification($"{notification}");
-            }
-        }
 
         // Persist a completed time-trial scene to a separate per-session file.
         public void WriteTimeTrialData(string track)
@@ -59,10 +35,10 @@ namespace GarfieldKartAPMod
                 }
                 Debug.Log($"AP TimeTrial file written to: {path}");
 
-                if (notificationDisplay != null)
-                {
-                    notificationDisplay.ShowNotification($"Time trial completed: {track}");
-                }
+                //if (notificationDisplay != null)
+                //{
+                //    notificationDisplay.ShowNotification($"Time trial completed: {track}");
+                //}
             }
         }
 

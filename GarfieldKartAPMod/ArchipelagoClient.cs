@@ -6,6 +6,7 @@ using Archipelago.MultiClient.Net.Packets;
 using Aube.AnimatorData;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Playables;
 
 namespace GarfieldKartAPMod
 {
@@ -91,10 +92,6 @@ namespace GarfieldKartAPMod
         private void OnMessageReceived(LogMessage message)
         {
             pendingNotifications.Enqueue(message.ToString());
-            if (notificationDisplay != null)
-            {
-                notificationDisplay.ShowNotification($"Received {notification.itemName} from {notification.playerName}!");
-            }
         }
 
         //private void OnItemReceived(ReceivedItemsHelper helper)
@@ -166,7 +163,7 @@ namespace GarfieldKartAPMod
             return pendingNotifications.Count > 0;
         }
 
-        public (long itemId, int playerId, string itemName, string playerName) DequeuePendingNotification()
+        public string DequeuePendingNotification()
         {
             return pendingNotifications.Dequeue();
         }

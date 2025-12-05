@@ -58,7 +58,7 @@ namespace GarfieldKartAPMod
                 string message = notificationQueue.Dequeue();
                 notificationText.text = message;
 
-                yield return new WaitForSeconds(5f); // Display for 5 seconds
+                yield return new WaitForSeconds(GarfieldKartAPMod.notificationTime.Value); // Display for configurable value, default 3 seconds
             }
 
             notificationText.text = "";
