@@ -1,7 +1,7 @@
 
 # Garfield Kart: Furious Racing Archipelago
 
-Adds support for [Archipelago](https://archipelago.gg/) to Garfield Kart: Furious Racing. Currently a Work in Progress mod, and only supports Grand Prix and Puzzle Piece randomization. More work to be done in the future!
+Adds support for [Archipelago](https://archipelago.gg/) to Garfield Kart: Furious Racing. Currently a Work in Progress mod.
 
 ## APWorld
 
