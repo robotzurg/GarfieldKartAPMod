@@ -30,6 +30,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="Resources\archipelago_logo.png" />
+		<EmbeddedResource Include="Resources\Sprites\archipelago_logo.png" />
+		<EmbeddedResource Include="Resources\Sprites\garfkart_ap_puzzle_filled.png" />
+		<EmbeddedResource Include="Resources\Sprites\garfkart_ap_puzzle_empty.png" />
 	</ItemGroup>
 </Project>

@@ -484,7 +484,7 @@ namespace GarfieldKartAPMod.Patches
 
                 long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(trackName, i);
                 bool flag = ArchipelagoItemTracker.HasLocation(puzzlePieceLocation);
-                puzzlePiecesImages[i].sprite = (flag ? UITextureSwapper.archipelagoSprite : UISprites.PuzzlePieceSlotIcon);
+                puzzlePiecesImages[i].sprite = (flag ? UITextureSwapper.puzzlePieceFilledSprite : UITextureSwapper.puzzlePieceEmptySprite);
             }
 
             return false;
@@ -661,7 +661,7 @@ namespace GarfieldKartAPMod.Patches
 
             if (___m_puzzleImages[iIndex] != null)
             {
-                ___m_puzzleImages[iIndex].sprite = UITextureSwapper.archipelagoSprite;
+                ___m_puzzleImages[iIndex].sprite = UITextureSwapper.puzzlePieceFilledSprite;
                 if (LogManager.Instance != null)
                 {
                     ___m_iLogPuzzle++;
