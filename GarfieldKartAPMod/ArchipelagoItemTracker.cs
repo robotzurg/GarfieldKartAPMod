@@ -290,9 +290,20 @@ namespace GarfieldKartAPMod
             return count;
         }
 
-
         public static int GetOverallPuzzlePieceCount()
         {
+            int count = 0;
+            int startingIndex = (int)ArchipelagoConstants.ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1;
+            for (int i = startingIndex; i < startingIndex + 48; i++)
+            {
+                if (HasItem(i)) count++;
+            }
+
+            return count;
+        }
+
+        public static int GetCheckedPuzzlePieceCount() { 
+            // Keeping this code in case we want to ever use it
             var tracks = new List<string>
             {
                 "E2C1", "E4C1", "E3C1", "E1C1", // Lasagna Cup
