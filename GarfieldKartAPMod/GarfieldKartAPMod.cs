@@ -23,7 +23,7 @@ namespace GarfieldKartAPMod
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Jeffdev";
         public const string PluginName = "GarfieldKartAPMod";
-        public const string PluginVersion = "0.3.5";
+        public const string PluginVersion = "0.3.6";
 
         public static ConfigEntry<int> notificationTime;
 
