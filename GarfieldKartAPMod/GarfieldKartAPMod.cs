@@ -525,10 +525,37 @@ namespace GarfieldKartAPMod.Patches
     [HarmonyPatch(typeof(KartBonusMgr), "SetItem")]
     public class KartBonusMgr_SetItem_Patch
     {
-        static bool Prefix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
+        static int GetRandomItemQuantity(int rank)
+        {
+            // Chances for 2 or 3 items depend on your current placement in the race
+            int[] ThreeBonusChance = [
+                    0, 0, 5, 10, 15, 20, 23, 25
+                ];
+
+            int[] TwoBonusChance = [
+                    0, 10, 15, 20, 25, 30, 33, 35
+                ];
+
+            int roll = UnityEngine.Random.Range(0, 101);
+
+            if (roll < ThreeBonusChance[rank])
+                return 3;
+
+            if (roll < ThreeBonusChance[rank] + TwoBonusChance[rank])
+                return 2;
+
+            return 1;
+        }
+        static bool Prefix(KartBonusMgr __instance, Kart ___m_kart, ref BonusCategory bonus, ref int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
             if (!___m_kart.Driver.IsHuman) return !ArchipelagoHelper.IsCPUItemsDisabled();
+
+            if (ArchipelagoHelper.IsSpringsOnly())
+            {
+                bonus = BonusCategory.SPRING;
+                iQuantity = GetRandomItemQuantity(___m_kart.RaceStats.GetRank());
+            }
 
             if (ArchipelagoItemTracker.HasBonusAvailable(bonus))
             {

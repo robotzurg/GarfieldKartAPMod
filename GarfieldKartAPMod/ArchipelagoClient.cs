@@ -137,6 +137,7 @@ namespace GarfieldKartAPMod
             Dictionary<string, object> defaultSlotData = new() { 
                 ["lap_count"] = 3,
                 ["disable_cpu_items"] = 0,
+                ["springs_only"] = 0,
             };
             if (session != null && GarfieldKartAPMod.sessionSlotData != null)
             {

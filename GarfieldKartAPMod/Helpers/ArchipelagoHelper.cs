@@ -58,6 +58,12 @@ namespace GarfieldKartAPMod.Helpers
             return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_CUPS || raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
+        public static bool IsSpringsOnly()
+        {
+            string springsOnlyString = GarfieldKartAPMod.APClient.GetSlotDataValue("springs_only");
+            return IsTrue(springsOnlyString);
+        }
+
         public static bool IsCPUItemsDisabled()
         {
             string cpuItemString = GarfieldKartAPMod.APClient.GetSlotDataValue("disable_cpu_items");
