@@ -4,6 +4,7 @@ using System.Runtime.Remoting.Messaging;
 using UnityEngine.Experimental.PlayerLoop;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace GarfieldKartAPMod
 {
@@ -410,15 +411,15 @@ namespace GarfieldKartAPMod
         public const long ITEM_CHARACTER_SQUEAK = 307;
         public const long ITEM_CHARACTER_HARRY = 308;
 
-        // Car Unlocks (351-358)
-        public const long ITEM_CAR_FORMULA_ZZZZ = 351;
-        public const long ITEM_CAR_ABSTRACT_KART = 352;
-        public const long ITEM_CAR_MEDI_KART = 353;
-        public const long ITEM_CAR_WOOF_MOBILE = 354;
-        public const long ITEM_CAR_KISSY_KART = 355;
-        public const long ITEM_CAR_CUTIE_PIE_CAT = 356;
-        public const long ITEM_CAR_RAT_RACER = 357;
-        public const long ITEM_CAR_MUCK_MADNESS = 358;
+        // Kart Unlocks (351-358)
+        public const long ITEM_KART_FORMULA_ZZZZ = 351;
+        public const long ITEM_KART_ABSTRACT_KART = 352;
+        public const long ITEM_KART_MEDI_KART = 353;
+        public const long ITEM_KART_WOOF_MOBILE = 354;
+        public const long ITEM_KART_KISSY_KART = 355;
+        public const long ITEM_KART_CUTIE_PIE_CAT = 356;
+        public const long ITEM_KART_RAT_RACER = 357;
+        public const long ITEM_KART_MUCK_MADNESS = 358;
 
         // Progressive Hat Unlocks (401-416)
         public const long ITEM_PROGRESSIVE_BEDDY_BYE_CAP = 401;
@@ -590,6 +591,10 @@ namespace GarfieldKartAPMod
         public const long OPTION_RANDOMIZE_RACES_CUPS = 0;
         public const long OPTION_RANDOMIZE_RACES_RACES = 1;
         public const long OPTION_RANDOMIZE_RACES_BOTH = 2;
+
+        public const long OPTION_RANDOMIZE_HATS_SPOILERS_OFF = 0;
+        public const long OPTION_RANDOMIZE_HATS_SPOILERS_PROG = 1;
+        public const long OPTION_RANDOMIZE_HATS_SPOILERS_COMBINE = 2;
 
         // ========== HELPER METHODS ==========
 
@@ -946,83 +951,83 @@ namespace GarfieldKartAPMod
             return returnedList;
         }
 
-        public static List<long> GetHatItemIds(string hat)
+        public static long GetHatItemId(string hat, bool progressive)
         {
             switch (hat)
             {
                 // LASAGNA CUP
                 // CATZ IN THE HOOD
-                case "EgyptPriestHatN":
-                case "EgyptPriestHatR": 
-                case "EgyptPriestHatU": return [ITEM_UNLOCK_TIC_TOQUE, ITEM_PROGRESSIVE_TIC_TOQUE];
+                case "EgyptPriestHatN": return progressive ? ITEM_PROGRESSIVE_TIC_TOQUE : ITEM_UNLOCK_TIC_TOQUE;
+                case "EgyptPriestHatR": return progressive ? ITEM_PROGRESSIVE_TIC_TOQUE : ITEM_UNLOCK_TIC_TOQUE;
+                case "EgyptPriestHatU": return progressive ? ITEM_PROGRESSIVE_TIC_TOQUE : ITEM_UNLOCK_TIC_TOQUE;
                 // CRAZY DUNES
-                case "SleepingHatN": 
-                case "SleepingHatR": 
-                case "SleepingHatU": return [ITEM_UNLOCK_BEDDY_BYE_CAP, ITEM_PROGRESSIVE_BEDDY_BYE_CAP];
+                case "SleepingHatN": return progressive ? ITEM_PROGRESSIVE_BEDDY_BYE_CAP : ITEM_UNLOCK_BEDDY_BYE_CAP;
+                case "SleepingHatR": return progressive ? ITEM_PROGRESSIVE_BEDDY_BYE_CAP : ITEM_UNLOCK_BEDDY_BYE_CAP;
+                case "SleepingHatU": return progressive ? ITEM_PROGRESSIVE_BEDDY_BYE_CAP : ITEM_UNLOCK_BEDDY_BYE_CAP;
                 // PALEROCK LAKE
-                case "PharaonHatN": 
-                case "PharaonHatR":
-                case "PharaonHatU": return [ITEM_UNLOCK_TOUTANKHAMEOW, ITEM_PROGRESSIVE_TOUTANKHAMEOW];
+                case "PharaonHatN": return progressive ? ITEM_PROGRESSIVE_TOUTANKHAMEOW : ITEM_UNLOCK_TOUTANKHAMEOW;
+                case "PharaonHatR": return progressive ? ITEM_PROGRESSIVE_TOUTANKHAMEOW : ITEM_UNLOCK_TOUTANKHAMEOW;
+                case "PharaonHatU": return progressive ? ITEM_PROGRESSIVE_TOUTANKHAMEOW : ITEM_UNLOCK_TOUTANKHAMEOW;
                 // CITY SLICKER
-                case "BeautyHatN": 
-                case "BeautyHatR":
-                case "BeautyHatU": return [ITEM_UNLOCK_ARISTO_CATIC_BICORN, ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN];
+                case "BeautyHatN": return progressive ? ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN : ITEM_UNLOCK_ARISTO_CATIC_BICORN;
+                case "BeautyHatR": return progressive ? ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN : ITEM_UNLOCK_ARISTO_CATIC_BICORN;
+                case "BeautyHatU": return progressive ? ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN : ITEM_UNLOCK_ARISTO_CATIC_BICORN;
 
                 // PIZZA CUP
                 // COUNTRY BUMPKIN
-                case "PiratHatN": 
-                case "PiratHatR":
-                case "PiratHatU": return [ITEM_UNLOCK_STINK_O_RAMA, ITEM_PROGRESSIVE_STINK_O_RAMA];
+                case "PiratHatN": return progressive ? ITEM_PROGRESSIVE_STINK_O_RAMA : ITEM_UNLOCK_STINK_O_RAMA;
+                case "PiratHatR": return progressive ? ITEM_PROGRESSIVE_STINK_O_RAMA : ITEM_UNLOCK_STINK_O_RAMA;
+                case "PiratHatU": return progressive ? ITEM_PROGRESSIVE_STINK_O_RAMA : ITEM_UNLOCK_STINK_O_RAMA;
                 // SPOOKY MANOR
-                case "FootballHelmetN": 
-                case "FootballHelmetR":
-                case "FootballHelmetU": return [ITEM_UNLOCK_JOE_MONTAGNA, ITEM_PROGRESSIVE_JOE_MONTAGNA];
+                case "FootballHelmetN": return progressive ? ITEM_PROGRESSIVE_JOE_MONTAGNA : ITEM_UNLOCK_JOE_MONTAGNA;
+                case "FootballHelmetR": return progressive ? ITEM_PROGRESSIVE_JOE_MONTAGNA : ITEM_UNLOCK_JOE_MONTAGNA;
+                case "FootballHelmetU": return progressive ? ITEM_PROGRESSIVE_JOE_MONTAGNA : ITEM_UNLOCK_JOE_MONTAGNA;
                 // MALLY MARKET
-                case "ChickenHatN":
-                case "ChickenHatR":
-                case "ChickenHatU": return [ITEM_UNLOCK_ELASTO_HAT, ITEM_PROGRESSIVE_ELASTO_HAT];
+                case "ChickenHatN": return progressive ? ITEM_PROGRESSIVE_ELASTO_HAT : ITEM_UNLOCK_ELASTO_HAT;
+                case "ChickenHatR": return progressive ? ITEM_PROGRESSIVE_ELASTO_HAT : ITEM_UNLOCK_ELASTO_HAT;
+                case "ChickenHatU": return progressive ? ITEM_PROGRESSIVE_ELASTO_HAT : ITEM_UNLOCK_ELASTO_HAT;
                 // VALLEY OF THE KINGS
-                case "SpaceHelmetN":
-                case "SpaceHelmetR":
-                case "SpaceHelmetU": return [ITEM_UNLOCK_SPACE_BUBBLE, ITEM_PROGRESSIVE_SPACE_BUBBLE];
+                case "SpaceHelmetN": return progressive ? ITEM_PROGRESSIVE_SPACE_BUBBLE : ITEM_UNLOCK_SPACE_BUBBLE;
+                case "SpaceHelmetR": return progressive ? ITEM_PROGRESSIVE_SPACE_BUBBLE : ITEM_UNLOCK_SPACE_BUBBLE;
+                case "SpaceHelmetU": return progressive ? ITEM_PROGRESSIVE_SPACE_BUBBLE : ITEM_UNLOCK_SPACE_BUBBLE;
 
                 // BURGER CUP
                 // PLAY MISTY FOR ME
-                case "CrownHatN":
-                case "CrownHatR":
-                case "CrownHatU": return [ITEM_UNLOCK_CUTIE_PIE_CROWN, ITEM_PROGRESSIVE_CUTIE_PIE_CROWN];
+                case "CrownHatN": return progressive ? ITEM_PROGRESSIVE_CUTIE_PIE_CROWN : ITEM_UNLOCK_CUTIE_PIE_CROWN;
+                case "CrownHatR": return progressive ? ITEM_PROGRESSIVE_CUTIE_PIE_CROWN : ITEM_UNLOCK_CUTIE_PIE_CROWN;
+                case "CrownHatU": return progressive ? ITEM_PROGRESSIVE_CUTIE_PIE_CROWN : ITEM_UNLOCK_CUTIE_PIE_CROWN;
                 // SNEAK-A-PEAK
-                case "PizzaioloHatN": 
-                case "PizzaioloHatR": 
-                case "PizzaioloHatU": return [ITEM_UNLOCK_PIZZAIOLO_HAT, ITEM_PROGRESSIVE_PIZZAIOLO_HAT];
+                case "PizzaioloHatN": return progressive ? ITEM_PROGRESSIVE_PIZZAIOLO_HAT : ITEM_UNLOCK_PIZZAIOLO_HAT;
+                case "PizzaioloHatR": return progressive ? ITEM_PROGRESSIVE_PIZZAIOLO_HAT : ITEM_UNLOCK_PIZZAIOLO_HAT;
+                case "PizzaioloHatU": return progressive ? ITEM_PROGRESSIVE_PIZZAIOLO_HAT : ITEM_UNLOCK_PIZZAIOLO_HAT;
                 // BLAZING OASIS
-                case "VikingHelmetN":
-                case "VikingHelmetR":
-                case "VikingHelmetU": return [ITEM_UNLOCK_VIKING_HELMET, ITEM_PROGRESSIVE_VIKING_HELMET];
+                case "VikingHelmetN": return progressive ? ITEM_PROGRESSIVE_VIKING_HELMET : ITEM_UNLOCK_VIKING_HELMET;
+                case "VikingHelmetR": return progressive ? ITEM_PROGRESSIVE_VIKING_HELMET : ITEM_UNLOCK_VIKING_HELMET;
+                case "VikingHelmetU": return progressive ? ITEM_PROGRESSIVE_VIKING_HELMET : ITEM_UNLOCK_VIKING_HELMET;
                 // PASTACOSI FACTORY
-                case "MagicHatN":
-                case "MagicHatR":
-                case "MagicHatU": return [ITEM_UNLOCK_WHIZZY_WIZARD, ITEM_PROGRESSIVE_WHIZZY_WIZARD];
+                case "MagicHatN": return progressive ? ITEM_PROGRESSIVE_WHIZZY_WIZARD : ITEM_UNLOCK_WHIZZY_WIZARD;
+                case "MagicHatR": return progressive ? ITEM_PROGRESSIVE_WHIZZY_WIZARD : ITEM_UNLOCK_WHIZZY_WIZARD;
+                case "MagicHatU": return progressive ? ITEM_PROGRESSIVE_WHIZZY_WIZARD : ITEM_UNLOCK_WHIZZY_WIZARD;
 
                 // ICE CREAM CUP
                 // MYSTERIOUS TEMPLE
-                case "WizardHatN":
-                case "WizardHatR":
-                case "WizardHatU": return [ITEM_UNLOCK_APPRENTICE_SORCERER, ITEM_PROGRESSIVE_APPRENTICE_SORCERER];
+                case "WizardHatN": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "WizardHatR": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "WizardHatU": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
                 // PROHIBITED SITE
-                case "DunkeyHatN":
-                case "DunkeyHatR":
-                case "DunkeyHatU": return [ITEM_UNLOCK_MULE_HEAD, ITEM_PROGRESSIVE_MULE_HEAD];
+                case "DunkeyHatN": return progressive ? ITEM_PROGRESSIVE_MULE_HEAD : ITEM_UNLOCK_MULE_HEAD;
+                case "DunkeyHatR": return progressive ? ITEM_PROGRESSIVE_MULE_HEAD : ITEM_UNLOCK_MULE_HEAD;
+                case "DunkeyHatU": return progressive ? ITEM_PROGRESSIVE_MULE_HEAD : ITEM_UNLOCK_MULE_HEAD;
                 // CASKOU PARK
-                case "PastryHatN":
-                case "PastryHatR":
-                case "PastryHatU": return [ITEM_UNLOCK_CHEFS_SPECIAL, ITEM_PROGRESSIVE_CHEFS_SPECIAL];
+                case "PastryHatN": return progressive ? ITEM_PROGRESSIVE_CHEFS_SPECIAL : ITEM_UNLOCK_CHEFS_SPECIAL;
+                case "PastryHatR": return progressive ? ITEM_PROGRESSIVE_CHEFS_SPECIAL : ITEM_UNLOCK_CHEFS_SPECIAL;
+                case "PastryHatU": return progressive ? ITEM_PROGRESSIVE_CHEFS_SPECIAL : ITEM_UNLOCK_CHEFS_SPECIAL;
                 // LOOPY LAGOON
-                case "RabbitHatN":
-                case "RabbitHatR":
-                case "RabbitHatU": return [ITEM_UNLOCK_BUNNY_BAND, ITEM_PROGRESSIVE_BUNNY_BAND];
+                case "RabbitHatN": return progressive ? ITEM_PROGRESSIVE_BUNNY_BAND : ITEM_UNLOCK_BUNNY_BAND;
+                case "RabbitHatR": return progressive ? ITEM_PROGRESSIVE_BUNNY_BAND : ITEM_UNLOCK_BUNNY_BAND;
+                case "RabbitHatU": return progressive ? ITEM_PROGRESSIVE_BUNNY_BAND : ITEM_UNLOCK_BUNNY_BAND;
 
-                default: return [];
+                default: return -1;
             }
         }
 
@@ -1133,47 +1138,47 @@ namespace GarfieldKartAPMod
             return returnedList;
         }
 
-        public static List<long> GetSpoilerItemIds(string custom)
+        public static long GetSpoilerItemId(string custom, bool progressive)
         {
             switch (custom)
             {
                 // LASAGNA CUP
-                case "KGC_ManiabilityN":
-                case "KGC_ManiabilityR":
-                case "KGC_ManiabilityU": return [ITEM_UNLOCK_BOMBASTIC_SPOILER, ITEM_PROGRESSIVE_BOMBASTIC_SPOILER];
+                case "KGC_ManiabilityN": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "KGC_ManiabilityR": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "KGC_ManiabilityU": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
 
-                case "KJC_SpeedN":
-                case "KJC_SpeedR":
-                case "KJC_SpeedU": return [ITEM_UNLOCK_WHACKY_SPOILER, ITEM_PROGRESSIVE_WHACKY_SPOILER];
+                case "KJC_SpeedN": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER: ITEM_UNLOCK_WHACKY_SPOILER;
+                case "KJC_SpeedR": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER : ITEM_UNLOCK_WHACKY_SPOILER;
+                case "KJC_SpeedU": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER : ITEM_UNLOCK_WHACKY_SPOILER;
 
                 // PIZZA CUP
-                case "KLC_AccelerationN":
-                case "KLC_AccelerationR":
-                case "KLC_AccelerationU": return [ITEM_UNLOCK_SUPERFIT_SPOILER, ITEM_PROGRESSIVE_SUPERFIT_SPOILER];
+                case "KLC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_SUPERFIT_SPOILER : ITEM_UNLOCK_SUPERFIT_SPOILER;
+                case "KLC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_SUPERFIT_SPOILER : ITEM_UNLOCK_SUPERFIT_SPOILER;
+                case "KLC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_SUPERFIT_SPOILER : ITEM_UNLOCK_SUPERFIT_SPOILER;
 
-                case "KOC_AccelerationN":
-                case "KOC_AccelerationR":
-                case "KOC_AccelerationU": return [ITEM_UNLOCK_CYCLOBONE_SPOILER, ITEM_PROGRESSIVE_CYCLOBONE_SPOILER];
+                case "KOC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_CYCLOBONE_SPOILER : ITEM_UNLOCK_CYCLOBONE_SPOILER;
+                case "KOC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_CYCLOBONE_SPOILER : ITEM_UNLOCK_CYCLOBONE_SPOILER;
+                case "KOC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_CYCLOBONE_SPOILER : ITEM_UNLOCK_CYCLOBONE_SPOILER;
 
                 // BURGER CUP
-                case "KAC_AccelerationN":
-                case "KAC_AccelerationR":
-                case "KAC_AccelerationU": return [ITEM_UNLOCK_FOXY_SPOILER, ITEM_PROGRESSIVE_FOXY_SPOILER];
+                case "KAC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_FOXY_SPOILER : ITEM_UNLOCK_FOXY_SPOILER;
+                case "KAC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_FOXY_SPOILER : ITEM_UNLOCK_FOXY_SPOILER;
+                case "KAC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_FOXY_SPOILER : ITEM_UNLOCK_FOXY_SPOILER;
 
-                case "KNC_AccelerationN":
-                case "KNC_AccelerationR":
-                case "KNC_AccelerationU": return [ITEM_UNLOCK_SHIMMERING_SPOILER, ITEM_PROGRESSIVE_SHIMMERING_SPOILER];
+                case "KNC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_SHIMMERING_SPOILER : ITEM_UNLOCK_SHIMMERING_SPOILER;
+                case "KNC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_SHIMMERING_SPOILER : ITEM_UNLOCK_SHIMMERING_SPOILER;
+                case "KNC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_SHIMMERING_SPOILER : ITEM_UNLOCK_SHIMMERING_SPOILER;
 
                 // ICE CREAM CUP
-                case "KSC_ManiabilityN":
-                case "KSC_ManiabilityR":
-                case "KSC_ManiabilityU": return [ITEM_UNLOCK_HOLEY_MOLEY_SPOILER, ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER];
+                case "KSC_ManiabilityN": return progressive ? ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER : ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
+                case "KSC_ManiabilityR": return progressive ? ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER : ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
+                case "KSC_ManiabilityU": return progressive ? ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER : ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
 
-                case "KHC_SpeedN":
-                case "KHC_SpeedR":
-                case "KHC_SpeedU": return [ITEM_UNLOCK_STAINED_SPOILER, ITEM_PROGRESSIVE_STAINED_SPOILER];
+                case "KHC_SpeedN": return progressive ? ITEM_PROGRESSIVE_STAINED_SPOILER : ITEM_UNLOCK_STAINED_SPOILER;
+                case "KHC_SpeedR": return progressive ? ITEM_PROGRESSIVE_STAINED_SPOILER : ITEM_UNLOCK_STAINED_SPOILER;
+                case "KHC_SpeedU": return progressive ? ITEM_PROGRESSIVE_STAINED_SPOILER : ITEM_UNLOCK_STAINED_SPOILER;
 
-                default: return [];
+                default: return -1;
             }
         }
     }

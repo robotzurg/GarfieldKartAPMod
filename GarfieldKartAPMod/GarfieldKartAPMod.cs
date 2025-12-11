@@ -3,6 +3,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using GarfieldKartAPMod.Helpers;
 using HarmonyLib;
+using Rewired;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -353,18 +354,13 @@ namespace GarfieldKartAPMod.Patches
 
             for (int i = 0; i < tabs.Length; i++)
             {
-                if (!ArchipelagoItemTracker.HasCup(i))
-                {
-                    tabs[i].gameObject.SetActive(false);
-                    continue;
-                }
-
                 bool activateButton = false;
+                bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i + (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA);
 
                 if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i))
                     activateButton = true;
 
-                else if (gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.TIME_TRIAL)
+                else if ((gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.TIME_TRIAL) && hasRaceInCup)
                     activateButton = true;
 
                 if (!activateButton)
@@ -392,33 +388,6 @@ namespace GarfieldKartAPMod.Patches
         static void Postfix(MenuHDTrackSelection __instance, object ___m_buttons, int iId)
         {
             ButtonHelper.DisableLockedRaceButtons(__instance, ___m_buttons, iId);
-        }
-    }
-
-    [HarmonyPatch(typeof(MenuHDTrackSelection), "OnSubmitTrack")]
-    public class MenuHDTrackSelection_OnSubmitTrack_Patch
-    {
-        static bool Prefix(MenuHDTrackSelection __instance, int track, int ___m_currentChampionshipIndex, int ___m_currentSelectedButton)
-        {
-            if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
-
-            E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
-            if (gameMode != E_GameModeType.CHAMPIONSHIP && gameMode != E_GameModeType.SINGLE && gameMode != E_GameModeType.TIME_TRIAL)
-            {
-                return true;
-            }
-
-            int cupId = ___m_currentChampionshipIndex;
-
-            if (ArchipelagoItemTracker.HasCup(cupId))
-            {
-                Log.Message($"[AP] Cup '{cupId}' is unlocked - allowing selection");
-                return true;
-            }
-
-            Log.Message($"[AP] Cup '{cupId}' is LOCKED - showing popup");
-            PopupManager.OpenPopup("You haven't unlocked this!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
-            return false;
         }
     }
 
@@ -525,37 +494,12 @@ namespace GarfieldKartAPMod.Patches
     [HarmonyPatch(typeof(KartBonusMgr), "SetItem")]
     public class KartBonusMgr_SetItem_Patch
     {
-        static int GetRandomItemQuantity(int rank)
-        {
-            // Chances for 2 or 3 items depend on your current placement in the race
-            int[] ThreeBonusChance = [
-                    0, 0, 5, 10, 15, 20, 23, 25
-                ];
-
-            int[] TwoBonusChance = [
-                    0, 10, 15, 20, 25, 30, 33, 35
-                ];
-
-            int roll = UnityEngine.Random.Range(0, 101);
-
-            if (roll < ThreeBonusChance[rank])
-                return 3;
-
-            if (roll < ThreeBonusChance[rank] + TwoBonusChance[rank])
-                return 2;
-
-            return 1;
-        }
         static bool Prefix(KartBonusMgr __instance, Kart ___m_kart, ref BonusCategory bonus, ref int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
             if (!___m_kart.Driver.IsHuman) return !ArchipelagoHelper.IsCPUItemsDisabled();
 
-            if (ArchipelagoHelper.IsSpringsOnly())
-            {
-                bonus = BonusCategory.SPRING;
-                iQuantity = GetRandomItemQuantity(___m_kart.RaceStats.GetRank());
-            }
+            if (ArchipelagoHelper.IsSpringsOnly()) bonus = BonusCategory.SPRING;
 
             if (ArchipelagoItemTracker.HasBonusAvailable(bonus))
             {
@@ -755,24 +699,93 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    //[HarmonyPatch(typeof(GameSaveManager), "GetCharacterState")]
+    //public class GameSaveManager_GetCharacterState_Patch
+    //{
+    //    static bool Prefix(GameSaveManager __instance, ECharacter character, ref UnlockableItemSate __result)
+    //    {
+    //        bool charRando = ArchipelagoHelper.IsCharRandomizerEnabled();
+
+    //        if (!charRando || !ArchipelagoHelper.IsConnectedAndEnabled)
+    //            return true;
+
+    //        long charItemId = 301 + (long)character; // Character IDs start at 301
+
+    //        if (ArchipelagoItemTracker.HasItem(charItemId))
+    //        {
+    //            __result = UnlockableItemSate.UNLOCKED;
+    //        }
+    //        else
+    //        {
+    //            __result = UnlockableItemSate.LOCKED;
+    //        }
+
+    //        return false;
+    //    }
+    //}
+
+    //[HarmonyPatch(typeof(GameSaveManager), "GetKartState")]
+    //public class GameSaveManager_GetKartState_Patch
+    //{
+    //    static bool Prefix(GameSaveManager __instance, ECharacter kart, ref UnlockableItemSate __result)
+    //    {
+    //        bool kartRando = ArchipelagoHelper.IsKartRandomizerEnabled();
+
+    //        if (!kartRando || !ArchipelagoHelper.IsConnectedAndEnabled)
+    //            return true;
+
+    //        long kartItemId = 351 + (long)kart; // Kart IDs start at 351
+
+    //        if (ArchipelagoItemTracker.HasItem(kartItemId))
+    //        {
+    //            __result = UnlockableItemSate.UNLOCKED;
+    //        }
+    //        else
+    //        {
+    //            __result = UnlockableItemSate.LOCKED;
+    //        }
+
+    //        return false;
+    //    }
+    //}
+
     [HarmonyPatch(typeof(GameSaveManager), "GetHatState")]
     public class GameSaveManager_GetHatState_Patch
     {
-        static bool Prefix(GameSaveManager __instance, string hat, /*long hatTier,*/ ref UnlockableItemSate __result)
+        static bool Prefix(GameSaveManager __instance, string hat, ref UnlockableItemSate __result)
         {
             bool hatRando = ArchipelagoHelper.IsHatRandomizerEnabled();
+            bool hatProgressive = ArchipelagoHelper.IsProgressiveHatEnabled();
+            char hatTierChar = hat[hat.Length - 1];
+            int hatTier = 1;
+
+            switch (hatTierChar)
+            {
+                case 'N':
+                    hatTier = 1;
+                    break;
+                case 'R':
+                    hatTier = 2;
+                    break;
+                case 'U':
+                    hatTier = 3;
+                    break;
+            }
+
+            long hatItemId = ArchipelagoConstants.GetHatItemId(hat, hatProgressive);
+
+            Log.Info($"{hatItemId}, {ArchipelagoItemTracker.AmountOfItem(hatItemId)}, {hatProgressive && ArchipelagoItemTracker.AmountOfItem(hatItemId) >= hatTier}");
 
             if (!hatRando || !ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
 
-            // [Main Unlock, Prog Unlock]
-            List<long> hatItemIds = ArchipelagoConstants.GetHatItemIds(hat);
-            if (hatItemIds.Count == 0) return true;
-
-            // TODO: Check hat items by tier (1-3 Bronze-Gold)
-            if (ArchipelagoItemTracker.HasItem(hatItemIds[0]) || ArchipelagoItemTracker.HasItem(hatItemIds[1]))
+            if (ArchipelagoItemTracker.HasItem(hatItemId) && hatRando && !hatProgressive)
             {
-                __result = UnlockableItemSate.UNLOCKED; 
+                __result = UnlockableItemSate.UNLOCKED;
+            }
+            else if (hatProgressive && ArchipelagoItemTracker.AmountOfItem(hatItemId) >= hatTier)
+            {
+                __result = UnlockableItemSate.UNLOCKED;
             }
             else
             {
@@ -786,20 +799,37 @@ namespace GarfieldKartAPMod.Patches
     [HarmonyPatch(typeof(GameSaveManager), "GetCustomState")]
     public class GameSaveManager_GetCustomState_Patch
     {
-        static bool Prefix(GameSaveManager __instance, string custom, /*long hatTier,*/ ref UnlockableItemSate __result)
+        static bool Prefix(GameSaveManager __instance, string custom, ref UnlockableItemSate __result)
         {
             bool spoilerRando = ArchipelagoHelper.IsSpoilerRandomizerEnabled();
-            
+            bool spoilerProgressive = ArchipelagoHelper.IsProgressiveSpoilerEnabled();
+            char customTierChar = custom[custom.Length - 1];
+            int customTier = 1;
+
+            switch (customTierChar)
+            {
+                case 'N':
+                    customTier = 1;
+                    break;
+                case 'R':
+                    customTier = 2;
+                    break;
+                case 'U':
+                    customTier = 3;
+                    break;
+            }
+
             if (!spoilerRando || !ArchipelagoHelper.IsConnectedAndEnabled) 
                 return true;
 
 
-            // [Main Unlock, Prog Unlock]
-            List<long> customItemIds = ArchipelagoConstants.GetSpoilerItemIds(custom);
-            if (customItemIds.Count == 0) return true;
+            long customItemId = ArchipelagoConstants.GetSpoilerItemId(custom, spoilerProgressive);
 
-            // TODO: Check spoiler items by tier (1-3 Bronze-Gold)
-            if (ArchipelagoItemTracker.HasItem(customItemIds[0]) || ArchipelagoItemTracker.HasItem(customItemIds[1]))
+            if (ArchipelagoItemTracker.HasItem(customItemId) && spoilerRando && !spoilerProgressive)
+            {
+                __result = UnlockableItemSate.UNLOCKED;
+            } 
+            else if (spoilerProgressive && ArchipelagoItemTracker.AmountOfItem(customItemId) >= customTier)
             {
                 __result = UnlockableItemSate.UNLOCKED;
             }

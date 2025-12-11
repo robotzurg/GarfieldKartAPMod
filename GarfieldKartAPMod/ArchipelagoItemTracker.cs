@@ -190,6 +190,7 @@ namespace GarfieldKartAPMod
 
             bool raceRando = ArchipelagoHelper.IsRacesRandomized();
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
+            bool cupAndRaceRando = ArchipelagoHelper.IsRacesAndCupsRandomized();
 
             if (!raceRando)
             {
@@ -205,6 +206,7 @@ namespace GarfieldKartAPMod
             bool hasRace = HasItem(raceItemId);
 
             if (!cupRando) return hasRace;
+            if (cupAndRaceRando) return hasRace;
             
             return hasRace && HasCup(cupId);
         }
@@ -213,6 +215,7 @@ namespace GarfieldKartAPMod
         {
             Log.Message($"Checking cup access for {cupId}");
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
+            bool cupAndRaceRando = ArchipelagoHelper.IsRacesAndCupsRandomized();
 
             Log.Message($"Cup randomizer is {cupRando}");
             if (!cupRando) 
@@ -221,8 +224,12 @@ namespace GarfieldKartAPMod
             bool progressiveCups = ArchipelagoHelper.IsProgressiveCupsEnabled();
 
             Log.Message($"Progressive cups are {progressiveCups}");
-            if (progressiveCups) 
+            if (progressiveCups)
+            {
+                if (cupAndRaceRando)
+                    return HasAllRacesInCup(cupId + (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA) && AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
                 return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
+            }
 
             var baseCupId = ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA;
             var cupItemId = baseCupId + cupId;
@@ -254,6 +261,20 @@ namespace GarfieldKartAPMod
             }
 
             return false;
+        }
+
+        public static bool HasAllRacesInCup(int cupItemId)
+        {
+            int cupId = cupItemId - (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA; // Convert 201-204 to 0-3
+            int startRaceId = cupId * 4; // 0, 4, 8, 12
+            int raceCount = 0;
+
+            for (int raceId = startRaceId; raceId < startRaceId + 4; raceId++)
+            {
+                if (HasRace(raceId)) raceCount++;
+            }
+
+            return raceCount == 4;
         }
 
         public static int GetPuzzlePieceCount(string startScene)

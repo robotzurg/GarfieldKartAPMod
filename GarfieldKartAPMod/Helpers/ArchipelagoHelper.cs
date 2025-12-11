@@ -25,17 +25,46 @@ namespace GarfieldKartAPMod.Helpers
             return IsTrue(pcs);
         }
 
+        public static bool IsCharRandomizerEnabled()
+        {
+            string charRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_characters");
+            return IsTrue(charRandoString);
+        }
+
+        public static bool IsKartRandomizerEnabled()
+        {
+            string kartRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_karts");
+            return IsTrue(kartRandoString);
+        }
+
         public static bool IsHatRandomizerEnabled()
         {
             string hatRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_hats");
-            return IsTrue(hatRandoString);
+            int hatRandoInt = int.Parse(hatRandoString);
+            return hatRandoInt != ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_OFF;
+        }
+
+        public static bool IsProgressiveHatEnabled()
+        {
+            string hatRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_hats");
+            int hatProgInt = int.Parse(hatRandoString);
+            return hatProgInt == ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_PROG;
         }
 
         public static bool IsSpoilerRandomizerEnabled()
         {
             string spoilerRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_spoilers");
-            return IsTrue(spoilerRandoString);
+            int spoilerRandoInt = int.Parse(spoilerRandoString);
+            return spoilerRandoInt != ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_OFF;
         }
+
+        public static bool IsProgressiveSpoilerEnabled()
+        {
+            string spoilerProgString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_spoilers");
+            int spoilerProgInt = int.Parse(spoilerProgString);
+            return spoilerProgInt == ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_PROG;
+        }
+
         public static bool IsItemRandomizerEnabled()
         {
             string itemRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_items");
@@ -56,6 +85,14 @@ namespace GarfieldKartAPMod.Helpers
 
             Int32.TryParse(raceRandomizerString, out int raceRandomizer);
             return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_CUPS || raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
+        }
+
+        public static bool IsRacesAndCupsRandomized()
+        {
+            string raceRandomizerString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_races");
+
+            Int32.TryParse(raceRandomizerString, out int raceRandomizer);
+            return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
         public static bool IsSpringsOnly()
