@@ -6,10 +6,12 @@ using HarmonyLib;
 using Rewired;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using static Aube.BasePlayerHandle;
 using static MenuHDTrackSelection;
 
 #if DEBUG
@@ -24,7 +26,7 @@ namespace GarfieldKartAPMod
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "Jeffdev";
         public const string PluginName = "GarfieldKartAPMod";
-        public const string PluginVersion = "0.3.6";
+        public const string PluginVersion = "0.4.0";
 
         public static ConfigEntry<int> notificationTime;
 
@@ -46,7 +48,7 @@ namespace GarfieldKartAPMod
             InitializeComponents();
             ApplyPatches();
 
-            Logger.LogInfo($"{PluginName} loaded successfully!");
+            Log.Info($"{PluginName} loaded successfully!");
         }
 
         private void InitializeLogging()
@@ -699,55 +701,122 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
-    //[HarmonyPatch(typeof(GameSaveManager), "GetCharacterState")]
-    //public class GameSaveManager_GetCharacterState_Patch
-    //{
-    //    static bool Prefix(GameSaveManager __instance, ECharacter character, ref UnlockableItemSate __result)
-    //    {
-    //        bool charRando = ArchipelagoHelper.IsCharRandomizerEnabled();
+    [HarmonyPatch(typeof(KartSelectionNavigation), "Enter")]
+    public class KartSelectionNavigation_Enter_Patch
+    {
+        static bool Prefix(KartSelectionNavigation __instance, EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> ___m_items)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
 
-    //        if (!charRando || !ArchipelagoHelper.IsConnectedAndEnabled)
-    //            return true;
+            UpdateCharacterUnlocks(__instance, ___m_items);
+            UpdateKartUnlocks(__instance, ___m_items);
 
-    //        long charItemId = 301 + (long)character; // Character IDs start at 301
+            return true; // Continue to original method after doing character/kart unlocks
+        }
 
-    //        if (ArchipelagoItemTracker.HasItem(charItemId))
-    //        {
-    //            __result = UnlockableItemSate.UNLOCKED;
-    //        }
-    //        else
-    //        {
-    //            __result = UnlockableItemSate.LOCKED;
-    //        }
+        private static void UpdateCharacterUnlocks(KartSelectionNavigation instance, EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> items)
+        {
+            if (items != null)
+            {
+                var indexer = items.GetType().GetMethod(
+                    "get_Item",
+                    BindingFlags.Public | BindingFlags.Instance,
+                    null,
+                    [typeof(int)],
+                    null
+                );
 
-    //        return false;
-    //    }
-    //}
+                var characterItems = (KartSelectionItem[])indexer.Invoke(items, [0]);
 
-    //[HarmonyPatch(typeof(GameSaveManager), "GetKartState")]
-    //public class GameSaveManager_GetKartState_Patch
-    //{
-    //    static bool Prefix(GameSaveManager __instance, ECharacter kart, ref UnlockableItemSate __result)
-    //    {
-    //        bool kartRando = ArchipelagoHelper.IsKartRandomizerEnabled();
+                foreach (KartSelectionItem item in characterItems)
+                {
+                    CharacterCarac character = (CharacterCarac)item.IconCarac;
+                    UnlockableItemSate state = Singleton<GameSaveManager>.Instance.GetCharacterState(character.Owner);
 
-    //        if (!kartRando || !ArchipelagoHelper.IsConnectedAndEnabled)
-    //            return true;
+                    bool isUnlocked = (state == UnlockableItemSate.UNLOCKED || state == UnlockableItemSate.NEWUNLOCKED);
+                    item.SetLock(!isUnlocked);
+                }
+            }
+        }
 
-    //        long kartItemId = 351 + (long)kart; // Kart IDs start at 351
+        private static void UpdateKartUnlocks(KartSelectionNavigation instance, EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> items)
+        {
+            if (items != null)
+            {
+                var indexer = items.GetType().GetMethod(
+                    "get_Item",
+                    BindingFlags.Public | BindingFlags.Instance,
+                    null,
+                    [typeof(int)],
+                    null
+                );
 
-    //        if (ArchipelagoItemTracker.HasItem(kartItemId))
-    //        {
-    //            __result = UnlockableItemSate.UNLOCKED;
-    //        }
-    //        else
-    //        {
-    //            __result = UnlockableItemSate.LOCKED;
-    //        }
+                var kartItems = (KartSelectionItem[])indexer.Invoke(items, [1]);
 
-    //        return false;
-    //    }
-    //}
+                foreach (KartSelectionItem item in kartItems)
+                {
+                    KartCarac kart = (KartCarac)item.IconCarac;
+                    UnlockableItemSate state = Singleton<GameSaveManager>.Instance.GetKartState(kart.Owner);
+
+                    bool isUnlocked = (state == UnlockableItemSate.UNLOCKED || state == UnlockableItemSate.NEWUNLOCKED);
+                    item.SetLock(!isUnlocked);
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(GameSaveManager), "GetCharacterState")]
+    public class GameSaveManager_GetCharacterState_Patch
+    {
+        static bool Prefix(GameSaveManager __instance, ECharacter character, ref UnlockableItemSate __result)
+        {
+            bool charRando = ArchipelagoHelper.IsCharRandomizerEnabled();
+            Log.Info($"{charRando} CHARACTER RANDO CHECK");
+
+            if (!charRando || !ArchipelagoHelper.IsConnectedAndEnabled)
+                return true;
+
+            long charItemId = 301 + (long)character; // Character IDs start at 301
+            Log.Info($"{character}, {charItemId}");
+
+            if (ArchipelagoItemTracker.HasItem(charItemId))
+            {
+                __result = UnlockableItemSate.UNLOCKED;
+            }
+            else
+            {
+                __result = UnlockableItemSate.LOCKED;
+            }
+
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(GameSaveManager), "GetKartState")]
+    public class GameSaveManager_GetKartState_Patch
+    {
+        static bool Prefix(GameSaveManager __instance, ECharacter kart, ref UnlockableItemSate __result)
+        {
+            bool kartRando = ArchipelagoHelper.IsKartRandomizerEnabled();
+            Log.Info($"{kartRando} CHARACTER RANDO CHECK");
+
+            if (!kartRando || !ArchipelagoHelper.IsConnectedAndEnabled)
+                return true;
+
+            long kartItemId = 351 + (long)kart; // Kart IDs start at 351
+
+            if (ArchipelagoItemTracker.HasItem(kartItemId))
+            {
+                __result = UnlockableItemSate.UNLOCKED;
+            }
+            else
+            {
+                __result = UnlockableItemSate.LOCKED;
+            }
+
+            return false;
+        }
+    }
 
     [HarmonyPatch(typeof(GameSaveManager), "GetHatState")]
     public class GameSaveManager_GetHatState_Patch
@@ -773,8 +842,6 @@ namespace GarfieldKartAPMod.Patches
             }
 
             long hatItemId = ArchipelagoConstants.GetHatItemId(hat, hatProgressive);
-
-            Log.Info($"{hatItemId}, {ArchipelagoItemTracker.AmountOfItem(hatItemId)}, {hatProgressive && ArchipelagoItemTracker.AmountOfItem(hatItemId) >= hatTier}");
 
             if (!hatRando || !ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
@@ -847,6 +914,7 @@ namespace GarfieldKartAPMod.Patches
     {
         static void Postfix(string key, ref string __result)
         {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             switch (key)
             {
                 case "MENU_GARAGE_UNLOCK_SINGLE_RACE":
@@ -877,11 +945,16 @@ namespace GarfieldKartAPMod.Patches
             E_TimeTrialMedal medal = E_TimeTrialMedal.None, 
             float diffTime = 0f, 
             int nbFirstPlace = 0, 
-            int cup = 0)
+            int cup = 0
+            )
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
+            
             Difficulty difficulty = Singleton<GameConfigurator>.Instance.Difficulty;
+            PlayerConfig playerConfig = Singleton<GameConfigurator>.Instance.GetPlayerConfig();
+            ECharacter character = playerConfig.Character;
+            ECharacter kart = playerConfig.Kart;
 
             if (gameMode == E_GameModeType.SINGLE && rank == 0)
             {
@@ -905,7 +978,11 @@ namespace GarfieldKartAPMod.Patches
                 }
 
                 GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
+                GarfieldKartAPMod.APClient.SendLocation((long)character + ArchipelagoConstants.LOC_WIN_RACE_AS_GARFIELD);
+                GarfieldKartAPMod.APClient.SendLocation((long)kart + ArchipelagoConstants.LOC_WIN_RACE_WITH_FORMULA_ZZZZ); 
+
                 ArchipelagoGoalManager.CheckAndCompleteGoal();
+
                 var hatLocs = ArchipelagoConstants.GetHatLocs(track, difficulty);
                 foreach (var loc in hatLocs)
                 {
@@ -952,7 +1029,7 @@ namespace GarfieldKartAPMod.Patches
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
 
-                // Re-check goals after persisting
+                // Re-` goals after persisting
                 ArchipelagoGoalManager.CheckAndCompleteGoal();
             }
 
