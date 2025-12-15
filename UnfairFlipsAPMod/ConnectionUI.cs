@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 
-namespace GarfieldKartAPMod
+namespace UnfairFlipsAPMod
 {
     public class ConnectionUI : MonoBehaviour
     {
         private bool showUI = true;
 #if DEBUG
         private string hostname = "localhost";
-        private string slotName = "Jeff-GK";
+        private string slotName = "Jeff-UF";
 #elif RELEASE
         private string hostname = "archipelago.gg";
         private string slotName = "";
@@ -18,10 +18,6 @@ namespace GarfieldKartAPMod
         private Rect windowRect = new Rect(Screen.width / 2 - 300, Screen.height / 2 - 250, 800, 700);
 
         private ArchipelagoClient apClient;
-
-        // Store original cursor state
-        private bool originalCursorVisible;
-        private CursorLockMode originalLockMode;
 
         public void Initialize(ArchipelagoClient client)
         {
@@ -59,31 +55,11 @@ namespace GarfieldKartAPMod
             {
                 password = last.password;
             }
-
-            originalCursorVisible = Cursor.visible;
-            originalLockMode = Cursor.lockState;
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
         }
 
         public void ToggleUI()
         {
             showUI = !showUI;
-
-            if (showUI)
-            {
-                // Store original cursor state and show cursor
-                originalCursorVisible = Cursor.visible;
-                originalLockMode = Cursor.lockState;
-                Cursor.visible = true;
-                Cursor.lockState = CursorLockMode.None;
-            }
-            else
-            {
-                // Restore original cursor state
-                Cursor.visible = originalCursorVisible;
-                Cursor.lockState = originalLockMode;
-            }
         }
 
         private void Update()

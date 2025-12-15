@@ -1,6 +1,6 @@
 ﻿using BepInEx.Logging;
 
-namespace GarfieldKartAPMod
+namespace UnfairFlipsAPMod
 {
     internal static class Log
     {
