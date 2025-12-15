@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net472</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<RestoreAdditionalProjectSources>
+			https://api.nuget.org/v3/index.json;
+			https://nuget.bepinex.dev/v3/index.json;
+			https://nuget.samboy.dev/v3/index.json
+		</RestoreAdditionalProjectSources>
+		<OutputPath>C:\Users\robot\AppData\Roaming\r2modmanPlus-local\GarfieldKartFuriousRacing\profiles\Default\BepInEx\plugins\Jeffdev-GarfieldKartArchipelago\</OutputPath>
+		<ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	</PropertyGroup>
+	<ItemGroup>
+	  <None Remove="Resources\archipelago_logo.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="System.Numerics" />
+		<Reference Include="UnityHotReload">
+		  <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\GarfieldKartFuriousRacing\profiles\Default\BepInEx\plugins\xiaoxiao921-UnityHotReload\UnityHotReload.dll</HintPath>
+		</Reference>
+		<PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
+		<PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
+		<PackageReference Include="BepInEx.Core" Version="5.*" />
+		<PackageReference Include="GarfieldKartFR.GameLibs" Version="1.0.1" IncludeAssets="compile" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Resources\Sprites\archipelago_logo.png" />
+		<EmbeddedResource Include="Resources\Sprites\garfkart_ap_puzzle_filled.png" />
+		<EmbeddedResource Include="Resources\Sprites\garfkart_ap_puzzle_empty.png" />
+	</ItemGroup>
+</Project>

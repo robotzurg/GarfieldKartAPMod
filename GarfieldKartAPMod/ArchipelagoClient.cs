@@ -3,14 +3,17 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Packets;
+using Aube.AnimatorData;
 using System;
 using System.Collections.Generic;
+using UnityEngine.Playables;
 
-namespace UnfairFlipsAPMod
+namespace GarfieldKartAPMod
 {
     public class ArchipelagoClient
     {
         private ArchipelagoSession session;
+        private Queue<string> pendingNotifications = new Queue<string>();
         
         public bool IsConnected => session?.Socket.Connected ?? false;
 
@@ -30,7 +33,7 @@ namespace UnfairFlipsAPMod
                 session.Socket.SocketClosed += OnSocketClosed;
 
                 LoginResult result = session.TryConnectAndLogin(
-                    "Unfair Flips",
+                    "Garfield Kart - Furious Racing",
                     slotName,
                     ItemsHandlingFlags.AllItems,
                     new Version(0, 6, 4),
@@ -40,8 +43,11 @@ namespace UnfairFlipsAPMod
                 if (result.Successful)
                 {
                     LoginSuccessful loginSuccess = (LoginSuccessful)result;
-                    UnfairFlipsAPMod.sessionSlotData = loginSuccess.SlotData;
+                    GarfieldKartAPMod.sessionSlotData = loginSuccess.SlotData;
                     Log.Message($"Connected successfully! Slot: {loginSuccess.Slot}");
+
+                    // Subscribe to message received
+                    session.MessageLog.OnMessageReceived += OnMessageReceived;
 
                     // Load items we already have
                     ArchipelagoItemTracker.LoadFromServer();
@@ -83,6 +89,11 @@ namespace UnfairFlipsAPMod
             }
         }
 
+        private void OnMessageReceived(LogMessage message)
+        {
+            pendingNotifications.Enqueue(message.ToString());
+        }
+
         //private void OnItemReceived(ReceivedItemsHelper helper)
         //{
         //    var item = helper.PeekItem();
@@ -122,12 +133,17 @@ namespace UnfairFlipsAPMod
 
         public string GetSlotDataValue(string key)
         {
-            Dictionary<string, object> defaultSlotData = new() { };
-            if (session != null && UnfairFlipsAPMod.sessionSlotData != null)
+            // Sneaky default slot data variable to ensure temporary backwards compatibility
+            Dictionary<string, object> defaultSlotData = new() { 
+                ["lap_count"] = 3,
+                ["disable_cpu_items"] = 0,
+                ["springs_only"] = 0,
+            };
+            if (session != null && GarfieldKartAPMod.sessionSlotData != null)
             {
-                if (UnfairFlipsAPMod.sessionSlotData.ContainsKey(key))
+                if (GarfieldKartAPMod.sessionSlotData.ContainsKey(key))
             {
-                    return UnfairFlipsAPMod.sessionSlotData[key].ToString();
+                    return GarfieldKartAPMod.sessionSlotData[key].ToString();
                 }
                 else if (defaultSlotData.ContainsKey(key)) 
                 {
@@ -141,6 +157,16 @@ namespace UnfairFlipsAPMod
 
             // Client is not connected
             return null;
+        }
+
+        public bool HasPendingNotifications()
+        {
+            return pendingNotifications.Count > 0;
+        }
+
+        public string DequeuePendingNotification()
+        {
+            return pendingNotifications.Dequeue();
         }
     }
 }

@@ -2,11 +2,45 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace UnfairFlipsAPMod
+namespace GarfieldKartAPMod
 {
     public class FileWriter : MonoBehaviour
     {
         private const string LastConnectionFileName = "last_connection.txt";
+
+        // Persist a completed time-trial scene to a separate per-session file.
+        public void WriteTimeTrialData(string track)
+        {
+            if (GarfieldKartAPMod.APClient == null || !GarfieldKartAPMod.APClient.IsConnected)
+                return;
+
+            var session = GarfieldKartAPMod.APClient.GetSession();
+            if (session == null)
+                return;
+
+            string sessionSeed = session.RoomState.Seed;
+            string path = Application.persistentDataPath + $"/{sessionSeed}_timetrials.txt";
+
+            HashSet<string> existingLines = new HashSet<string>();
+            if (File.Exists(path))
+            {
+                existingLines = new HashSet<string>(File.ReadAllLines(path));
+            }
+
+            if (!existingLines.Contains(track))
+            {
+                using (StreamWriter writer = new StreamWriter(path, true))
+                {
+                    writer.WriteLine(track);
+                }
+                Debug.Log($"AP TimeTrial file written to: {path}");
+
+                //if (notificationDisplay != null)
+                //{
+                //    notificationDisplay.ShowNotification($"Time trial completed: {track}");
+                //}
+            }
+        }
 
         // Save the last used connection info to disk. Overwrites each time so it's the default on next run.
         public void WriteLastConnection(string host, int port, string slotName, string password)
