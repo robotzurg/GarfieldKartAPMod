@@ -196,6 +196,7 @@ namespace GarfieldKartAPMod.Helpers
         {
             var queue = new Queue<ActiveFillerItem>();
 
+            // TODO: Actually load a string instead of just initialising an empty string.
             string saveDataString = "";
             string[] saveData = saveDataString.Split(',');
             foreach (string entry in saveData)
