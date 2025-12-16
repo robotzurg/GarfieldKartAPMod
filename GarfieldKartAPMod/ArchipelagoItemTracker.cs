@@ -23,6 +23,7 @@ namespace GarfieldKartAPMod
         public static void AddReceivedItem(long itemId)
         {
             receivedItems.AddOrUpdate(itemId, 1, (_, existing) => existing + 1);
+            ArchipelagoFillerManager.TryQueueFiller(itemId);
         }
 
         public static bool HasItem(long itemId)
@@ -83,6 +84,9 @@ namespace GarfieldKartAPMod
                         Log.Message($"[AP] Item: {item.ItemName} (ID: {item.ItemId})");
                         receivedItems.AddOrUpdate(item.ItemId, 1, (_, existing) => existing + 1);
                     }
+
+                    // Throw all the received items into the filler manager to load the state.
+                    ArchipelagoFillerManager.LoadFillerFromReceivedItems(itemsList);
                 }
 
                 // Load locations

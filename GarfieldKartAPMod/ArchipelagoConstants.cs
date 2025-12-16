@@ -574,12 +574,10 @@ namespace GarfieldKartAPMod
 
         // Filler Items (1000+)
         public const long ITEM_FILLER = 1000;
-        public const long ITEM_SPRING_PICKUP = 1001;
-        public const long ITEM_PIE_PICKUP = 1002;
-        public const long ITEM_RANDOM_BOX = 1003;
-        public const long ITEM_START_BOOST_HELPER = 1004;
 
         // Trap Items (1500+)
+        public const long ITEM_TRAP = 1500;
+        public const long ITEM_HANDLING_TRAP = 1501;
 
         // Goals
         public const long GOAL_GRAND_PRIX = 0;
