@@ -93,6 +93,15 @@ namespace GarfieldKartAPMod.Helpers
             UpdateFillerQueue();
         }
 
+        public static bool IsFillerActive(long fillerID)
+        {
+            foreach (ActiveFillerItem fillerItem in activeFiller)
+            {
+                if (fillerItem.Item.Id == fillerID) return true;
+            }
+
+            return false;
+        }
         public static void UpdateFillerQueue()
         {
             // Dequeue expired filler items
