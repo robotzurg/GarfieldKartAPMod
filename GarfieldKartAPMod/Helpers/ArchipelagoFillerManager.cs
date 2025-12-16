@@ -1,4 +1,5 @@
 ﻿using Archipelago.MultiClient.Net.Models;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -145,7 +146,7 @@ namespace GarfieldKartAPMod.Helpers
             Queue<ActiveFillerItem> fillerSaveData = LoadFiller();
 
             // Filter out non trap or filler items from the items
-            Queue<long> fillerIDs = new();
+            Dictionary<long, int> fillerItemCounts = new();
             foreach (ItemInfo item in itemList)
             {
                 if (GetFillerById(item.ItemId) == null)
@@ -153,43 +154,43 @@ namespace GarfieldKartAPMod.Helpers
                     continue;
                 }
 
-                fillerIDs.Enqueue(item.ItemId);
+                if (!fillerItemCounts.ContainsKey(item.ItemId)) fillerItemCounts.Add(item.ItemId, 0);
+                fillerItemCounts[item.ItemId]++;
             }
 
-            // Dequeue all the completed filler items from the save data
-            while (fillerSaveData.Peek().RemainingRaces == 0)
-            {
-                var item = fillerSaveData.Dequeue();
-                var id = fillerIDs.Dequeue();
-                if (item.Item.Id != id)
-                {
-                    throw new ApplicationException("Something went wrong, I'm pretty sure the order on this should always be the same");
-                }
-
-                completedFiller.Add(item.Item);
-            }
-
-            // Dequeue all the active filler items from the save data
             while (fillerSaveData.Count > 0)
             {
-                var item = fillerSaveData.Dequeue();
-                var id = fillerIDs.Dequeue();
-                if (item.Item.Id != id)
-                {
-                    throw new ApplicationException("Something went wrong, I'm pretty sure the order on this should always be the same");
-                }
-
+                ActiveFillerItem item = fillerSaveData.Dequeue();
+                long itemId = item.Item.Id;
+                fillerItemCounts[itemId]--;
                 if (item.RemainingRaces == 0)
                 {
-                    throw new ApplicationException("Something went wrong... An item with 0 races remaining made it into the active ones");
+                    completedFiller.Add(item.Item);
+                }
+                else
+                {
+                    activeFiller.Enqueue(item);
                 }
             }
 
-            // Throw remaining items from the pool onto the filler queue.
-            while (fillerIDs.Count > 0)
+            // Create a list of remaining items and shuffle it
+            // this should technically be in order of received traps
+            // but it really doesn't matter and this is way cleaner than the code I had.
+            // If you don't like it, revert the commit that added this comment.
+            List<long> remainingItemIDs = new();
+            foreach (long id in fillerItemCounts.Keys)
             {
-                var fillerItem = GetFillerById(fillerIDs.Dequeue());
-                fillerQueue.Enqueue(fillerItem);
+                while (fillerItemCounts[id] > 0)
+                {
+                    remainingItemIDs.Add(id);
+                    fillerItemCounts[id]--;
+                }
+            }
+
+            Utils.Shuffle(remainingItemIDs);
+            foreach (long id in remainingItemIDs)
+            {
+                fillerQueue.Enqueue(GetFillerById(id));
             }
         }
         public static Queue<ActiveFillerItem> LoadFiller()
