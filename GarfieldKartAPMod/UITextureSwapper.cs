@@ -1,19 +1,19 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using System.IO;
 using System;
+using System.Reflection;
 
 namespace GarfieldKartAPMod
 {
     public static class UITextureSwapper
     {
-        private static string spriteFolder = "Resources/Sprites";
+        public static string spriteFolder = "Resources/Sprites";
 
-        public static Sprite baseArchipelagoSprite;
+        private static Sprite baseArchipelagoSprite;
         public static Sprite puzzlePieceFilledSprite;
         public static Sprite puzzlePieceEmptySprite;
-        private static bool initialized = false;
-        private static bool hasSwappedThisMenu = false;
+        private static bool initialized;
+        private static bool hasSwappedThisMenu;
 
         public static void Initialize()
         {
@@ -22,7 +22,7 @@ namespace GarfieldKartAPMod
             Log.Message("Initializing UI texture swapper...");
 
             bool allSpritesLoaded = true;
-            allSpritesLoaded = allSpritesLoaded && TryLoadSprite("archipelago_logo.png", out baseArchipelagoSprite);
+            allSpritesLoaded = TryLoadSprite("archipelago_logo.png", out baseArchipelagoSprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_puzzle_filled.png", out puzzlePieceFilledSprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_puzzle_empty.png", out puzzlePieceEmptySprite);
 
@@ -34,14 +34,14 @@ namespace GarfieldKartAPMod
 
         private static bool TryLoadSprite(string path, out Sprite targetSprite)
         {
-            var nameSpace = typeof(UITextureSwapper).Namespace;
+            string nameSpace = typeof(UITextureSwapper).Namespace;
 
             targetSprite = null;
 
             try
             {
                 // Load from embedded resource
-                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                Assembly assembly = Assembly.GetExecutingAssembly();
 
                 string[] resourceNames = assembly.GetManifestResourceNames();
 
@@ -57,15 +57,13 @@ namespace GarfieldKartAPMod
                 string resourceName = null;
                 foreach (string name in resourceNames)
                 {
-                    if (name == path || name.EndsWith($".{path}"))
+                    if (name != path && !name.EndsWith($".{path}")) continue;
+                    if (resourceName != null)
                     {
-                        if (resourceName != null)
-                        {
-                            throw new ApplicationException("Duplicate resource name found, unable to load the correct texture: " + name);
-                        }
-
-                        resourceName = name;
+                        throw new ApplicationException("Duplicate resource name found, unable to load the correct texture: " + name);
                     }
+
+                    resourceName = name;
                 }
 
                 if (resourceName == null)

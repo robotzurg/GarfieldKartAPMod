@@ -19,7 +19,7 @@ namespace GarfieldKartAPMod
 
         private ArchipelagoClient apClient;
 
-        // Store original cursor state
+        // Store the original cursor state
         private bool originalCursorVisible;
         private CursorLockMode originalLockMode;
 
@@ -41,7 +41,7 @@ namespace GarfieldKartAPMod
                 }
             };
 
-            // Try to prefill fields from last saved connection
+            // Try to prefill fields from the last saved connection
             var last = FileWriter.ReadLastConnection();
             if (!string.IsNullOrEmpty(last.host))
             {
@@ -88,7 +88,7 @@ namespace GarfieldKartAPMod
 
         private void Update()
         {
-            // Toggle UI with F1 key
+            // Toggle UI with the F1 key
             if (Input.GetKeyDown(KeyCode.F1))
             {
                 ToggleUI();
@@ -108,6 +108,7 @@ namespace GarfieldKartAPMod
             }
         }
 
+        // ReSharper disable Unity.PerformanceAnalysis
         private void DrawWindow(int windowID)
         {
             GUILayout.BeginVertical();
@@ -131,7 +132,7 @@ namespace GarfieldKartAPMod
             password = GUILayout.PasswordField(password, '*', GUILayout.Height(40));
             GUILayout.Space(15);
 
-            if (apClient != null && apClient.IsConnected)
+            if (apClient is { IsConnected: true })
             {
                 if (GUILayout.Button("Disconnect", GUILayout.Height(40)))
                 {
@@ -149,7 +150,7 @@ namespace GarfieldKartAPMod
                     else if (int.TryParse(port, out int portNum))
                     {
                         statusMessage = "Connecting...";
-                        apClient.Connect(hostname, portNum, slotName, password);
+                        apClient?.Connect(hostname, portNum, slotName, password);
                     }
                     else
                     {

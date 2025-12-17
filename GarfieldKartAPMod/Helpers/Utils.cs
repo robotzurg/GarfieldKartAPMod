@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GarfieldKartAPMod.Helpers
 {
@@ -12,7 +9,7 @@ namespace GarfieldKartAPMod.Helpers
         // Posted by grenade, modified by community. See post 'Timeline' for change history
         // Retrieved 2025-12-16, License - CC BY-SA 4.0
 
-        private static Random rng = new();
+        private static readonly Random rng = new Random();
 
         public static void Shuffle<T>(List<T> list)
         {

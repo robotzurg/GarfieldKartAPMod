@@ -9,9 +9,9 @@ namespace GarfieldKartAPMod
 {
     public class ArchipelagoItemTracker
     {
-        // Thread-safe collections so background socket callbacks can't corrupt state
-        private static ConcurrentDictionary<long, int> receivedItems = new ConcurrentDictionary<long, int>();
-        private static ConcurrentDictionary<long, byte> checkedLocations = new ConcurrentDictionary<long, byte>();
+        // Thread-safe collections so background socket callbacks can't corrupt the state
+        private static readonly ConcurrentDictionary<long, int> receivedItems = new ConcurrentDictionary<long, int>();
+        private static readonly ConcurrentDictionary<long, byte> checkedLocations = new ConcurrentDictionary<long, byte>();
 
         public static void Initialize()
         {
@@ -33,7 +33,7 @@ namespace GarfieldKartAPMod
 
         public static int AmountOfItem(long itemId)
         {
-            return receivedItems.TryGetValue(itemId, out var count) ? count : 0;
+            return receivedItems.GetValueOrDefault(itemId, 0);
         }
 
         // ========== LOCATION METHODS ==========
@@ -103,11 +103,11 @@ namespace GarfieldKartAPMod
             }
             catch (System.Exception ex)
             {
-                Log.Error($"[AP] LoadFromServer exception: {ex.ToString()}");
+                Log.Error($"[AP] LoadFromServer exception: {ex}");
             }
         }
 
-        // Convenience: force a resync from the current session (call on reconnect)
+        // Convenience: force a resyncing from the current session (call on reconnection)
         public static void ResyncFromServer()
         {
             Log.Message("[AP] Resyncing Archipelago state from server");
@@ -126,7 +126,7 @@ namespace GarfieldKartAPMod
                 ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY
             };
 
-            return cupVictories.Count(loc => HasLocation(loc));
+            return cupVictories.Count(HasLocation);
         }
 
         public static int GetRaceVictoryCount()

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using static System.Int32;
 
 namespace GarfieldKartAPMod.Helpers
 {
@@ -7,7 +7,7 @@ namespace GarfieldKartAPMod.Helpers
     {
         private static bool IsTrue(string str)
         {
-            return str == "true" || str == "1";
+            return str is "true" or "1";
         }
 
         public static bool IsConnectedAndEnabled =>
@@ -40,28 +40,28 @@ namespace GarfieldKartAPMod.Helpers
         public static bool IsHatRandomizerEnabled()
         {
             string hatRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_hats");
-            int hatRandoInt = int.Parse(hatRandoString);
+            int hatRandoInt = Parse(hatRandoString);
             return hatRandoInt != ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_OFF;
         }
 
         public static bool IsProgressiveHatEnabled()
         {
             string hatRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_hats");
-            int hatProgInt = int.Parse(hatRandoString);
+            int hatProgInt = Parse(hatRandoString);
             return hatProgInt == ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_PROG;
         }
 
         public static bool IsSpoilerRandomizerEnabled()
         {
             string spoilerRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_spoilers");
-            int spoilerRandoInt = int.Parse(spoilerRandoString);
+            int spoilerRandoInt = Parse(spoilerRandoString);
             return spoilerRandoInt != ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_OFF;
         }
 
         public static bool IsProgressiveSpoilerEnabled()
         {
             string spoilerProgString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_spoilers");
-            int spoilerProgInt = int.Parse(spoilerProgString);
+            int spoilerProgInt = Parse(spoilerProgString);
             return spoilerProgInt == ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_PROG;
         }
 
@@ -75,7 +75,7 @@ namespace GarfieldKartAPMod.Helpers
         {
             string raceRandomizerString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_races");
 
-            Int32.TryParse(raceRandomizerString, out int raceRandomizer);
+            TryParse(raceRandomizerString, out int raceRandomizer);
             return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_RACES || raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
@@ -83,7 +83,7 @@ namespace GarfieldKartAPMod.Helpers
         {
             string raceRandomizerString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_races");
 
-            Int32.TryParse(raceRandomizerString, out int raceRandomizer);
+            TryParse(raceRandomizerString, out int raceRandomizer);
             return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_CUPS || raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
@@ -91,7 +91,7 @@ namespace GarfieldKartAPMod.Helpers
         {
             string raceRandomizerString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_races");
 
-            Int32.TryParse(raceRandomizerString, out int raceRandomizer);
+            TryParse(raceRandomizerString, out int raceRandomizer);
             return raceRandomizer == ArchipelagoConstants.OPTION_RANDOMIZE_RACES_BOTH;
         }
 
@@ -125,12 +125,8 @@ namespace GarfieldKartAPMod.Helpers
         {
             string puzzleCountString = GarfieldKartAPMod.APClient.GetSlotDataValue("puzzle_piece_count");
 
-            if (!Int32.TryParse(puzzleCountString, out int reqPuzzleCount))
-            {
-                throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {puzzleCountString}");
-            }
+            return !TryParse(puzzleCountString, out int reqPuzzleCount) ? throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {puzzleCountString}") : reqPuzzleCount;
 
-            return reqPuzzleCount;
         }
 
         internal static int GetLapCount()
@@ -139,12 +135,8 @@ namespace GarfieldKartAPMod.Helpers
 
             if (lapCountString == null) return 3;
 
-            if (!Int32.TryParse(lapCountString, out int lapCount))
-            {
-                throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {lapCountString}");
-            }
+            return !TryParse(lapCountString, out int lapCount) ? throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {lapCountString}") : lapCount;
 
-            return lapCount;
         }
     }
 }

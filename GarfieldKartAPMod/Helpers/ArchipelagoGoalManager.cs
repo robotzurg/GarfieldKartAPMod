@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GarfieldKartAPMod.Helpers
+﻿namespace GarfieldKartAPMod.Helpers
 {
     // Goal Helper Classs
     public static class ArchipelagoGoalManager
@@ -8,7 +6,7 @@ namespace GarfieldKartAPMod.Helpers
         public static long GetGoalId()
         {
             string goalString = GarfieldKartAPMod.APClient.GetSlotDataValue("goal");
-            Int64.TryParse(goalString, out long goalId);
+            long.TryParse(goalString, out long goalId);
 
             return goalId;
         }

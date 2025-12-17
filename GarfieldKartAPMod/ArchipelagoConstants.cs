@@ -1,17 +1,11 @@
-﻿using HarmonyLib;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using UnityEngine.Experimental.PlayerLoop;
-using UnityEngine.SceneManagement;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
+﻿using System.Collections.Generic;
 
 namespace GarfieldKartAPMod
 {
     public static class ArchipelagoConstants
     {
         // ========== LOCATION CONSTANTS (what you check in-game) ==========
-        // These are the location IDs that get sent when you accomplish something
+        // These are the location IDs that get sent when you achieve something
 
         // Single Race Victories (1-16)
         public const long LOC_CATZ_IN_THE_HOOD_VICTORY = 1;
@@ -825,9 +819,6 @@ namespace GarfieldKartAPMod
                     if (diffIndex >= 3) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_GOLD);
                     if (diffIndex >= 4) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_PLATINUM);
                     break;
-
-                default:
-                    break;
             }
 
             return returnedList;
@@ -944,8 +935,6 @@ namespace GarfieldKartAPMod
                     if (diffIndex >= 2) returnedList.Add(LOC_LOOPY_LAGOON_GOLD_HAT_UNLOCK);
                     break;
 
-                default:
-                    break;
             }
 
             return returnedList;
@@ -1131,8 +1120,6 @@ namespace GarfieldKartAPMod
                     }
                     break;
 
-                default:
-                    break;
             }
 
             return returnedList;
@@ -1143,39 +1130,39 @@ namespace GarfieldKartAPMod
             switch (custom)
             {
                 // LASAGNA CUP
-                case "KGC_ManiabilityN": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
-                case "KGC_ManiabilityR": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "KGC_ManiabilityN":
+                case "KGC_ManiabilityR":
                 case "KGC_ManiabilityU": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
 
-                case "KJC_SpeedN": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER: ITEM_UNLOCK_WHACKY_SPOILER;
-                case "KJC_SpeedR": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER : ITEM_UNLOCK_WHACKY_SPOILER;
-                case "KJC_SpeedU": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER : ITEM_UNLOCK_WHACKY_SPOILER;
+                case "KJC_SpeedN":
+                case "KJC_SpeedR":
+                case "KJC_SpeedU": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER: ITEM_UNLOCK_WHACKY_SPOILER;
 
                 // PIZZA CUP
-                case "KLC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_SUPERFIT_SPOILER : ITEM_UNLOCK_SUPERFIT_SPOILER;
-                case "KLC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_SUPERFIT_SPOILER : ITEM_UNLOCK_SUPERFIT_SPOILER;
+                case "KLC_AccelerationN":
+                case "KLC_AccelerationR":
                 case "KLC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_SUPERFIT_SPOILER : ITEM_UNLOCK_SUPERFIT_SPOILER;
 
-                case "KOC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_CYCLOBONE_SPOILER : ITEM_UNLOCK_CYCLOBONE_SPOILER;
-                case "KOC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_CYCLOBONE_SPOILER : ITEM_UNLOCK_CYCLOBONE_SPOILER;
+                case "KOC_AccelerationN":
+                case "KOC_AccelerationR":
                 case "KOC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_CYCLOBONE_SPOILER : ITEM_UNLOCK_CYCLOBONE_SPOILER;
 
                 // BURGER CUP
-                case "KAC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_FOXY_SPOILER : ITEM_UNLOCK_FOXY_SPOILER;
-                case "KAC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_FOXY_SPOILER : ITEM_UNLOCK_FOXY_SPOILER;
+                case "KAC_AccelerationN":
+                case "KAC_AccelerationR":
                 case "KAC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_FOXY_SPOILER : ITEM_UNLOCK_FOXY_SPOILER;
 
-                case "KNC_AccelerationN": return progressive ? ITEM_PROGRESSIVE_SHIMMERING_SPOILER : ITEM_UNLOCK_SHIMMERING_SPOILER;
-                case "KNC_AccelerationR": return progressive ? ITEM_PROGRESSIVE_SHIMMERING_SPOILER : ITEM_UNLOCK_SHIMMERING_SPOILER;
+                case "KNC_AccelerationN":
+                case "KNC_AccelerationR":
                 case "KNC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_SHIMMERING_SPOILER : ITEM_UNLOCK_SHIMMERING_SPOILER;
 
                 // ICE CREAM CUP
-                case "KSC_ManiabilityN": return progressive ? ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER : ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
-                case "KSC_ManiabilityR": return progressive ? ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER : ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
+                case "KSC_ManiabilityN":
+                case "KSC_ManiabilityR":
                 case "KSC_ManiabilityU": return progressive ? ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER : ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
 
-                case "KHC_SpeedN": return progressive ? ITEM_PROGRESSIVE_STAINED_SPOILER : ITEM_UNLOCK_STAINED_SPOILER;
-                case "KHC_SpeedR": return progressive ? ITEM_PROGRESSIVE_STAINED_SPOILER : ITEM_UNLOCK_STAINED_SPOILER;
+                case "KHC_SpeedN":
+                case "KHC_SpeedR":
                 case "KHC_SpeedU": return progressive ? ITEM_PROGRESSIVE_STAINED_SPOILER : ITEM_UNLOCK_STAINED_SPOILER;
 
                 default: return -1;

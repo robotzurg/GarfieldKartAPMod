@@ -1,19 +1,15 @@
 ﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
-using Archipelago.MultiClient.Net.Packets;
-using Aube.AnimatorData;
 using System;
 using System.Collections.Generic;
-using UnityEngine.Playables;
 
 namespace GarfieldKartAPMod
 {
     public class ArchipelagoClient
     {
         private ArchipelagoSession session;
-        private Queue<string> pendingNotifications = new Queue<string>();
+        private readonly Queue<string> pendingNotifications = new Queue<string>();
         
         public bool IsConnected => session?.Socket.Connected ?? false;
 
@@ -68,7 +64,7 @@ namespace GarfieldKartAPMod
             }
             catch (Exception ex)
             {
-                Log.Error($"Connection exception: {ex.ToString()}");
+                Log.Error($"Connection exception: {ex}");
                 OnConnectionFailed?.Invoke(ex.Message);
                 session = null;
             }
@@ -81,12 +77,10 @@ namespace GarfieldKartAPMod
 
         public void Disconnect()
         {
-            if (session != null)
-            {
-                session.Socket.DisconnectAsync();
-                session = null;
-                Log.Message("Disconnected from Archipelago");
-            }
+            if (session == null) return;
+            session.Socket.DisconnectAsync();
+            session = null;
+            Log.Message("Disconnected from Archipelago");
         }
 
         private void OnMessageReceived(LogMessage message)
@@ -134,29 +128,19 @@ namespace GarfieldKartAPMod
         public string GetSlotDataValue(string key)
         {
             // Sneaky default slot data variable to ensure temporary backwards compatibility
-            Dictionary<string, object> defaultSlotData = new() { 
+            Dictionary<string, object> defaultSlotData = new Dictionary<string, object> { 
                 ["lap_count"] = 3,
                 ["disable_cpu_items"] = 0,
                 ["springs_only"] = 0,
             };
-            if (session != null && GarfieldKartAPMod.sessionSlotData != null)
+            if (session == null || GarfieldKartAPMod.sessionSlotData == null) return null;
+            if (GarfieldKartAPMod.sessionSlotData.TryGetValue(key, out object value))
             {
-                if (GarfieldKartAPMod.sessionSlotData.ContainsKey(key))
-            {
-                    return GarfieldKartAPMod.sessionSlotData[key].ToString();
-                }
-                else if (defaultSlotData.ContainsKey(key)) 
-                {
-                    return defaultSlotData[key].ToString();
-                }
-                else
-                {
-                    throw new SlotDataException($"Invalid option requested from apworld: {key}. Did you generate on the wrong version?");
+                return value.ToString();
             }
-            }
+            return defaultSlotData.TryGetValue(key, out object slotValue) ? slotValue.ToString() : throw new SlotDataException($"Invalid option requested from apworld: {key}. Did you generate on the wrong version?");
 
             // Client is not connected
-            return null;
         }
 
         public bool HasPendingNotifications()

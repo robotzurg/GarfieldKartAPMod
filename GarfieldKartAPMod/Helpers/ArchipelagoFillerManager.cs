@@ -1,10 +1,6 @@
 ﻿using Archipelago.MultiClient.Net.Models;
-using HarmonyLib;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GarfieldKartAPMod.Helpers
 {
@@ -16,7 +12,8 @@ namespace GarfieldKartAPMod.Helpers
             public string Name;
             public string Description;
         }
-        public class TrapItem : FillerItem 
+
+        private class TrapItem : FillerItem 
         { 
         }
 
@@ -54,19 +51,14 @@ namespace GarfieldKartAPMod.Helpers
         public static int MaxConcurrentFiller { get; set; } = 1;
 
 
-        public static Queue<FillerItem> fillerQueue = new();
-        public static Queue<ActiveFillerItem> activeFiller = new();
+        public static Queue<FillerItem> fillerQueue = new Queue<FillerItem>();
+        public static Queue<ActiveFillerItem> activeFiller = new Queue<ActiveFillerItem>();
         public static List<FillerItem> completedFiller = [];
 
 
         public static FillerItem GetFillerById(long id)
         {
-            foreach (FillerItem item in FillerItems)
-            {
-                if (item.Id == id) return item;
-            }
-
-            return null;
+            return FillerItems.FirstOrDefault(item => item.Id == id);
         }
 
         public static void TryQueueFiller(long itemID)
@@ -96,12 +88,8 @@ namespace GarfieldKartAPMod.Helpers
 
         public static bool IsFillerActive(long fillerID)
         {
-            foreach (ActiveFillerItem fillerItem in activeFiller)
-            {
-                if (fillerItem.Item.Id == fillerID) return true;
-            }
+            return activeFiller.Any(fillerItem => fillerItem.Item.Id == fillerID);
 
-            return false;
         }
         public static void UpdateFillerQueue()
         {
@@ -116,7 +104,7 @@ namespace GarfieldKartAPMod.Helpers
             while (fillerQueue.Count > 0 && activeFiller.Count < MaxConcurrentFiller)
             {
                 FillerItem filler = fillerQueue.Dequeue();
-                ActiveFillerItem activeFillerItem = new()
+                ActiveFillerItem activeFillerItem = new ActiveFillerItem
                 {
                     Item = filler,
                     RemainingRaces = RacesPerFiller
@@ -135,7 +123,7 @@ namespace GarfieldKartAPMod.Helpers
             bool isTrap = item is TrapItem;
             PopupHD.POPUP_TYPE popupType = isTrap ? PopupHD.POPUP_TYPE.ERROR : PopupHD.POPUP_TYPE.INFORMATION;
             string typeString = isTrap ? "trap" : "filler";
-            PopupManager.OpenPopup($"Temporary {typeString} effect activated: {item.Name}", PopupHD.POPUP_TYPE.ERROR, PopupHD.POPUP_PRIORITY.NORMAL);
+            PopupManager.OpenPopup($"Temporary {typeString} effect activated: {item.Name}", popupType, PopupHD.POPUP_PRIORITY.NORMAL);
         }
 
         public static void LoadFillerFromReceivedItems(List<ItemInfo> itemList)
@@ -146,15 +134,10 @@ namespace GarfieldKartAPMod.Helpers
             Queue<ActiveFillerItem> fillerSaveData = LoadFiller();
 
             // Filter out non trap or filler items from the items
-            Dictionary<long, int> fillerItemCounts = new();
-            foreach (ItemInfo item in itemList)
+            Dictionary<long, int> fillerItemCounts = new Dictionary<long, int>();
+            foreach (ItemInfo item in itemList.Where(item => GetFillerById(item.ItemId) != null))
             {
-                if (GetFillerById(item.ItemId) == null)
-                {
-                    continue;
-                }
-
-                if (!fillerItemCounts.ContainsKey(item.ItemId)) fillerItemCounts.Add(item.ItemId, 0);
+                fillerItemCounts.TryAdd(item.ItemId, 0);
                 fillerItemCounts[item.ItemId]++;
             }
 
@@ -177,7 +160,7 @@ namespace GarfieldKartAPMod.Helpers
             // this should technically be in order of received traps
             // but it really doesn't matter and this is way cleaner than the code I had.
             // If you don't like it, revert the commit that added this comment.
-            List<long> remainingItemIDs = new();
+            List<long> remainingItemIDs = [];
             foreach (long id in fillerItemCounts.Keys)
             {
                 while (fillerItemCounts[id] > 0)
@@ -198,16 +181,16 @@ namespace GarfieldKartAPMod.Helpers
             var queue = new Queue<ActiveFillerItem>();
 
             // TODO: Actually load a string instead of just initialising an empty string.
-            string saveDataString = "";
+            const string saveDataString = "";
             string[] saveData = saveDataString.Split(',');
             foreach (string entry in saveData)
             {
                 string[] parts = entry.Split('-');
 
-                ActiveFillerItem item = new()
+                ActiveFillerItem item = new ActiveFillerItem
                 {
-                    Item = GetFillerById(Int64.Parse(parts[0])),
-                    RemainingRaces = Int32.Parse(parts[1])
+                    Item = GetFillerById(long.Parse(parts[0])),
+                    RemainingRaces = int.Parse(parts[1])
                 };
                 queue.Enqueue(item);
             }
@@ -217,7 +200,7 @@ namespace GarfieldKartAPMod.Helpers
 
         public static void SaveFiller()
         {
-            // Save current filler state to a file. This needs to save:
+            // Save the current filler state to a file. This needs to save:
             // - activeFiller contents (currently active filler item IDs and their remaining races
             // - completedFiller contents (IDs only)
             // 
@@ -225,15 +208,8 @@ namespace GarfieldKartAPMod.Helpers
             // active or completed, you know everything else should be in the queue.
 
             List<string> saveData = [];
-            foreach (var completedFillerItem in completedFiller)
-            {
-                saveData.Add($"{completedFillerItem.Id}-0");
-            }
-
-            foreach (var activeFillerItem in activeFiller)
-            {
-                saveData.Add($"{activeFillerItem.Item.Id}-{activeFillerItem.RemainingRaces}");
-            }
+            saveData.AddRange(completedFiller.Select(completedFillerItem => $"{completedFillerItem.Id}-0"));
+            saveData.AddRange(activeFiller.Select(activeFillerItem => $"{activeFillerItem.Item.Id}-{activeFillerItem.RemainingRaces}"));
 
             string saveDataString = string.Join(",", saveData);
             // TODO: Actually saving this is not implemented yet! 

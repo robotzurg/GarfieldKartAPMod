@@ -653,8 +653,8 @@ namespace GarfieldKartAPMod.Patches
                 return true;
             }
 
-            var pieceData = piece.Split('_');
-            Int32.TryParse(pieceData[1], out var pieceIndex);
+            string[] pieceData = piece.Split('_');
+            Int32.TryParse(pieceData[1], out int pieceIndex);
 
             __result = ArchipelagoItemTracker.HasItem(
                 ArchipelagoConstants.GetPuzzlePiece(pieceData[0], pieceIndex));
@@ -713,7 +713,7 @@ namespace GarfieldKartAPMod.Patches
         {
             if (items != null)
             {
-                var indexer = items.GetType().GetMethod(
+                MethodInfo indexer = items.GetType().GetMethod(
                     "get_Item",
                     BindingFlags.Public | BindingFlags.Instance,
                     null,
@@ -729,7 +729,7 @@ namespace GarfieldKartAPMod.Patches
                     CharacterCarac character = (CharacterCarac)item.IconCarac;
                     UnlockableItemSate state = Singleton<GameSaveManager>.Instance.GetCharacterState(character.Owner);
 
-                    bool isUnlocked = (state == UnlockableItemSate.UNLOCKED || state == UnlockableItemSate.NEWUNLOCKED);
+                    bool isUnlocked = state is UnlockableItemSate.UNLOCKED or UnlockableItemSate.NEWUNLOCKED;
                     item.SetLock(!isUnlocked);
                 }
             }
@@ -739,7 +739,7 @@ namespace GarfieldKartAPMod.Patches
         {
             if (items != null)
             {
-                var indexer = items.GetType().GetMethod(
+                MethodInfo indexer = items.GetType().GetMethod(
                     "get_Item",
                     BindingFlags.Public | BindingFlags.Instance,
                     null,
@@ -829,11 +829,7 @@ namespace GarfieldKartAPMod.Patches
             if (!hatRando || !ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
 
-            if (ArchipelagoItemTracker.HasItem(hatItemId) && !hatProgressive)
-            {
-                __result = UnlockableItemSate.UNLOCKED;
-            }
-            else if (hatProgressive && ArchipelagoItemTracker.AmountOfItem(hatItemId) >= hatTier)
+            if (ArchipelagoItemTracker.HasItem(hatItemId) && !hatProgressive || hatProgressive && ArchipelagoItemTracker.AmountOfItem(hatItemId) >= hatTier)
             {
                 __result = UnlockableItemSate.UNLOCKED;
             }
@@ -1003,7 +999,7 @@ namespace GarfieldKartAPMod.Patches
                 var fw = GameObject.FindObjectOfType<FileWriter>();
                 fw?.WriteTimeTrialData(track);
 
-                // We do -1 here because medals go from 1 to 3 and difficulties from 0 to 2
+                // We do -1 here because medals go from 1 to 3 and difficulties 0 to 2
                 Difficulty medalDiff = (Difficulty)((int)difficulty - 1);
 
                 var hatLocs = ArchipelagoConstants.GetHatLocs(track, medalDiff);

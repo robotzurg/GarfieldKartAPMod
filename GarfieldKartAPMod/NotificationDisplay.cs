@@ -8,8 +8,8 @@ namespace GarfieldKartAPMod
     public class NotificationDisplay : MonoBehaviour
     {
         private TextMeshProUGUI notificationText;
-        private Queue<string> notificationQueue = new Queue<string>();
-        private bool isDisplaying = false;
+        private readonly Queue<string> notificationQueue = new Queue<string>();
+        private bool isDisplaying;
 
         public void Initialize()
         {

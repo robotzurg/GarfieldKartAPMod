@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using Archipelago.MultiClient.Net;
+using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,14 +15,14 @@ namespace GarfieldKartAPMod
             if (GarfieldKartAPMod.APClient == null || !GarfieldKartAPMod.APClient.IsConnected)
                 return;
 
-            var session = GarfieldKartAPMod.APClient.GetSession();
+            ArchipelagoSession session = GarfieldKartAPMod.APClient.GetSession();
             if (session == null)
                 return;
 
             string sessionSeed = session.RoomState.Seed;
             string path = Application.persistentDataPath + $"/{sessionSeed}_timetrials.txt";
 
-            HashSet<string> existingLines = new HashSet<string>();
+            HashSet<string> existingLines = [];
             if (File.Exists(path))
             {
                 existingLines = new HashSet<string>(File.ReadAllLines(path));
@@ -42,7 +43,7 @@ namespace GarfieldKartAPMod
             }
         }
 
-        // Save the last used connection info to disk. Overwrites each time so it's the default on next run.
+        // Save the last used connection info to disk. Overwrites each time, so it's the default on the next run.
         public void WriteLastConnection(string host, int port, string slotName, string password)
         {
             try
