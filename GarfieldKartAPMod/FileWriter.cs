@@ -28,19 +28,17 @@ namespace GarfieldKartAPMod
                 existingLines = new HashSet<string>(File.ReadAllLines(path));
             }
 
-            if (!existingLines.Contains(track))
+            if (existingLines.Contains(track)) return;
+            using (StreamWriter writer = new StreamWriter(path, true))
             {
-                using (StreamWriter writer = new StreamWriter(path, true))
-                {
-                    writer.WriteLine(track);
-                }
-                Debug.Log($"AP TimeTrial file written to: {path}");
-
-                //if (notificationDisplay != null)
-                //{
-                //    notificationDisplay.ShowNotification($"Time trial completed: {track}");
-                //}
+                writer.WriteLine(track);
             }
+            Debug.Log($"AP TimeTrial file written to: {path}");
+
+            //if (notificationDisplay != null)
+            //{
+            //    notificationDisplay.ShowNotification($"Time trial completed: {track}");
+            //}
         }
 
         // Save the last used connection info to disk. Overwrites each time, so it's the default on the next run.
@@ -72,7 +70,7 @@ namespace GarfieldKartAPMod
                 if (!File.Exists(path))
                     return (null, null, null, null);
 
-                var lines = File.ReadAllLines(path);
+                string[] lines = File.ReadAllLines(path);
                 string host = lines.Length > 0 ? lines[0] : null;
                 string port = lines.Length > 1 ? lines[1] : null;
                 string slot = lines.Length > 2 ? lines[2] : null;

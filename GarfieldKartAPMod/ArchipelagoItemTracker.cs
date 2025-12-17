@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Archipelago.MultiClient.Net.Models;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -79,7 +80,7 @@ namespace GarfieldKartAPMod
                 if (itemsList != null)
                 {
                     Log.Message($"[AP] Loading {itemsList.Count} items from server");
-                    foreach (var item in itemsList)
+                    foreach (ItemInfo item in itemsList)
                     {
                         Log.Message($"[AP] Item: {item.ItemName} (ID: {item.ItemId})");
                         receivedItems.AddOrUpdate(item.ItemId, 1, (_, existing) => existing + 1);
@@ -91,14 +92,12 @@ namespace GarfieldKartAPMod
 
                 // Load locations
                 List<long> locationsList = session.Locations.AllLocationsChecked?.ToList();
-                if (locationsList != null)
+                if (locationsList == null) return;
+                Log.Message($"[AP] Loading {locationsList.Count} checked locations from server");
+                foreach (long locationId in locationsList)
                 {
-                    Log.Message($"[AP] Loading {locationsList.Count} checked locations from server");
-                    foreach (var locationId in locationsList)
-                    {
-                        Log.Message($"[AP] Location checked: {locationId}");
-                        checkedLocations.TryAdd(locationId, 0);
-                    }
+                    Log.Message($"[AP] Location checked: {locationId}");
+                    checkedLocations.TryAdd(locationId, 0);
                 }
             }
             catch (System.Exception ex)

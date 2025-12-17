@@ -33,16 +33,14 @@ namespace GarfieldKartAPMod
             // When connected, persist the connection info so it can be used as default next time
             apClient.OnConnected += () =>
             {
-                var fw = GameObject.FindObjectOfType<FileWriter>();
-                if (fw != null)
-                {
-                    int.TryParse(port, out int p);
-                    fw.WriteLastConnection(hostname, p, slotName, password);
-                }
+                FileWriter fw = GameObject.FindObjectOfType<FileWriter>();
+                if (fw == null) return;
+                int.TryParse(port, out int p);
+                fw.WriteLastConnection(hostname, p, slotName, password);
             };
 
             // Try to prefill fields from the last saved connection
-            var last = FileWriter.ReadLastConnection();
+            (string host, string port, string slotName, string password) last = FileWriter.ReadLastConnection();
             if (!string.IsNullOrEmpty(last.host))
             {
                 hostname = last.host;
@@ -97,15 +95,13 @@ namespace GarfieldKartAPMod
 
         private void OnGUI()
         {
-            if (showUI)
-            {
-                // Scale up the GUI
-                GUI.skin.label.fontSize = 24;
-                GUI.skin.button.fontSize = 24;
-                GUI.skin.textField.fontSize = 24;
+            if (!showUI) return;
+            // Scale up the GUI
+            GUI.skin.label.fontSize = 24;
+            GUI.skin.button.fontSize = 24;
+            GUI.skin.textField.fontSize = 24;
 
-                windowRect = GUI.Window(0, windowRect, DrawWindow, "Archipelago Connection");
-            }
+            windowRect = GUI.Window(0, windowRect, DrawWindow, "Archipelago Connection");
         }
 
         // ReSharper disable Unity.PerformanceAnalysis

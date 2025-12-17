@@ -592,116 +592,116 @@ namespace GarfieldKartAPMod
 
         public static string GetSceneNameFromTrackId(TrackId trackId)
         {
-            switch (trackId)
+            return trackId switch
             {
                 // LASAGNA CUP (Championship 1)
-                case TrackId.E2C1: return "E2C1"; // Catz in the Hood
-                case TrackId.E4C1: return "E4C1"; // Crazy Dunes
-                case TrackId.E3C1: return "E3C1"; // Palerock Lake
-                case TrackId.E1C1: return "E1C1"; // City Slicker
-
+                TrackId.E2C1 => "E2C1", // Catz in the Hood
+                TrackId.E4C1 => "E4C1", // Crazy Dunes
+                TrackId.E3C1 => "E3C1", // Palerock Lake
+                TrackId.E1C1 => "E1C1", // City Slicker
+                
                 // PIZZA CUP (Championship 2)
-                case TrackId.E3C2: return "E3C2"; // Country Bumpkin
-                case TrackId.E2C2: return "E2C2"; // Spooky Manor
-                case TrackId.E1C2: return "E1C2"; // Mally Market
-                case TrackId.E4C2: return "E4C2"; // Valley of the Kings
-
+                TrackId.E3C2 => "E3C2", // Country Bumpkin
+                TrackId.E2C2 => "E2C2", // Spooky Manor
+                TrackId.E1C2 => "E1C2", // Mally Market
+                TrackId.E4C2 => "E4C2", // Valley of the Kings
+                
                 // BURGER CUP (Championship 3)
-                case TrackId.E1C3: return "E1C3"; // Misty for Me
-                case TrackId.E3C3: return "E3C3"; // Sneak a Peak
-                case TrackId.E4C3: return "E4C3"; // Blazing Oasis
-                case TrackId.E2C3: return "E2C3"; // Pastacosi Factory
-
+                TrackId.E1C3 => "E1C3", // Misty for Me
+                TrackId.E3C3 => "E3C3", // Sneak a Peak
+                TrackId.E4C3 => "E4C3", // Blazing Oasis
+                TrackId.E2C3 => "E2C3", // Pastacosi Factory
+                
                 // ICE CREAM CUP (Championship 4)
-                case TrackId.E4C4: return "E4C4"; // Mysterious Temple
-                case TrackId.E1C4: return "E1C4"; // Prohibited Site
-                case TrackId.E2C4: return "E2C4"; // Caskou Park
-                case TrackId.E3C4: return "E3C4"; // Loopy Lagoon
-
-                default: return null;
-            }
+                TrackId.E4C4 => "E4C4", // Mysterious Temple
+                TrackId.E1C4 => "E1C4", // Prohibited Site
+                TrackId.E2C4 => "E2C4", // Caskou Park
+                TrackId.E3C4 => "E3C4", // Loopy Lagoon
+                
+                _ => null
+            };
         }
 
         public static long GetRaceVictoryLoc(string startScene)
         {
-            switch (startScene)
+            return startScene switch
             {
-                case "E2C1": return LOC_CATZ_IN_THE_HOOD_VICTORY;
-                case "E4C1": return LOC_CRAZY_DUNES_VICTORY;
-                case "E3C1": return LOC_PALEROCK_LAKE_VICTORY;
-                case "E1C1": return LOC_CITY_SLICKER_VICTORY;
-                case "E3C2": return LOC_COUNTRY_BUMPKIN_VICTORY;
-                case "E2C2": return LOC_SPOOKY_MANOR_VICTORY;
-                case "E1C2": return LOC_MALLY_MARKET_VICTORY;
-                case "E4C2": return LOC_VALLEY_OF_THE_KINGS_VICTORY;
-                case "E1C3": return LOC_MISTY_FOR_ME_VICTORY;
-                case "E3C3": return LOC_SNEAK_A_PEAK_VICTORY;
-                case "E4C3": return LOC_BLAZING_OASIS_VICTORY;
-                case "E2C3": return LOC_PASTACOSI_FACTORY_VICTORY;
-                case "E4C4": return LOC_MYSTERIOUS_TEMPLE_VICTORY;
-                case "E1C4": return LOC_PROHIBITED_SITE_VICTORY;
-                case "E2C4": return LOC_CASKOU_PARK_VICTORY;
-                case "E3C4": return LOC_LOOPY_LAGOON_VICTORY;
-                default: return -1;
-            }
+                "E2C1" => LOC_CATZ_IN_THE_HOOD_VICTORY,
+                "E4C1" => LOC_CRAZY_DUNES_VICTORY,
+                "E3C1" => LOC_PALEROCK_LAKE_VICTORY,
+                "E1C1" => LOC_CITY_SLICKER_VICTORY,
+                "E3C2" => LOC_COUNTRY_BUMPKIN_VICTORY,
+                "E2C2" => LOC_SPOOKY_MANOR_VICTORY,
+                "E1C2" => LOC_MALLY_MARKET_VICTORY,
+                "E4C2" => LOC_VALLEY_OF_THE_KINGS_VICTORY,
+                "E1C3" => LOC_MISTY_FOR_ME_VICTORY,
+                "E3C3" => LOC_SNEAK_A_PEAK_VICTORY,
+                "E4C3" => LOC_BLAZING_OASIS_VICTORY,
+                "E2C3" => LOC_PASTACOSI_FACTORY_VICTORY,
+                "E4C4" => LOC_MYSTERIOUS_TEMPLE_VICTORY,
+                "E1C4" => LOC_PROHIBITED_SITE_VICTORY,
+                "E2C4" => LOC_CASKOU_PARK_VICTORY,
+                "E3C4" => LOC_LOOPY_LAGOON_VICTORY,
+                _ => -1
+            };
         }
 
 
 
         public static long GetPuzzlePiece(string startScene, int puzzleIndex)
         {
-            switch (startScene)
+            return startScene switch
             {
                 // LASAGNA CUP
-                case "E2C1": return ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E4C1": return ITEM_CRAZY_DUNES_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E3C1": return ITEM_PALEROCK_LAKE_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E1C1": return ITEM_CITY_SLICKER_PUZZLE_PIECE_1 + puzzleIndex;
+                "E2C1" => ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 + puzzleIndex,
+                "E4C1" => ITEM_CRAZY_DUNES_PUZZLE_PIECE_1 + puzzleIndex,
+                "E3C1" => ITEM_PALEROCK_LAKE_PUZZLE_PIECE_1 + puzzleIndex,
+                "E1C1" => ITEM_CITY_SLICKER_PUZZLE_PIECE_1 + puzzleIndex,
                 // PIZZA CUP
-                case "E3C2": return ITEM_COUNTRY_BUMPKIN_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E2C2": return ITEM_SPOOKY_MANOR_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E1C2": return ITEM_MALLY_MARKET_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E4C2": return ITEM_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1 + puzzleIndex;
+                "E3C2" => ITEM_COUNTRY_BUMPKIN_PUZZLE_PIECE_1 + puzzleIndex,
+                "E2C2" => ITEM_SPOOKY_MANOR_PUZZLE_PIECE_1 + puzzleIndex,
+                "E1C2" => ITEM_MALLY_MARKET_PUZZLE_PIECE_1 + puzzleIndex,
+                "E4C2" => ITEM_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1 + puzzleIndex,
                 // BURGER CUP
-                case "E1C3": return ITEM_MISTY_FOR_ME_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E3C3": return ITEM_SNEAK_A_PEAK_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E4C3": return ITEM_BLAZING_OASIS_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E2C3": return ITEM_PASTACOSI_FACTORY_PUZZLE_PIECE_1 + puzzleIndex;
+                "E1C3" => ITEM_MISTY_FOR_ME_PUZZLE_PIECE_1 + puzzleIndex,
+                "E3C3" => ITEM_SNEAK_A_PEAK_PUZZLE_PIECE_1 + puzzleIndex,
+                "E4C3" => ITEM_BLAZING_OASIS_PUZZLE_PIECE_1 + puzzleIndex,
+                "E2C3" => ITEM_PASTACOSI_FACTORY_PUZZLE_PIECE_1 + puzzleIndex,
                 // ICE CREAM CUP
-                case "E4C4": return ITEM_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E1C4": return ITEM_PROHIBITED_SITE_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E2C4": return ITEM_CASKOU_PARK_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E3C4": return ITEM_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex;
-                default: return -1;
-            }
+                "E4C4" => ITEM_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1 + puzzleIndex,
+                "E1C4" => ITEM_PROHIBITED_SITE_PUZZLE_PIECE_1 + puzzleIndex,
+                "E2C4" => ITEM_CASKOU_PARK_PUZZLE_PIECE_1 + puzzleIndex,
+                "E3C4" => ITEM_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex,
+                _ => -1
+            };
         }
 
         public static long GetPuzzlePieceLoc(string startScene, int puzzleIndex)
         {
-            switch (startScene)
+            return startScene switch
             {
                 // LASAGNA CUP
-                case "E2C1": return LOC_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E4C1": return LOC_CRAZY_DUNES_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E3C1": return LOC_PALEROCK_LAKE_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E1C1": return LOC_CITY_SLICKER_PUZZLE_PIECE_1 + puzzleIndex;
+                "E2C1" => LOC_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 + puzzleIndex,
+                "E4C1" => LOC_CRAZY_DUNES_PUZZLE_PIECE_1 + puzzleIndex,
+                "E3C1" => LOC_PALEROCK_LAKE_PUZZLE_PIECE_1 + puzzleIndex,
+                "E1C1" => LOC_CITY_SLICKER_PUZZLE_PIECE_1 + puzzleIndex,
                 // PIZZA CUP
-                case "E3C2": return LOC_COUNTRY_BUMPKIN_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E2C2": return LOC_SPOOKY_MANOR_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E1C2": return LOC_MALLY_MARKET_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E4C2": return LOC_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1 + puzzleIndex;
+                "E3C2" => LOC_COUNTRY_BUMPKIN_PUZZLE_PIECE_1 + puzzleIndex,
+                "E2C2" => LOC_SPOOKY_MANOR_PUZZLE_PIECE_1 + puzzleIndex,
+                "E1C2" => LOC_MALLY_MARKET_PUZZLE_PIECE_1 + puzzleIndex,
+                "E4C2" => LOC_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1 + puzzleIndex,
                 // BURGER CUP
-                case "E1C3": return LOC_MISTY_FOR_ME_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E3C3": return LOC_SNEAK_A_PEAK_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E4C3": return LOC_BLAZING_OASIS_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E2C3": return LOC_PASTACOSI_FACTORY_PUZZLE_PIECE_1 + puzzleIndex;
+                "E1C3" => LOC_MISTY_FOR_ME_PUZZLE_PIECE_1 + puzzleIndex,
+                "E3C3" => LOC_SNEAK_A_PEAK_PUZZLE_PIECE_1 + puzzleIndex,
+                "E4C3" => LOC_BLAZING_OASIS_PUZZLE_PIECE_1 + puzzleIndex,
+                "E2C3" => LOC_PASTACOSI_FACTORY_PUZZLE_PIECE_1 + puzzleIndex,
                 // ICE CREAM CUP
-                case "E4C4": return LOC_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E1C4": return LOC_PROHIBITED_SITE_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E2C4": return LOC_CASKOU_PARK_PUZZLE_PIECE_1 + puzzleIndex;
-                case "E3C4": return LOC_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex;
-                default: return -1;
-            }
+                "E4C4" => LOC_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1 + puzzleIndex,
+                "E1C4" => LOC_PROHIBITED_SITE_PUZZLE_PIECE_1 + puzzleIndex,
+                "E2C4" => LOC_CASKOU_PARK_PUZZLE_PIECE_1 + puzzleIndex,
+                "E3C4" => LOC_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex,
+                _ => -1
+            };
         }
 
         public static List<long> GetTimeTrialLocs(string startScene, E_TimeTrialMedal medal)
@@ -946,74 +946,74 @@ namespace GarfieldKartAPMod
             {
                 // LASAGNA CUP
                 // CATZ IN THE HOOD
-                case "EgyptPriestHatN": return progressive ? ITEM_PROGRESSIVE_TIC_TOQUE : ITEM_UNLOCK_TIC_TOQUE;
-                case "EgyptPriestHatR": return progressive ? ITEM_PROGRESSIVE_TIC_TOQUE : ITEM_UNLOCK_TIC_TOQUE;
+                case "EgyptPriestHatN":
+                case "EgyptPriestHatR":
                 case "EgyptPriestHatU": return progressive ? ITEM_PROGRESSIVE_TIC_TOQUE : ITEM_UNLOCK_TIC_TOQUE;
                 // CRAZY DUNES
-                case "SleepingHatN": return progressive ? ITEM_PROGRESSIVE_BEDDY_BYE_CAP : ITEM_UNLOCK_BEDDY_BYE_CAP;
-                case "SleepingHatR": return progressive ? ITEM_PROGRESSIVE_BEDDY_BYE_CAP : ITEM_UNLOCK_BEDDY_BYE_CAP;
+                case "SleepingHatN":
+                case "SleepingHatR":
                 case "SleepingHatU": return progressive ? ITEM_PROGRESSIVE_BEDDY_BYE_CAP : ITEM_UNLOCK_BEDDY_BYE_CAP;
                 // PALEROCK LAKE
-                case "PharaonHatN": return progressive ? ITEM_PROGRESSIVE_TOUTANKHAMEOW : ITEM_UNLOCK_TOUTANKHAMEOW;
-                case "PharaonHatR": return progressive ? ITEM_PROGRESSIVE_TOUTANKHAMEOW : ITEM_UNLOCK_TOUTANKHAMEOW;
+                case "PharaonHatN":
+                case "PharaonHatR":
                 case "PharaonHatU": return progressive ? ITEM_PROGRESSIVE_TOUTANKHAMEOW : ITEM_UNLOCK_TOUTANKHAMEOW;
                 // CITY SLICKER
-                case "BeautyHatN": return progressive ? ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN : ITEM_UNLOCK_ARISTO_CATIC_BICORN;
-                case "BeautyHatR": return progressive ? ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN : ITEM_UNLOCK_ARISTO_CATIC_BICORN;
+                case "BeautyHatN":
+                case "BeautyHatR":
                 case "BeautyHatU": return progressive ? ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN : ITEM_UNLOCK_ARISTO_CATIC_BICORN;
 
                 // PIZZA CUP
                 // COUNTRY BUMPKIN
-                case "PiratHatN": return progressive ? ITEM_PROGRESSIVE_STINK_O_RAMA : ITEM_UNLOCK_STINK_O_RAMA;
-                case "PiratHatR": return progressive ? ITEM_PROGRESSIVE_STINK_O_RAMA : ITEM_UNLOCK_STINK_O_RAMA;
+                case "PiratHatN":
+                case "PiratHatR":
                 case "PiratHatU": return progressive ? ITEM_PROGRESSIVE_STINK_O_RAMA : ITEM_UNLOCK_STINK_O_RAMA;
                 // SPOOKY MANOR
-                case "FootballHelmetN": return progressive ? ITEM_PROGRESSIVE_JOE_MONTAGNA : ITEM_UNLOCK_JOE_MONTAGNA;
-                case "FootballHelmetR": return progressive ? ITEM_PROGRESSIVE_JOE_MONTAGNA : ITEM_UNLOCK_JOE_MONTAGNA;
+                case "FootballHelmetN":
+                case "FootballHelmetR":
                 case "FootballHelmetU": return progressive ? ITEM_PROGRESSIVE_JOE_MONTAGNA : ITEM_UNLOCK_JOE_MONTAGNA;
                 // MALLY MARKET
-                case "ChickenHatN": return progressive ? ITEM_PROGRESSIVE_ELASTO_HAT : ITEM_UNLOCK_ELASTO_HAT;
-                case "ChickenHatR": return progressive ? ITEM_PROGRESSIVE_ELASTO_HAT : ITEM_UNLOCK_ELASTO_HAT;
+                case "ChickenHatN":
+                case "ChickenHatR":
                 case "ChickenHatU": return progressive ? ITEM_PROGRESSIVE_ELASTO_HAT : ITEM_UNLOCK_ELASTO_HAT;
                 // VALLEY OF THE KINGS
-                case "SpaceHelmetN": return progressive ? ITEM_PROGRESSIVE_SPACE_BUBBLE : ITEM_UNLOCK_SPACE_BUBBLE;
-                case "SpaceHelmetR": return progressive ? ITEM_PROGRESSIVE_SPACE_BUBBLE : ITEM_UNLOCK_SPACE_BUBBLE;
+                case "SpaceHelmetN":
+                case "SpaceHelmetR":
                 case "SpaceHelmetU": return progressive ? ITEM_PROGRESSIVE_SPACE_BUBBLE : ITEM_UNLOCK_SPACE_BUBBLE;
 
                 // BURGER CUP
                 // PLAY MISTY FOR ME
-                case "CrownHatN": return progressive ? ITEM_PROGRESSIVE_CUTIE_PIE_CROWN : ITEM_UNLOCK_CUTIE_PIE_CROWN;
-                case "CrownHatR": return progressive ? ITEM_PROGRESSIVE_CUTIE_PIE_CROWN : ITEM_UNLOCK_CUTIE_PIE_CROWN;
+                case "CrownHatN":
+                case "CrownHatR":
                 case "CrownHatU": return progressive ? ITEM_PROGRESSIVE_CUTIE_PIE_CROWN : ITEM_UNLOCK_CUTIE_PIE_CROWN;
                 // SNEAK-A-PEAK
-                case "PizzaioloHatN": return progressive ? ITEM_PROGRESSIVE_PIZZAIOLO_HAT : ITEM_UNLOCK_PIZZAIOLO_HAT;
-                case "PizzaioloHatR": return progressive ? ITEM_PROGRESSIVE_PIZZAIOLO_HAT : ITEM_UNLOCK_PIZZAIOLO_HAT;
+                case "PizzaioloHatN":
+                case "PizzaioloHatR":
                 case "PizzaioloHatU": return progressive ? ITEM_PROGRESSIVE_PIZZAIOLO_HAT : ITEM_UNLOCK_PIZZAIOLO_HAT;
                 // BLAZING OASIS
-                case "VikingHelmetN": return progressive ? ITEM_PROGRESSIVE_VIKING_HELMET : ITEM_UNLOCK_VIKING_HELMET;
-                case "VikingHelmetR": return progressive ? ITEM_PROGRESSIVE_VIKING_HELMET : ITEM_UNLOCK_VIKING_HELMET;
+                case "VikingHelmetN":
+                case "VikingHelmetR":
                 case "VikingHelmetU": return progressive ? ITEM_PROGRESSIVE_VIKING_HELMET : ITEM_UNLOCK_VIKING_HELMET;
                 // PASTACOSI FACTORY
-                case "MagicHatN": return progressive ? ITEM_PROGRESSIVE_WHIZZY_WIZARD : ITEM_UNLOCK_WHIZZY_WIZARD;
-                case "MagicHatR": return progressive ? ITEM_PROGRESSIVE_WHIZZY_WIZARD : ITEM_UNLOCK_WHIZZY_WIZARD;
+                case "MagicHatN":
+                case "MagicHatR":
                 case "MagicHatU": return progressive ? ITEM_PROGRESSIVE_WHIZZY_WIZARD : ITEM_UNLOCK_WHIZZY_WIZARD;
 
                 // ICE CREAM CUP
                 // MYSTERIOUS TEMPLE
-                case "WizardHatN": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
-                case "WizardHatR": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "WizardHatN":
+                case "WizardHatR":
                 case "WizardHatU": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
                 // PROHIBITED SITE
-                case "DunkeyHatN": return progressive ? ITEM_PROGRESSIVE_MULE_HEAD : ITEM_UNLOCK_MULE_HEAD;
-                case "DunkeyHatR": return progressive ? ITEM_PROGRESSIVE_MULE_HEAD : ITEM_UNLOCK_MULE_HEAD;
+                case "DunkeyHatN":
+                case "DunkeyHatR":
                 case "DunkeyHatU": return progressive ? ITEM_PROGRESSIVE_MULE_HEAD : ITEM_UNLOCK_MULE_HEAD;
                 // CASKOU PARK
-                case "PastryHatN": return progressive ? ITEM_PROGRESSIVE_CHEFS_SPECIAL : ITEM_UNLOCK_CHEFS_SPECIAL;
-                case "PastryHatR": return progressive ? ITEM_PROGRESSIVE_CHEFS_SPECIAL : ITEM_UNLOCK_CHEFS_SPECIAL;
+                case "PastryHatN":
+                case "PastryHatR":
                 case "PastryHatU": return progressive ? ITEM_PROGRESSIVE_CHEFS_SPECIAL : ITEM_UNLOCK_CHEFS_SPECIAL;
                 // LOOPY LAGOON
-                case "RabbitHatN": return progressive ? ITEM_PROGRESSIVE_BUNNY_BAND : ITEM_UNLOCK_BUNNY_BAND;
-                case "RabbitHatR": return progressive ? ITEM_PROGRESSIVE_BUNNY_BAND : ITEM_UNLOCK_BUNNY_BAND;
+                case "RabbitHatN":
+                case "RabbitHatR":
                 case "RabbitHatU": return progressive ? ITEM_PROGRESSIVE_BUNNY_BAND : ITEM_UNLOCK_BUNNY_BAND;
 
                 default: return -1;

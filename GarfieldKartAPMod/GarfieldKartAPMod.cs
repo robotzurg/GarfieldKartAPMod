@@ -114,11 +114,9 @@ namespace GarfieldKartAPMod
             }
 #endif
 
-            if (APClient != null && APClient.HasPendingNotifications())
-            {
-                var notification = APClient.DequeuePendingNotification();
-                notificationDisplay.ShowNotification(notification);
-            }
+            if (APClient == null || !APClient.HasPendingNotifications()) return;
+            string notification = APClient.DequeuePendingNotification();
+            notificationDisplay.ShowNotification(notification);
         }
 
         private void OnArchipelagoConnected()
@@ -136,18 +134,14 @@ namespace GarfieldKartAPMod
 
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
         {
-            var assemblyName = new AssemblyName(args.Name);
+            AssemblyName assemblyName = new AssemblyName(args.Name);
 
-            if (assemblyName.Name == "Newtonsoft.Json")
+            if (assemblyName.Name != "Newtonsoft.Json") return null;
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-                {
-                    if (assembly.GetName().Name == "Newtonsoft.Json")
-                    {
-                        Log.Message($"Resolved Newtonsoft.Json to version {assembly.GetName().Version}");
-                        return assembly;
-                    }
-                }
+                if (assembly.GetName().Name != "Newtonsoft.Json") continue;
+                Log.Message($"Resolved Newtonsoft.Json to version {assembly.GetName().Version}");
+                return assembly;
             }
 
             return null;
@@ -192,9 +186,9 @@ namespace GarfieldKartAPMod.Patches
         {
             try
             {
-                var buttonsType = buttonsArray.GetType();
-                var lengthProp = buttonsType.GetProperty("Length");
-                var indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
+                Type buttonsType = buttonsArray.GetType();
+                PropertyInfo lengthProp = buttonsType.GetProperty("Length");
+                PropertyInfo indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
                 if (lengthProp == null) return;
                 int length = (int)lengthProp.GetValue(buttonsArray);
 
@@ -203,7 +197,7 @@ namespace GarfieldKartAPMod.Patches
                     if (i >= length) continue;
 
                     if (indexerProp == null) continue;
-                    var button = indexerProp.GetValue(buttonsArray, [i]) as BetterButton;
+                    BetterButton button = indexerProp.GetValue(buttonsArray, [i]) as BetterButton;
                     if (button == null) continue;
                     button.interactable = false;
                     Log.Info($"Disabled button at index {i}");
@@ -219,21 +213,21 @@ namespace GarfieldKartAPMod.Patches
         {
             try
             {
-                var buttonsType = m_buttons.GetType();
+                Type buttonsType = m_buttons.GetType();
 
                 // Get Length property
-                var lengthProp = buttonsType.GetProperty("Length");
+                PropertyInfo lengthProp = buttonsType.GetProperty("Length");
                 if (lengthProp == null) return;
                 int length = (int)lengthProp.GetValue(m_buttons);
 
                 // Get the indexer with specific parameters (int index)
-                var indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
+                PropertyInfo indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
 
                 for (int i = 0; i < length; i++)
                 {
                     if (indexerProp != null)
                     {
-                        var button = indexerProp.GetValue(m_buttons, [i]) as BetterButton;
+                        BetterButton button = indexerProp.GetValue(m_buttons, [i]) as BetterButton;
                         if (button == null) continue;
 
                         if (i == 4)
@@ -302,12 +296,9 @@ namespace GarfieldKartAPMod.Patches
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
 
             var cupList = ArchipelagoItemTracker.GetAvailableCups();
-            if (cupList.Count == 0)
-            {
-                PopupManager.OpenPopup("You haven't unlocked any cups!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
-                return false;
-            }
-            return true;
+            if (cupList.Count != 0) return true;
+            PopupManager.OpenPopup("You haven't unlocked any cups!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
+            return false;
         }
     }
 
@@ -357,10 +348,7 @@ namespace GarfieldKartAPMod.Patches
                 bool activateButton = false;
                 bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i + (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA);
 
-                if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i))
-                    activateButton = true;
-
-                else if ((gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.TIME_TRIAL) && hasRaceInCup)
+                if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i) || gameMode is E_GameModeType.SINGLE or E_GameModeType.TIME_TRIAL && hasRaceInCup)
                     activateButton = true;
 
                 if (!activateButton)
@@ -410,7 +398,7 @@ namespace GarfieldKartAPMod.Patches
             for (int i = 0; i < ___m_itemsButtons.Count - 1; i++)
             {
                 ___m_itemsButtons[i].ChangeBackground(PlayerGameEntities.ChampionShipDataList[cup].Sprites[i]);
-                var text = Singleton<GameConfigurator>.Instance.ChampionShipData.Tracks[i];
+                string text = Singleton<GameConfigurator>.Instance.ChampionShipData.Tracks[i];
                 int puzzleCount = ArchipelagoItemTracker.GetPuzzlePieceCount(text);
                 ___m_itemsButtons[i].UpdatePuzzleText(puzzleCount);
                 ___m_itemsButtons[i].UpdateTimeTrialText(text);
@@ -418,7 +406,7 @@ namespace GarfieldKartAPMod.Patches
 
             if (___m_currentSelectedButton != 4 && ___m_hasFinishedEntering)
             {
-                var method = AccessTools.Method(typeof(MenuHDTrackSelection), "UpdateTimeTrialValues");
+                MethodInfo method = AccessTools.Method(typeof(MenuHDTrackSelection), "UpdateTimeTrialValues");
                 method.Invoke(__instance, [___m_currentSelectedButton]);
             }
 
@@ -463,12 +451,9 @@ namespace GarfieldKartAPMod.Patches
     {
         static Exception Finalizer(Exception __exception)
         {
-            if (__exception is InvalidCastException)
-            {
-                Log.Debug("Suppressed InvalidCastException in OnSecondaryMove (navigating to disabled tab)");
-                return null;
-            }
-            return __exception;
+            if (__exception is not InvalidCastException) return __exception;
+            Log.Debug("Suppressed InvalidCastException in OnSecondaryMove (navigating to disabled tab)");
+            return null;
         }
     }
 
@@ -499,50 +484,44 @@ namespace GarfieldKartAPMod.Patches
 
             if (ArchipelagoHelper.IsSpringsOnly()) bonus = BonusCategory.SPRING;
 
-            if (ArchipelagoItemTracker.HasBonusAvailable(bonus))
-            {
-                return true;
-            } 
+            return ArchipelagoItemTracker.HasBonusAvailable(bonus);
 
-            return false;
         }
         
         static void Postfix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            if (___m_kart.Driver.IsHuman && ArchipelagoItemTracker.HasBonusAvailable(bonus))
+            if (!___m_kart.Driver.IsHuman || !ArchipelagoItemTracker.HasBonusAvailable(bonus)) return;
+            switch (bonus)
             {
-                switch (bonus)
-                {
-                    case BonusCategory.PIE:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PIE);
-                        break;
-                    case BonusCategory.AUTOLOCK_PIE:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_HOMING_PIE);
-                        break;
-                    case BonusCategory.LASAGNA:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_LASAGNA);
-                        break;
-                    case BonusCategory.SPRING:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_SPRING);
-                        break;
-                    case BonusCategory.DIAMOND:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_DIAMOND);
-                        break;
-                    case BonusCategory.MAGIC:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_MAGIC_WAND);
-                        break;
-                    case BonusCategory.NAP:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PILLOW);
-                        break;
-                    case BonusCategory.PARFUME:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PERFUME);
-                        break;
-                    case BonusCategory.UFO:
-                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_UFO);
-                        break;
-                }
+                case BonusCategory.PIE:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PIE);
+                    break;
+                case BonusCategory.AUTOLOCK_PIE:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_HOMING_PIE);
+                    break;
+                case BonusCategory.LASAGNA:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_LASAGNA);
+                    break;
+                case BonusCategory.SPRING:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_SPRING);
+                    break;
+                case BonusCategory.DIAMOND:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_DIAMOND);
+                    break;
+                case BonusCategory.MAGIC:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_MAGIC_WAND);
+                    break;
+                case BonusCategory.NAP:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PILLOW);
+                    break;
+                case BonusCategory.PARFUME:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PERFUME);
+                    break;
+                case BonusCategory.UFO:
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_UFO);
+                    break;
             }
         }
      }
@@ -554,14 +533,12 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            if (pVehicle && pVehicle.GetControlType() == RcVehicle.ControlType.Human)
-            {
-                long puzzlePieceLocId = ArchipelagoConstants.GetPuzzlePieceLoc(
-                    Singleton<GameConfigurator>.Instance.StartScene,
-                    __instance.Index);
-                GarfieldKartAPMod.APClient.SendLocation(puzzlePieceLocId);
-                Log.Message($"Sending Puzzle Piece {Singleton<GameConfigurator>.Instance.StartScene}_{__instance.Index}");
-            }
+            if (!pVehicle || pVehicle.GetControlType() != RcVehicle.ControlType.Human) return;
+            long puzzlePieceLocId = ArchipelagoConstants.GetPuzzlePieceLoc(
+                Singleton<GameConfigurator>.Instance.StartScene,
+                __instance.Index);
+            GarfieldKartAPMod.APClient.SendLocation(puzzlePieceLocId);
+            Log.Message($"Sending Puzzle Piece {Singleton<GameConfigurator>.Instance.StartScene}_{__instance.Index}");
         }
     }
 
@@ -579,15 +556,13 @@ namespace GarfieldKartAPMod.Patches
             long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, __instance.Index);
             bool hasPuzzlePiece = ArchipelagoItemTracker.HasLocation(puzzlePieceLocation);
 
-            if (hasPuzzlePiece)
+            if (!hasPuzzlePiece) return;
+            Material[] materials = __instance.GetComponent<Renderer>().materials;
+            if (materials.Length == 1)
             {
-                Material[] materials = __instance.GetComponent<Renderer>().materials;
-                if (materials.Length == 1)
-                {
-                    materials[0] = __instance.TransparentMaterial;
-                }
-                __instance.GetComponent<Renderer>().materials = materials;
+                materials[0] = __instance.TransparentMaterial;
             }
+            __instance.GetComponent<Renderer>().materials = materials;
         }
 
     }
@@ -597,23 +572,19 @@ namespace GarfieldKartAPMod.Patches
     {
         static bool Prefix(HUDPositionHD __instance, int iIndex, List<Animation> ___m_puzzlesAnimation, List<Image> ___m_puzzleImages, int ___m_iLogPuzzle)
         {
-            if (iIndex < 0 || iIndex >= 3)
+            if (iIndex is < 0 or >= 3)
             {
                 return false;
             }
             bool flag = true;
             for (int i = 0; i < 2; i++)
             {
-                if (i != iIndex)
-                {
-                    long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, i);
+                if (i == iIndex) continue;
+                long puzzlePieceLocation = ArchipelagoConstants.GetPuzzlePieceLoc(Singleton<GameConfigurator>.Instance.StartScene, i);
 
-                    if (!ArchipelagoItemTracker.HasLocation(puzzlePieceLocation))
-                    {
-                        flag = false;
-                        break;
-                    }
-                }
+                if (ArchipelagoItemTracker.HasLocation(puzzlePieceLocation)) continue;
+                flag = false;
+                break;
             }
 
             if (flag)
@@ -628,13 +599,11 @@ namespace GarfieldKartAPMod.Patches
                 ___m_puzzlesAnimation[iIndex].Play("PuzzlePiece_Turn");
             }
 
-            if (___m_puzzleImages[iIndex] != null)
+            if (___m_puzzleImages[iIndex] == null) return false;
+            ___m_puzzleImages[iIndex].sprite = UITextureSwapper.puzzlePieceFilledSprite;
+            if (LogManager.Instance != null)
             {
-                ___m_puzzleImages[iIndex].sprite = UITextureSwapper.puzzlePieceFilledSprite;
-                if (LogManager.Instance != null)
-                {
-                    ___m_iLogPuzzle++;
-                }
+                ___m_iLogPuzzle++;
             }
 
             return false;
@@ -711,53 +680,49 @@ namespace GarfieldKartAPMod.Patches
 
         private static void UpdateCharacterUnlocks(KartSelectionNavigation instance, EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> items)
         {
-            if (items != null)
+            if (items == null) return;
+            MethodInfo indexer = items.GetType().GetMethod(
+                "get_Item",
+                BindingFlags.Public | BindingFlags.Instance,
+                null,
+                [typeof(int)],
+                null
+            );
+
+            if (indexer == null) return;
+            var characterItems = (KartSelectionItem[])indexer.Invoke(items, [0]);
+
+            foreach (KartSelectionItem item in characterItems)
             {
-                MethodInfo indexer = items.GetType().GetMethod(
-                    "get_Item",
-                    BindingFlags.Public | BindingFlags.Instance,
-                    null,
-                    [typeof(int)],
-                    null
-                );
+                CharacterCarac character = (CharacterCarac)item.IconCarac;
+                UnlockableItemSate state = Singleton<GameSaveManager>.Instance.GetCharacterState(character.Owner);
 
-                if (indexer == null) return;
-                var characterItems = (KartSelectionItem[])indexer.Invoke(items, [0]);
-
-                foreach (KartSelectionItem item in characterItems)
-                {
-                    CharacterCarac character = (CharacterCarac)item.IconCarac;
-                    UnlockableItemSate state = Singleton<GameSaveManager>.Instance.GetCharacterState(character.Owner);
-
-                    bool isUnlocked = state is UnlockableItemSate.UNLOCKED or UnlockableItemSate.NEWUNLOCKED;
-                    item.SetLock(!isUnlocked);
-                }
+                bool isUnlocked = state is UnlockableItemSate.UNLOCKED or UnlockableItemSate.NEWUNLOCKED;
+                item.SetLock(!isUnlocked);
             }
         }
 
         private static void UpdateKartUnlocks(KartSelectionNavigation instance, EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> items)
         {
-            if (items != null)
+            if (items == null) return;
+            MethodInfo indexer = items.GetType().GetMethod(
+                "get_Item",
+                BindingFlags.Public | BindingFlags.Instance,
+                null,
+                [typeof(int)],
+                null
+            );
+
+            if (indexer == null) return;
+            var kartItems = (KartSelectionItem[])indexer.Invoke(items, [1]);
+
+            foreach (KartSelectionItem item in kartItems)
             {
-                MethodInfo indexer = items.GetType().GetMethod(
-                    "get_Item",
-                    BindingFlags.Public | BindingFlags.Instance,
-                    null,
-                    [typeof(int)],
-                    null
-                );
+                KartCarac kart = (KartCarac)item.IconCarac;
+                UnlockableItemSate state = Singleton<GameSaveManager>.Instance.GetKartState(kart.Owner);
 
-                if (indexer == null) return;
-                var kartItems = (KartSelectionItem[])indexer.Invoke(items, [1]);
-
-                foreach (KartSelectionItem item in kartItems)
-                {
-                    KartCarac kart = (KartCarac)item.IconCarac;
-                    UnlockableItemSate state = Singleton<GameSaveManager>.Instance.GetKartState(kart.Owner);
-
-                    bool isUnlocked = (state == UnlockableItemSate.UNLOCKED || state == UnlockableItemSate.NEWUNLOCKED);
-                    item.SetLock(!isUnlocked);
-                }
+                bool isUnlocked = (state == UnlockableItemSate.UNLOCKED || state == UnlockableItemSate.NEWUNLOCKED);
+                item.SetLock(!isUnlocked);
             }
         }
     }
@@ -1012,6 +977,7 @@ namespace GarfieldKartAPMod.Patches
                 ArchipelagoGoalManager.CheckAndCompleteGoal();
             }
 
+            // ReSharper disable once InvertIf
             if (gameMode == E_GameModeType.CHAMPIONSHIP && nbFirstPlace == 4)
             {
                 var spoilerLocs = ArchipelagoConstants.GetSpoilerLocs(cup, difficulty);

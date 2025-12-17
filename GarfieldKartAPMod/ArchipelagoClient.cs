@@ -117,12 +117,10 @@ namespace GarfieldKartAPMod
 
         public void SendLocation(long locationId)
         {
-            if (IsConnected)
-            {
-                ArchipelagoItemTracker.AddCheckedLocation(locationId);
-                session.Locations.CompleteLocationChecks(locationId);
-                Log.Message($"Sent location check: {locationId}");
-            }
+            if (!IsConnected) return;
+            ArchipelagoItemTracker.AddCheckedLocation(locationId);
+            session.Locations.CompleteLocationChecks(locationId);
+            Log.Message($"Sent location check: {locationId}");
         }
 
         public string GetSlotDataValue(string key)
