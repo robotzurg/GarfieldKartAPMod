@@ -34,11 +34,6 @@ namespace GarfieldKartAPMod
                 writer.WriteLine(track);
             }
             Debug.Log($"AP TimeTrial file written to: {path}");
-
-            //if (notificationDisplay != null)
-            //{
-            //    notificationDisplay.ShowNotification($"Time trial completed: {track}");
-            //}
         }
 
         // Save the last used connection info to disk. Overwrites each time, so it's the default on the next run.

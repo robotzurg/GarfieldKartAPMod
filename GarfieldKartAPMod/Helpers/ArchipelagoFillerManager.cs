@@ -128,9 +128,6 @@ namespace GarfieldKartAPMod.Helpers
 
         public static void LoadFillerFromReceivedItems(List<ItemInfo> itemList)
         {
-            // Hi Jeff, I'll be honest I'm feeling a little dizzy while writing this so this function is going to be written
-            // especially poorly and I'd really appreciate if you could rewrite it.
-            // ~Felucia
             Queue<ActiveFillerItem> fillerSaveData = LoadFiller();
 
             // Filter out non trap or filler items from the items
@@ -157,9 +154,6 @@ namespace GarfieldKartAPMod.Helpers
             }
 
             // Create a list of remaining items and shuffle it
-            // this should technically be in order of received traps
-            // but it really doesn't matter and this is way cleaner than the code I had.
-            // If you don't like it, revert the commit that added this comment.
             List<long> remainingItemIDs = [];
             foreach (long id in fillerItemCounts.Keys)
             {
@@ -176,6 +170,7 @@ namespace GarfieldKartAPMod.Helpers
                 fillerQueue.Enqueue(GetFillerById(id));
             }
         }
+        
         public static Queue<ActiveFillerItem> LoadFiller()
         {
             var queue = new Queue<ActiveFillerItem>();
