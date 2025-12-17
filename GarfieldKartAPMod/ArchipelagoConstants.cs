@@ -652,6 +652,8 @@ namespace GarfieldKartAPMod
             }
         }
 
+
+
         public static long GetPuzzlePiece(string startScene, int puzzleIndex)
         {
             switch (startScene)
