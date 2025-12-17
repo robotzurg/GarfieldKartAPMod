@@ -3,15 +3,12 @@ using BepInEx;
 using BepInEx.Configuration;
 using GarfieldKartAPMod.Helpers;
 using HarmonyLib;
-using Rewired;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using static Aube.BasePlayerHandle;
 using static MenuHDTrackSelection;
 
 #if DEBUG
@@ -20,13 +17,13 @@ using UnityHotReloadNS;
 
 namespace GarfieldKartAPMod
 {
-    [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
+    [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
     public class GarfieldKartAPMod : BaseUnityPlugin
     {
-        public const string PluginGUID = PluginAuthor + "." + PluginName;
-        public const string PluginAuthor = "Jeffdev";
-        public const string PluginName = "GarfieldKartAPMod";
-        public const string PluginVersion = "0.4.0";
+        private const string PluginGuid = PluginAuthor + "." + PluginName;
+        private const string PluginAuthor = "Jeffdev";
+        private const string PluginName = "GarfieldKartAPMod";
+        private const string PluginVersion = "0.5.0";
 
         public static ConfigEntry<int> notificationTime;
 
@@ -34,7 +31,7 @@ namespace GarfieldKartAPMod
         public static Dictionary<string, object> sessionSlotData;
         public static ArchipelagoClient APClient { get; private set; }
         private static GameObject uiObject;
-        private static bool uiCreated = false;
+        private static bool uiCreated;
         private static NotificationDisplay notificationDisplay;
         private FileWriter fileWriter;
 
@@ -101,7 +98,7 @@ namespace GarfieldKartAPMod
 
         private void ApplyPatches()
         {
-            harmony = new Harmony(PluginGUID);
+            harmony = new Harmony(PluginGuid);
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
 
@@ -197,19 +194,19 @@ namespace GarfieldKartAPMod.Patches
             {
                 var buttonsType = buttonsArray.GetType();
                 var lengthProp = buttonsType.GetProperty("Length");
-                var indexerProp = buttonsType.GetProperty("Item", new Type[] { typeof(int) });
+                var indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
+                if (lengthProp == null) return;
                 int length = (int)lengthProp.GetValue(buttonsArray);
 
                 foreach (int i in indices)
                 {
                     if (i >= length) continue;
 
-                    var button = indexerProp.GetValue(buttonsArray, new object[] { i }) as BetterButton;
-                    if (button != null)
-                    {
-                        button.interactable = false;
-                        Log.Info($"Disabled button at index {i}");
-                    }
+                    if (indexerProp == null) continue;
+                    var button = indexerProp.GetValue(buttonsArray, [i]) as BetterButton;
+                    if (button == null) continue;
+                    button.interactable = false;
+                    Log.Info($"Disabled button at index {i}");
                 }
             }
             catch (Exception ex)
@@ -226,37 +223,38 @@ namespace GarfieldKartAPMod.Patches
 
                 // Get Length property
                 var lengthProp = buttonsType.GetProperty("Length");
+                if (lengthProp == null) return;
                 int length = (int)lengthProp.GetValue(m_buttons);
 
                 // Get the indexer with specific parameters (int index)
-                var indexerProp = buttonsType.GetProperty("Item", new Type[] { typeof(int) });
+                var indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
 
                 for (int i = 0; i < length; i++)
                 {
-                    var button = indexerProp.GetValue(m_buttons, new object[] { i }) as BetterButton;
-                    if (button == null) continue;
-
-                    if (i == 4)
+                    if (indexerProp != null)
                     {
-                        button.gameObject.SetActive(false);
-                        continue; // Skip the last button
+                        var button = indexerProp.GetValue(m_buttons, [i]) as BetterButton;
+                        if (button == null) continue;
+
+                        if (i == 4)
+                        {
+                            button.gameObject.SetActive(false);
+                            continue; // Skip the last button
+                        }
+
+                        int raceId = 4 * currentCupIndex + i; // Race IDs
+                    
+                        if (!ArchipelagoItemTracker.HasRace(raceId))
+                        {
+                            button.interactable = false;
+                            continue;
+                        }
+
+                        button.interactable = true;
+                        GkEventSystem.Current.SelectButton(button);
                     }
-
-                    int raceId = 4 * currentCupIndex + i; // Race IDs
-                    bool randomizeCups = ArchipelagoHelper.IsCupsRandomized();
-                    bool randomizeRaces = ArchipelagoHelper.IsRacesRandomized();
-
-
-                    if (!ArchipelagoItemTracker.HasRace(raceId))
-                    {
-                        button.interactable = false;
-                        continue;
-                    }
-
-                    button.interactable = true;
-                    GkEventSystem.Current.SelectButton(button);
-                    if (instance is MenuHDTrackSelection)
-                        (instance as MenuHDTrackSelection).UpdateRacesButtons(currentCupIndex);
+                    if (instance is MenuHDTrackSelection selection)
+                        selection.UpdateRacesButtons(currentCupIndex);
                 }
             }
             catch (Exception ex)
@@ -409,12 +407,10 @@ namespace GarfieldKartAPMod.Patches
                 return true;
             }
 
-            string text = "";
-
             for (int i = 0; i < ___m_itemsButtons.Count - 1; i++)
             {
                 ___m_itemsButtons[i].ChangeBackground(PlayerGameEntities.ChampionShipDataList[cup].Sprites[i]);
-                text = Singleton<GameConfigurator>.Instance.ChampionShipData.Tracks[i];
+                var text = Singleton<GameConfigurator>.Instance.ChampionShipData.Tracks[i];
                 int puzzleCount = ArchipelagoItemTracker.GetPuzzlePieceCount(text);
                 ___m_itemsButtons[i].UpdatePuzzleText(puzzleCount);
                 ___m_itemsButtons[i].UpdateTimeTrialText(text);
@@ -423,7 +419,7 @@ namespace GarfieldKartAPMod.Patches
             if (___m_currentSelectedButton != 4 && ___m_hasFinishedEntering)
             {
                 var method = AccessTools.Method(typeof(MenuHDTrackSelection), "UpdateTimeTrialValues");
-                method.Invoke(__instance, new object[] { ___m_currentSelectedButton });
+                method.Invoke(__instance, [___m_currentSelectedButton]);
             }
 
             if (___m_currentSelectedButton < Singleton<GameConfigurator>.Instance.ChampionShipData.TracksName.Length)
@@ -658,8 +654,7 @@ namespace GarfieldKartAPMod.Patches
             }
 
             var pieceData = piece.Split('_');
-            int pieceIndex;
-            Int32.TryParse(pieceData[1], out pieceIndex);
+            Int32.TryParse(pieceData[1], out var pieceIndex);
 
             __result = ArchipelagoItemTracker.HasItem(
                 ArchipelagoConstants.GetPuzzlePiece(pieceData[0], pieceIndex));
@@ -726,6 +721,7 @@ namespace GarfieldKartAPMod.Patches
                     null
                 );
 
+                if (indexer == null) return;
                 var characterItems = (KartSelectionItem[])indexer.Invoke(items, [0]);
 
                 foreach (KartSelectionItem item in characterItems)
@@ -751,6 +747,7 @@ namespace GarfieldKartAPMod.Patches
                     null
                 );
 
+                if (indexer == null) return;
                 var kartItems = (KartSelectionItem[])indexer.Invoke(items, [1]);
 
                 foreach (KartSelectionItem item in kartItems)
@@ -779,14 +776,7 @@ namespace GarfieldKartAPMod.Patches
             long charItemId = 301 + (long)character; // Character IDs start at 301
             Log.Info($"{character}, {charItemId}");
 
-            if (ArchipelagoItemTracker.HasItem(charItemId))
-            {
-                __result = UnlockableItemSate.UNLOCKED;
-            }
-            else
-            {
-                __result = UnlockableItemSate.LOCKED;
-            }
+            __result = ArchipelagoItemTracker.HasItem(charItemId) ? UnlockableItemSate.UNLOCKED : UnlockableItemSate.LOCKED;
 
             return false;
         }
@@ -805,14 +795,7 @@ namespace GarfieldKartAPMod.Patches
 
             long kartItemId = 351 + (long)kart; // Kart IDs start at 351
 
-            if (ArchipelagoItemTracker.HasItem(kartItemId))
-            {
-                __result = UnlockableItemSate.UNLOCKED;
-            }
-            else
-            {
-                __result = UnlockableItemSate.LOCKED;
-            }
+            __result = ArchipelagoItemTracker.HasItem(kartItemId) ? UnlockableItemSate.UNLOCKED : UnlockableItemSate.LOCKED;
 
             return false;
         }
@@ -846,7 +829,7 @@ namespace GarfieldKartAPMod.Patches
             if (!hatRando || !ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
 
-            if (ArchipelagoItemTracker.HasItem(hatItemId) && hatRando && !hatProgressive)
+            if (ArchipelagoItemTracker.HasItem(hatItemId) && !hatProgressive)
             {
                 __result = UnlockableItemSate.UNLOCKED;
             }
@@ -892,7 +875,7 @@ namespace GarfieldKartAPMod.Patches
 
             long customItemId = ArchipelagoConstants.GetSpoilerItemId(custom, spoilerProgressive);
 
-            if (ArchipelagoItemTracker.HasItem(customItemId) && spoilerRando && !spoilerProgressive)
+            if (ArchipelagoItemTracker.HasItem(customItemId) && !spoilerProgressive)
             {
                 __result = UnlockableItemSate.UNLOCKED;
             } 
@@ -1024,7 +1007,7 @@ namespace GarfieldKartAPMod.Patches
                 Difficulty medalDiff = (Difficulty)((int)difficulty - 1);
 
                 var hatLocs = ArchipelagoConstants.GetHatLocs(track, medalDiff);
-                foreach (var loc in hatLocs)
+                foreach (long loc in hatLocs)
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
@@ -1036,7 +1019,7 @@ namespace GarfieldKartAPMod.Patches
             if (gameMode == E_GameModeType.CHAMPIONSHIP && nbFirstPlace == 4)
             {
                 var spoilerLocs = ArchipelagoConstants.GetSpoilerLocs(cup, difficulty);
-                foreach (var loc in spoilerLocs)
+                foreach (long loc in spoilerLocs)
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
