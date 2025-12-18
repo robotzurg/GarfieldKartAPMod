@@ -36,6 +36,55 @@ namespace GarfieldKartAPMod
             Debug.Log($"AP TimeTrial file written to: {path}");
         }
 
+        public void WriteFillerData(string data)
+        {
+            if (GarfieldKartAPMod.APClient == null || !GarfieldKartAPMod.APClient.IsConnected)
+                return;
+
+            ArchipelagoSession session = GarfieldKartAPMod.APClient.GetSession();
+            if (session == null)
+                return;
+
+            string sessionSeed = session.RoomState.Seed;
+            string path = Application.persistentDataPath + $"/{sessionSeed}_filler.txt";
+
+            try
+            {
+                File.WriteAllText(path, data);
+                Debug.Log($"AP Filler file written to: {path}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to write filler data: {ex.Message}");
+            }
+        }
+
+        public string ReadFillerData()
+        {
+            if (GarfieldKartAPMod.APClient == null || !GarfieldKartAPMod.APClient.IsConnected)
+                return string.Empty;
+
+            ArchipelagoSession session = GarfieldKartAPMod.APClient.GetSession();
+            if (session == null)
+                return string.Empty;
+
+            string sessionSeed = session.RoomState.Seed;
+            string path = Application.persistentDataPath + $"/{sessionSeed}_filler.txt";
+
+            if (!File.Exists(path))
+                return string.Empty;
+
+            try
+            {
+                return File.ReadAllText(path);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"Failed to read filler data: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
         // Save the last used connection info to disk. Overwrites each time, so it's the default on the next run.
         public void WriteLastConnection(string host, int port, string slotName, string password)
         {

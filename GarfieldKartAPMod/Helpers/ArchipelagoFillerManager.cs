@@ -175,11 +175,16 @@ namespace GarfieldKartAPMod.Helpers
         {
             var queue = new Queue<ActiveFillerItem>();
 
-            // TODO: Actually load a string instead of just initialising an empty string.
-            const string saveDataString = "";
+            var fw = UnityEngine.Object.FindObjectOfType<FileWriter>();
+            if (fw == null) return queue;
+            
+            string saveDataString = fw.ReadFillerData();
+            if (string.IsNullOrEmpty(saveDataString)) return queue;
+            
             string[] saveData = saveDataString.Split(',');
             foreach (string entry in saveData)
             {
+                if (string.IsNullOrEmpty(entry)) continue;
                 string[] parts = entry.Split('-');
 
                 ActiveFillerItem item = new ActiveFillerItem
@@ -207,7 +212,12 @@ namespace GarfieldKartAPMod.Helpers
             saveData.AddRange(activeFiller.Select(activeFillerItem => $"{activeFillerItem.Item.Id}-{activeFillerItem.RemainingRaces}"));
 
             string saveDataString = string.Join(",", saveData);
-            // TODO: Actually saving this is not implemented yet! 
+            
+            var fw = UnityEngine.Object.FindObjectOfType<FileWriter>();
+            if (fw != null)
+            {
+                fw.WriteFillerData(saveDataString);
+            }
         }
     }
 }

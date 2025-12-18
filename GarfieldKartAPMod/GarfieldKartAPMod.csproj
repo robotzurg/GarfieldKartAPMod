@@ -18,6 +18,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="UnityEngine.Modules" Version="6000.4.0-beta.2">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<Reference Include="System.Numerics" />
 		<Reference Include="UnityHotReload">
 		  <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\GarfieldKartFuriousRacing\profiles\Default\BepInEx\plugins\xiaoxiao921-UnityHotReload\UnityHotReload.dll</HintPath>
@@ -25,7 +29,14 @@
 		<PackageReference Include="Archipelago.MultiClient.Net" Version="6.7.0" />
 		<PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
 		<PackageReference Include="BepInEx.Core" Version="5.*" />
-		<PackageReference Include="GarfieldKartFR.GameLibs" Version="1.0.1" IncludeAssets="compile" />
+		<PackageReference Include="Krafs.Publicizer" Version="2.3.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<Reference Include="C:\Program Files (x86)\Steam\steamapps\common\Garfield Kart - Furious Racing\Garfield Kart Furious Racing_Data\Managed\*.dll">
+			<HintPath>%(Identity)</HintPath>
+			<Private>False</Private>
+		</Reference>
 
 	</ItemGroup>
 

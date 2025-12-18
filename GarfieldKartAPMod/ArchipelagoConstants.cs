@@ -451,60 +451,6 @@ namespace GarfieldKartAPMod
         public const long ITEM_UNLOCK_APPRENTICE_SORCERER = 435;
         public const long ITEM_UNLOCK_MULE_HEAD = 436;
 
-        // Bronze Hat Items (441-456)
-        public const long ITEM_BEDDY_BYE_CAP_BRONZE = 441;
-        public const long ITEM_WHIZZY_WIZARD_BRONZE = 442;
-        public const long ITEM_TIC_TOQUE_BRONZE = 443;
-        public const long ITEM_ELASTO_HAT_BRONZE = 444;
-        public const long ITEM_CHEFS_SPECIAL_BRONZE = 445;
-        public const long ITEM_CUTIE_PIE_CROWN_BRONZE = 446;
-        public const long ITEM_VIKING_HELMET_BRONZE = 447;
-        public const long ITEM_STINK_O_RAMA_BRONZE = 448;
-        public const long ITEM_SPACE_BUBBLE_BRONZE = 449;
-        public const long ITEM_PIZZAIOLO_HAT_BRONZE = 450;
-        public const long ITEM_BUNNY_BAND_BRONZE = 451;
-        public const long ITEM_JOE_MONTAGNA_BRONZE = 452;
-        public const long ITEM_ARISTO_CATIC_BICORN_BRONZE = 453;
-        public const long ITEM_TOUTANKHAMEOW_BRONZE = 454;
-        public const long ITEM_APPRENTICE_SORCERER_BRONZE = 455;
-        public const long ITEM_MULE_HEAD_BRONZE = 456;
-
-        // Silver Hat Items (461-476)
-        public const long ITEM_BEDDY_BYE_CAP_SILVER = 461;
-        public const long ITEM_WHIZZY_WIZARD_SILVER = 462;
-        public const long ITEM_TIC_TOQUE_SILVER = 463;
-        public const long ITEM_ELASTO_HAT_SILVER = 464;
-        public const long ITEM_CHEFS_SPECIAL_SILVER = 465;
-        public const long ITEM_CUTIE_PIE_CROWN_SILVER = 466;
-        public const long ITEM_VIKING_HELMET_SILVER = 467;
-        public const long ITEM_STINK_O_RAMA_SILVER = 468;
-        public const long ITEM_SPACE_BUBBLE_SILVER = 469;
-        public const long ITEM_PIZZAIOLO_HAT_SILVER = 470;
-        public const long ITEM_BUNNY_BAND_SILVER = 471;
-        public const long ITEM_JOE_MONTAGNA_SILVER = 472;
-        public const long ITEM_ARISTO_CATIC_BICORN_SILVER = 473;
-        public const long ITEM_TOUTANKHAMEOW_SILVER = 474;
-        public const long ITEM_APPRENTICE_SORCERER_SILVER = 475;
-        public const long ITEM_MULE_HEAD_SILVER = 476;
-
-        // Gold Hat Items (481-496)
-        public const long ITEM_BEDDY_BYE_CAP_GOLD = 481;
-        public const long ITEM_WHIZZY_WIZARD_GOLD = 482;
-        public const long ITEM_TIC_TOQUE_GOLD = 483;
-        public const long ITEM_ELASTO_HAT_GOLD = 484;
-        public const long ITEM_CHEFS_SPECIAL_GOLD = 485;
-        public const long ITEM_CUTIE_PIE_CROWN_GOLD = 486;
-        public const long ITEM_VIKING_HELMET_GOLD = 487;
-        public const long ITEM_STINK_O_RAMA_GOLD = 488;
-        public const long ITEM_SPACE_BUBBLE_GOLD = 489;
-        public const long ITEM_PIZZAIOLO_HAT_GOLD = 490;
-        public const long ITEM_BUNNY_BAND_GOLD = 491;
-        public const long ITEM_JOE_MONTAGNA_GOLD = 492;
-        public const long ITEM_ARISTO_CATIC_BICORN_GOLD = 493;
-        public const long ITEM_TOUTANKHAMEOW_GOLD = 494;
-        public const long ITEM_APPRENTICE_SORCERER_GOLD = 495;
-        public const long ITEM_MULE_HEAD_GOLD = 496;
-
         // Progressive Spoiler Unlocks (501-508)
         public const long ITEM_PROGRESSIVE_BOMBASTIC_SPOILER = 501;
         public const long ITEM_PROGRESSIVE_WHACKY_SPOILER = 502;
@@ -524,36 +470,6 @@ namespace GarfieldKartAPMod
         public const long ITEM_UNLOCK_SHIMMERING_SPOILER = 526;
         public const long ITEM_UNLOCK_HOLEY_MOLEY_SPOILER = 527;
         public const long ITEM_UNLOCK_STAINED_SPOILER = 528;
-
-        // Bronze Spoiler Items (541-548)
-        public const long ITEM_BOMBASTIC_SPOILER_BRONZE = 541;
-        public const long ITEM_WHACKY_SPOILER_BRONZE = 542;
-        public const long ITEM_SUPERFIT_SPOILER_BRONZE = 543;
-        public const long ITEM_CYCLOBONE_SPOILER_BRONZE = 544;
-        public const long ITEM_FOXY_SPOILER_BRONZE = 545;
-        public const long ITEM_SHIMMERING_SPOILER_BRONZE = 546;
-        public const long ITEM_HOLEY_MOLEY_SPOILER_BRONZE = 547;
-        public const long ITEM_STAINED_SPOILER_BRONZE = 548;
-
-        // Silver Spoiler Items (561-568)
-        public const long ITEM_BOMBASTIC_SPOILER_SILVER = 561;
-        public const long ITEM_WHACKY_SPOILER_SILVER = 562;
-        public const long ITEM_SUPERFIT_SPOILER_SILVER = 563;
-        public const long ITEM_CYCLOBONE_SPOILER_SILVER = 564;
-        public const long ITEM_FOXY_SPOILER_SILVER = 565;
-        public const long ITEM_SHIMMERING_SPOILER_SILVER = 566;
-        public const long ITEM_HOLEY_MOLEY_SPOILER_SILVER = 567;
-        public const long ITEM_STAINED_SPOILER_SILVER = 568;
-
-        // Gold Spoiler Items (581-588)
-        public const long ITEM_BOMBASTIC_SPOILER_GOLD = 581;
-        public const long ITEM_WHACKY_SPOILER_GOLD = 582;
-        public const long ITEM_SUPERFIT_SPOILER_GOLD = 583;
-        public const long ITEM_CYCLOBONE_SPOILER_GOLD = 584;
-        public const long ITEM_FOXY_SPOILER_GOLD = 585;
-        public const long ITEM_SHIMMERING_SPOILER_GOLD = 586;
-        public const long ITEM_HOLEY_MOLEY_SPOILER_GOLD = 587;
-        public const long ITEM_STAINED_SPOILER_GOLD = 588;
 
         // Item Box Randomizer Items (901-909)
         public const long ITEM_PIE = 901;
