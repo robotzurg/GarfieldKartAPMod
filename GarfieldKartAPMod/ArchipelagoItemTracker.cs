@@ -185,35 +185,45 @@ namespace GarfieldKartAPMod
 
             bool raceRando = ArchipelagoHelper.IsRacesRandomized();
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
-
-            if (!raceRando)
+            
+            if (cupRando && !raceRando)
             {
-                // If races aren't randomized, they are accessible if the cup is accessible
                 return HasCup(cupId);
             }
             
             long raceItemId = ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD + raceId;
             bool hasRaceItem = HasItem(raceItemId);
 
-            if (!cupRando) 
-                return hasRaceItem;
-            
-            return hasRaceItem && HasCup(cupId);
+            if (ArchipelagoHelper.IsRacesAndCupsRandomized())
+            {
+                return hasRaceItem && HasCup(cupId);
+            }
+
+            return hasRaceItem;
         }
 
         public static bool HasCup(int cupId)
         {
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
-            if (!cupRando) 
-                return true;
-
-            if (ArchipelagoHelper.IsProgressiveCupsEnabled())
+            bool raceRando = ArchipelagoHelper.IsRacesRandomized();
+            
+            if (raceRando && !cupRando)
             {
-                return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
+                return HasAllRacesInCup(cupId);
             }
 
-            long cupItemId = ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA + cupId;
-            return HasItem(cupItemId);
+            if (cupRando)
+            {
+                if (ArchipelagoHelper.IsProgressiveCupsEnabled())
+                {
+                    return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
+                }
+
+                long cupItemId = ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA + cupId;
+                return HasItem(cupItemId);
+            }
+            
+            return true;
         }
 
         public static bool CanAccessCup(int cupId)
@@ -221,19 +231,11 @@ namespace GarfieldKartAPMod
             if (!HasCup(cupId)) 
                 return false;
 
-            int startRaceId = cupId * 4;
-            for (int i = 0; i < 4; i++)
-            {
-                if (!HasRace(startRaceId + i)) 
-                    return false;
-            }
-            
-            return true;
+            return HasAllRacesInCup(cupId);
         }
 
-        public static bool HasRaceInCup(long cupItemId)
+        public static bool HasRaceInCup(int cupId)
         {
-            int cupId = (int)(cupItemId - ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA); 
             int startRaceId = cupId * 4;
 
             for (int i = 0; i < 4; i++)
@@ -245,9 +247,8 @@ namespace GarfieldKartAPMod
             return false;
         }
 
-        public static bool HasAllRacesInCup(long cupItemId)
+        public static bool HasAllRacesInCup(int cupId)
         {
-            int cupId = (int)(cupItemId - ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA);
             int startRaceId = cupId * 4;
 
             for (int i = 0; i < 4; i++)

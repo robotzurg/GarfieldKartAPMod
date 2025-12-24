@@ -346,7 +346,7 @@ namespace GarfieldKartAPMod.Patches
             for (int i = 0; i < tabs.Length; i++)
             {
                 bool activateButton = false;
-                bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i + (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA);
+                bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i);
 
                 if ((gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i)) || (gameMode is E_GameModeType.SINGLE or E_GameModeType.TIME_TRIAL && hasRaceInCup))
                     activateButton = true;
