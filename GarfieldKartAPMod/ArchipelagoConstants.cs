@@ -484,6 +484,7 @@ namespace GarfieldKartAPMod
 
         // Filler Items (1000+)
         public const long ITEM_FILLER = 1000;
+        public const long ITEM_GIVE_ITEM_FILLER = 1001;
 
         // Trap Items (1500+)
         public const long ITEM_TRAP = 1500;

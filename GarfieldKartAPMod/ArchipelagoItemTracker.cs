@@ -24,7 +24,7 @@ namespace GarfieldKartAPMod
         public static void AddReceivedItem(long itemId)
         {
             receivedItems.AddOrUpdate(itemId, 1, (_, existing) => existing + 1);
-            ArchipelagoFillerManager.TryQueueFiller(itemId);
+            // ArchipelagoFillerManager.TryQueueFiller(itemId);
         }
 
         public static bool HasItem(long itemId)
@@ -87,7 +87,7 @@ namespace GarfieldKartAPMod
                     }
 
                     // Throw all the received items into the filler manager to load the state.
-                    ArchipelagoFillerManager.LoadFillerFromReceivedItems(itemsList);
+                    // ArchipelagoFillerManager.LoadFillerFromReceivedItems(itemsList);
                 }
 
                 // Load locations
@@ -117,24 +117,16 @@ namespace GarfieldKartAPMod
 
         public static int GetCupVictoryCount()
         {
-            var cupVictories = new List<long>
-            {
-                ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY,
-                ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY,
-                ArchipelagoConstants.LOC_BURGER_CUP_VICTORY,
-                ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY
-            };
-
-            return cupVictories.Count(HasLocation);
+            return (int)checkedLocations.Keys.Count(loc => loc >= ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY && loc <= ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY);
         }
 
         public static int GetRaceVictoryCount()
         {
+            const long startPos = ArchipelagoConstants.LOC_CATZ_IN_THE_HOOD_VICTORY;
             int count = 0;
-
             for (int i = 0; i < 16; i++)
             {
-                if (HasLocation(i))
+                if (HasLocation(startPos + i))
                 {
                     count++;
                 }
@@ -188,96 +180,83 @@ namespace GarfieldKartAPMod
 
         public static bool HasRace(int raceId)
         {
-            // TODO: If we ever randomize which races are in which cups, this cupId -> raceId conversion will stop working
+            // raceId is 0-15
             int cupId = raceId / 4;
 
             bool raceRando = ArchipelagoHelper.IsRacesRandomized();
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
-            bool cupAndRaceRando = ArchipelagoHelper.IsRacesAndCupsRandomized();
 
             if (!raceRando)
             {
-                if (!cupRando) // This can never happen in settings but should be true if not connected
-                    return true;
-
+                // If races aren't randomized, they are accessible if the cup is accessible
                 return HasCup(cupId);
             }
             
-            var baseRaceId = ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD;
-            var raceItemId = baseRaceId + raceId;
+            long raceItemId = ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD + raceId;
+            bool hasRaceItem = HasItem(raceItemId);
 
-            bool hasRace = HasItem(raceItemId);
-
-            if (!cupRando) return hasRace;
-            if (cupAndRaceRando) return hasRace;
+            if (!cupRando) 
+                return hasRaceItem;
             
-            return hasRace && HasCup(cupId);
+            return hasRaceItem && HasCup(cupId);
         }
 
         public static bool HasCup(int cupId)
         {
-            Log.Message($"Checking cup access for {cupId}");
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
-            bool cupAndRaceRando = ArchipelagoHelper.IsRacesAndCupsRandomized();
-
-            Log.Message($"Cup randomizer is {cupRando}");
             if (!cupRando) 
                 return true;
 
-            bool progressiveCups = ArchipelagoHelper.IsProgressiveCupsEnabled();
-
-            Log.Message($"Progressive cups are {progressiveCups}");
-            if (progressiveCups)
+            if (ArchipelagoHelper.IsProgressiveCupsEnabled())
             {
-                if (cupAndRaceRando)
-                    return HasAllRacesInCup(cupId + (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA) && AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
                 return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
             }
 
-            var baseCupId = ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA;
-            var cupItemId = baseCupId + cupId;
-
-            Log.Message($"Cup item ID: {cupItemId}");
-            Log.Message($"Item present: {HasItem(cupItemId)}");
+            long cupItemId = ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA + cupId;
             return HasItem(cupItemId);
         }
 
         public static bool CanAccessCup(int cupId)
         {
-            if (!HasCup(cupId)) return false;
+            if (!HasCup(cupId)) 
+                return false;
 
-            for (int raceId = cupId * 4; raceId < cupId * 5; raceId++)
+            int startRaceId = cupId * 4;
+            for (int i = 0; i < 4; i++)
             {
-                if (!HasRace(raceId)) return false;
+                if (!HasRace(startRaceId + i)) 
+                    return false;
             }
+            
             return true;
         }
 
-        public static bool HasRaceInCup(int cupItemId)
+        public static bool HasRaceInCup(long cupItemId)
         {
-            int cupId = cupItemId - (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA; // Convert 201-204 to 0-3
-            int startRaceId = cupId * 4; // 0, 4, 8, 12
+            int cupId = (int)(cupItemId - ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA); 
+            int startRaceId = cupId * 4;
 
-            for (int raceId = startRaceId; raceId < startRaceId + 4; raceId++)
+            for (int i = 0; i < 4; i++)
             {
-                if (HasRace(raceId)) return true;
+                if (HasRace(startRaceId + i)) 
+                    return true;
             }
 
             return false;
         }
 
-        public static bool HasAllRacesInCup(int cupItemId)
+        public static bool HasAllRacesInCup(long cupItemId)
         {
-            int cupId = cupItemId - (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA; // Convert 201-204 to 0-3
-            int startRaceId = cupId * 4; // 0, 4, 8, 12
-            int raceCount = 0;
+            int cupId = (int)(cupItemId - ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA);
+            int startRaceId = cupId * 4;
 
-            for (int raceId = startRaceId; raceId < startRaceId + 4; raceId++)
+            for (int i = 0; i < 4; i++)
             {
-                if (HasRace(raceId)) raceCount++;
+                if (!HasRace(startRaceId + i)) 
+                    return false;
             }
 
-            return raceCount == 4;
+            return true;
         }
 
         public static int GetPuzzlePieceCount(string startScene)
@@ -297,30 +276,14 @@ namespace GarfieldKartAPMod
             return count;
         }
 
-        public static int GetPuzzleLocationCount(string startScene)
-        {
-            long basePuzzlePieceId = ArchipelagoConstants.GetPuzzlePieceLoc(startScene, 0);
-            if (basePuzzlePieceId == -1)
-                return 0;
-
-            int count = 0;
-            for (int i = 0; i < 3; i++)
-            {
-                if (HasLocation(basePuzzlePieceId + i))
-                {
-                    count++;
-                }
-            }
-            return count;
-        }
-
         public static int GetOverallPuzzlePieceCount()
         {
+            const long startingId = ArchipelagoConstants.ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1;
             int count = 0;
-            int startingIndex = (int)ArchipelagoConstants.ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1;
-            for (int i = startingIndex; i < startingIndex + 48; i++)
+            for (int i = 0; i < 48; i++)
             {
-                if (HasItem(i)) count++;
+                if (HasItem(startingId + i)) 
+                    count++;
             }
 
             return count;

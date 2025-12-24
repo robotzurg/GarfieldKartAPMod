@@ -23,7 +23,7 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "0.5.0";
+        private const string PluginVersion = "0.4.2";
 
         public static ConfigEntry<int> notificationTime;
 
@@ -209,7 +209,7 @@ namespace GarfieldKartAPMod.Patches
             }
         }
 
-        public static void DisableLockedRaceButtons(object instance, object m_buttons, int currentCupIndex)
+        public static void DisableLockedRaceButtons(object instance, object m_buttons, int currentCupId)
         {
             try
             {
@@ -236,7 +236,7 @@ namespace GarfieldKartAPMod.Patches
                             continue; // Skip the last button
                         }
 
-                        int raceId = 4 * currentCupIndex + i; // Race IDs
+                        int raceId = 4 * currentCupId + i; // Race IDs
                     
                         if (!ArchipelagoItemTracker.HasRace(raceId))
                         {
@@ -248,7 +248,7 @@ namespace GarfieldKartAPMod.Patches
                         GkEventSystem.Current.SelectButton(button);
                     }
                     if (instance is MenuHDTrackSelection selection)
-                        selection.UpdateRacesButtons(currentCupIndex);
+                        selection.UpdateRacesButtons(currentCupId);
                 }
             }
             catch (Exception ex)
@@ -338,7 +338,7 @@ namespace GarfieldKartAPMod.Patches
             ButtonHelper.DisableLockedRaceButtons(__instance, ___m_buttons, foundTab != -1 ? foundTab : ___m_currentChampionshipIndex);
         }
 
-        private static int SetupCupTabs(EnumArray<TAB, BetterToggle> tabs, int currentChampionshipIndex)
+        private static int SetupCupTabs(EnumArray<TAB, BetterToggle> tabs, int currentChampionshipId)
         {
             int foundTab = -1;
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
@@ -348,7 +348,7 @@ namespace GarfieldKartAPMod.Patches
                 bool activateButton = false;
                 bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i + (int)ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA);
 
-                if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i) || gameMode is E_GameModeType.SINGLE or E_GameModeType.TIME_TRIAL && hasRaceInCup)
+                if ((gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i)) || (gameMode is E_GameModeType.SINGLE or E_GameModeType.TIME_TRIAL && hasRaceInCup))
                     activateButton = true;
 
                 if (!activateButton)
