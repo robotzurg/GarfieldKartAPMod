@@ -186,20 +186,13 @@ namespace GarfieldKartAPMod
             bool raceRando = ArchipelagoHelper.IsRacesRandomized();
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
             
-            if (cupRando && !raceRando)
+            if (cupRando && !raceRando )
             {
                 return HasCup(cupId);
             }
             
             long raceItemId = ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD + raceId;
-            bool hasRaceItem = HasItem(raceItemId);
-
-            if (ArchipelagoHelper.IsRacesAndCupsRandomized())
-            {
-                return hasRaceItem && HasCup(cupId);
-            }
-
-            return hasRaceItem;
+            return HasItem(raceItemId);
         }
 
         public static bool HasCup(int cupId)

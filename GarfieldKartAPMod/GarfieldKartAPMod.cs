@@ -348,8 +348,14 @@ namespace GarfieldKartAPMod.Patches
                 bool activateButton = false;
                 bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i);
 
-                if ((gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i)) || (gameMode is E_GameModeType.SINGLE or E_GameModeType.TIME_TRIAL && hasRaceInCup))
+                if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i))
+                {
                     activateButton = true;
+                }
+                else if ((gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.TIME_TRIAL) && hasRaceInCup)
+                {
+                    activateButton = true;
+                }
 
                 if (!activateButton)
                 {
