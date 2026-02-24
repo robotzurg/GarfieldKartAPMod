@@ -1,10 +1,13 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace GarfieldKartAPMod
 {
     public class ConnectionUI : MonoBehaviour
     {
         private bool showUI = true;
+        private bool m_paused = false;
+
+        private bool NeedsConnection => !(apClient?.IsConnected ?? false);
 #if DEBUG
         private string hostname = "localhost";
         private string slotName = "Jeff-GK";
@@ -86,8 +89,24 @@ namespace GarfieldKartAPMod
 
         private void Update()
         {
-            // Toggle UI with the F1 key
-            if (Input.GetKeyDown(KeyCode.F1))
+            bool needsConn = NeedsConnection;
+
+            if (needsConn && !m_paused)
+            {
+                Time.timeScale = 0f;
+                m_paused = true;
+                showUI = true;
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
+            }
+            else if (!needsConn && m_paused)
+            {
+                Time.timeScale = 1f;
+                m_paused = false;
+            }
+
+            // F1 only works when connected
+            if (!needsConn && Input.GetKeyDown(KeyCode.F1))
             {
                 ToggleUI();
             }
@@ -95,13 +114,16 @@ namespace GarfieldKartAPMod
 
         private void OnGUI()
         {
-            if (!showUI) return;
+            if (!showUI && !NeedsConnection) return;
             // Scale up the GUI
             GUI.skin.label.fontSize = 24;
             GUI.skin.button.fontSize = 24;
             GUI.skin.textField.fontSize = 24;
 
+            Color prevColor = GUI.backgroundColor;
+            GUI.backgroundColor = new Color(1f, 0.5f, 0f);
             windowRect = GUI.Window(0, windowRect, DrawWindow, "Archipelago Connection");
+            GUI.backgroundColor = prevColor;
         }
 
         // ReSharper disable Unity.PerformanceAnalysis

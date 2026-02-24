@@ -129,13 +129,24 @@ namespace GarfieldKartAPMod.Helpers
 
         }
 
+        public static bool IsStatRandomizationEnabled()
+        {
+            string statRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("stat_randomization");
+            return IsTrue(statRandoString);
+        }
+
         internal static int GetLapCount()
         {
+            if (GarfieldKartAPMod.lapCountOverride.Value > 0)
+            {
+                return GarfieldKartAPMod.lapCountOverride.Value;
+            }
+            
             string lapCountString = GarfieldKartAPMod.APClient.GetSlotDataValue("lap_count");
 
             if (lapCountString == null) return 3;
 
-            return !TryParse(lapCountString, out int lapCount) ? throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {lapCountString}") : lapCount;
+            return !TryParse(lapCountString, out int lapCount) ? throw new SlotDataException($"Invalid lap count value passed from slot data: {lapCountString}") : lapCount;
 
         }
     }

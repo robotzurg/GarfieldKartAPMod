@@ -23,9 +23,10 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "0.4.2";
+        private const string PluginVersion = "0.5.0";
 
         public static ConfigEntry<int> notificationTime;
+        public static ConfigEntry<int> lapCountOverride;
 
         private Harmony harmony;
         public static Dictionary<string, object> sessionSlotData;
@@ -39,6 +40,7 @@ namespace GarfieldKartAPMod
         {
 
             notificationTime = Config.Bind("Archipelago", "Server Message On-Screen Time", 3, "How long to show archipelago server messages and checks on the screen, in seconds.");
+            lapCountOverride = Config.Bind("Archipelago", "Lap Count Override", 0, "Override the lap count for races. Set to 0 to use the lap count from Archipelago slot data.");
            
             InitializeLogging();
             InitializeAssemblyResolution();
@@ -480,6 +482,55 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    public static class DrivingCaracStatsRando
+    {
+        // Stat value range for Speed/Acceleration/Maniability.
+        // GkUtils.ComputeStatsModifiers sums kart+character then multiplies by 0.01.
+        // The gauge formula is 0.5 + result, so the combined sum must stay in -50..+50.
+        // With two components (kart and character), each should be in -25..25.
+        private const float StatMin = -25f;
+        private const float StatMax = 25f;
+
+        public static void ApplyAll()
+        {
+            Log.Info($"[StatsRando] ApplyAll called. Connected={ArchipelagoHelper.IsConnectedAndEnabled} CharCount={PlayerGameEntities.CharacterList?.Count} KartCount={PlayerGameEntities.KartList?.Count}");
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (!ArchipelagoHelper.IsStatRandomizationEnabled()) return;
+            string seed = GarfieldKartAPMod.APClient.GetSeed();
+            Log.Info($"[StatsRando] Seed={seed}");
+            if (seed == null) return;
+
+#if DEBUG
+            System.Random debugRng = new System.Random();
+#endif
+            foreach (CharacterCarac character in PlayerGameEntities.CharacterList)
+#if DEBUG
+                ApplyStats(character, seed, "Character", debugRng);
+#else
+                ApplyStats(character, seed, "Character");
+#endif
+            foreach (KartCarac kart in PlayerGameEntities.KartList)
+#if DEBUG
+                ApplyStats(kart, seed, "Kart", debugRng);
+#else
+                ApplyStats(kart, seed, "Kart");
+#endif
+        }
+
+        private static void ApplyStats(DrivingCarac instance, string seed, string label, System.Random rng = null)
+        {
+            if (rng == null)
+            {
+                int rngSeed = (seed.GetHashCode() * 397) ^ (int)instance.Owner;
+                rng = new System.Random(rngSeed);
+            }
+            instance.Speed        = (float)(rng.NextDouble() * (StatMax - StatMin) + StatMin);
+            instance.Acceleration = (float)(rng.NextDouble() * (StatMax - StatMin) + StatMin);
+            instance.Maniability  = (float)(rng.NextDouble() * (StatMax - StatMin) + StatMin);
+            Log.Info($"[StatsRando] {label} {instance.Owner}: spd={instance.Speed:F2} acc={instance.Acceleration:F2} man={instance.Maniability:F2}");
+        }
+    }
+
     [HarmonyPatch(typeof(KartBonusMgr), "SetItem")]
     public class KartBonusMgr_SetItem_Patch
     {
@@ -494,40 +545,49 @@ namespace GarfieldKartAPMod.Patches
 
         }
         
-        static void Postfix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
+        static void Postfix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, ref int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            if (!___m_kart.Driver.IsHuman || !ArchipelagoItemTracker.HasBonusAvailable(bonus)) return;
-            switch (bonus)
+            // Max out quantity EVERY TIME if in hard mode >:)
+            if (GarfieldKartAPMod.APClient.GetSlotDataValue("hard_mode") == "1" && ___m_kart.Driver.IsAi)
             {
-                case BonusCategory.PIE:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PIE);
-                    break;
-                case BonusCategory.AUTOLOCK_PIE:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_HOMING_PIE);
-                    break;
-                case BonusCategory.LASAGNA:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_LASAGNA);
-                    break;
-                case BonusCategory.SPRING:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_SPRING);
-                    break;
-                case BonusCategory.DIAMOND:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_DIAMOND);
-                    break;
-                case BonusCategory.MAGIC:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_MAGIC_WAND);
-                    break;
-                case BonusCategory.NAP:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PILLOW);
-                    break;
-                case BonusCategory.PARFUME:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PERFUME);
-                    break;
-                case BonusCategory.UFO:
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_UFO);
-                    break;
+                Log.Info("HARD MDOE ACTIVATE!!!");
+                iQuantity = 3;
+            }
+
+            if (___m_kart.Driver.IsHuman && ArchipelagoItemTracker.HasBonusAvailable(bonus))
+            {
+                switch (bonus)
+                {
+                    case BonusCategory.PIE:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PIE);
+                        break;
+                    case BonusCategory.AUTOLOCK_PIE:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_HOMING_PIE);
+                        break;
+                    case BonusCategory.LASAGNA:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_LASAGNA);
+                        break;
+                    case BonusCategory.SPRING:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_SPRING);
+                        break;
+                    case BonusCategory.DIAMOND:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_DIAMOND);
+                        break;
+                    case BonusCategory.MAGIC:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_MAGIC_WAND);
+                        break;
+                    case BonusCategory.NAP:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PILLOW);
+                        break;
+                    case BonusCategory.PARFUME:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_PERFUME);
+                        break;
+                    case BonusCategory.UFO:
+                        GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_FIND_ITEM_UFO);
+                        break;
+                }
             }
         }
      }
@@ -678,6 +738,7 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
 
+            DrivingCaracStatsRando.ApplyAll();
             UpdateCharacterUnlocks(__instance, ___m_items);
             UpdateKartUnlocks(__instance, ___m_items);
 
@@ -741,13 +802,13 @@ namespace GarfieldKartAPMod.Patches
             bool charRando = ArchipelagoHelper.IsCharRandomizerEnabled();
             Log.Info($"{charRando} CHARACTER RANDO CHECK");
 
-            if (!charRando || !ArchipelagoHelper.IsConnectedAndEnabled)
+            if (!ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
 
             long charItemId = 301 + (long)character; // Character IDs start at 301
             Log.Info($"{character}, {charItemId}");
 
-            __result = ArchipelagoItemTracker.HasItem(charItemId) ? UnlockableItemSate.UNLOCKED : UnlockableItemSate.LOCKED;
+            __result = (ArchipelagoItemTracker.HasItem(charItemId) || !charRando) ? UnlockableItemSate.UNLOCKED : UnlockableItemSate.LOCKED;
 
             return false;
         }
@@ -759,14 +820,14 @@ namespace GarfieldKartAPMod.Patches
         static bool Prefix(GameSaveManager __instance, ECharacter kart, ref UnlockableItemSate __result)
         {
             bool kartRando = ArchipelagoHelper.IsKartRandomizerEnabled();
-            Log.Info($"{kartRando} CHARACTER RANDO CHECK");
+            Log.Info($"{kartRando} KART RANDO CHECK");
 
-            if (!kartRando || !ArchipelagoHelper.IsConnectedAndEnabled)
+            if (!ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
 
             long kartItemId = 351 + (long)kart; // Kart IDs start at 351
 
-            __result = ArchipelagoItemTracker.HasItem(kartItemId) ? UnlockableItemSate.UNLOCKED : UnlockableItemSate.LOCKED;
+            __result = (ArchipelagoItemTracker.HasItem(kartItemId) || !kartRando) ? UnlockableItemSate.UNLOCKED : UnlockableItemSate.LOCKED;
 
             return false;
         }

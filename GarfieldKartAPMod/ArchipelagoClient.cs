@@ -32,7 +32,7 @@ namespace GarfieldKartAPMod
                     "Garfield Kart - Furious Racing",
                     slotName,
                     ItemsHandlingFlags.AllItems,
-                    new Version(0, 6, 5),
+                    new Version(0, 6, 6),
                     password: string.IsNullOrEmpty(password) ? null : password
                 );
 
@@ -41,6 +41,10 @@ namespace GarfieldKartAPMod
                     LoginSuccessful loginSuccess = (LoginSuccessful)result;
                     GarfieldKartAPMod.sessionSlotData = loginSuccess.SlotData;
                     Log.Message($"Connected successfully! Slot: {loginSuccess.Slot}");
+                    foreach (var data in loginSuccess.SlotData)
+                    {
+                        Log.Message($"Slot Data: {data.Key} = {data.Value}");
+                    }
 
                     // Subscribe to message received
                     session.MessageLog.OnMessageReceived += OnMessageReceived;
@@ -130,6 +134,8 @@ namespace GarfieldKartAPMod
                 ["lap_count"] = 3,
                 ["disable_cpu_items"] = 0,
                 ["springs_only"] = 0,
+                ["hard_mode"] = 0,
+                ["stat_randomization"] = 0
             };
             if (session == null || GarfieldKartAPMod.sessionSlotData == null) return null;
             if (GarfieldKartAPMod.sessionSlotData.TryGetValue(key, out object value))
@@ -139,6 +145,11 @@ namespace GarfieldKartAPMod
             return defaultSlotData.TryGetValue(key, out object slotValue) ? slotValue.ToString() : throw new SlotDataException($"Invalid option requested from apworld: {key}. Did you generate on the wrong version?");
 
             // Client is not connected
+        }
+
+        public string GetSeed()
+        {
+            return session?.RoomState?.Seed;
         }
 
         public bool HasPendingNotifications()
