@@ -272,15 +272,7 @@ namespace GarfieldKartAPMod
 
         public static int GetOverallPuzzlePieceCount()
         {
-            const long startingId = ArchipelagoConstants.ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1;
-            int count = 0;
-            for (int i = 0; i < 48; i++)
-            {
-                if (HasItem(startingId + i)) 
-                    count++;
-            }
-
-            return count;
+            return AmountOfItem(ArchipelagoConstants.ITEM_PUZZLE_PIECE);
         }
 
         public static int GetCheckedPuzzlePieceCount() { 

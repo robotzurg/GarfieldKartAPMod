@@ -129,10 +129,10 @@ namespace GarfieldKartAPMod.Helpers
 
         }
 
-        public static bool IsStatRandomizationEnabled()
+        public static bool IsLapSanityEnabled()
         {
-            string statRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("stat_randomization");
-            return IsTrue(statRandoString);
+            string lapSanityString = GarfieldKartAPMod.APClient.GetSlotDataValue("lap_sanity");
+            return IsTrue(lapSanityString);
         }
 
         internal static int GetLapCount()

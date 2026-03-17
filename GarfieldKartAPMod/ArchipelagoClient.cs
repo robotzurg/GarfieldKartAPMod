@@ -1,6 +1,7 @@
 ﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 
@@ -129,22 +130,26 @@ namespace GarfieldKartAPMod
 
         public string GetSlotDataValue(string key)
         {
-            // Sneaky default slot data variable to ensure temporary backwards compatibility
-            Dictionary<string, object> defaultSlotData = new Dictionary<string, object> { 
-                ["lap_count"] = 3,
-                ["disable_cpu_items"] = 0,
-                ["springs_only"] = 0,
-                ["hard_mode"] = 0,
-                ["stat_randomization"] = 0
-            };
             if (session == null || GarfieldKartAPMod.sessionSlotData == null) return null;
-            if (GarfieldKartAPMod.sessionSlotData.TryGetValue(key, out object value))
-            {
-                return value.ToString();
-            }
-            return defaultSlotData.TryGetValue(key, out object slotValue) ? slotValue.ToString() : throw new SlotDataException($"Invalid option requested from apworld: {key}. Did you generate on the wrong version?");
 
-            // Client is not connected
+            // Options are nested under "options" key in the new apworld format
+            if (GarfieldKartAPMod.sessionSlotData.TryGetValue("options", out object optionsObj))
+            {
+                Dictionary<string, object> options = optionsObj switch
+                {
+                    Dictionary<string, object> d => d,
+                    JObject j => j.ToObject<Dictionary<string, object>>(),
+                    _ => null
+                };
+                if (options != null && options.TryGetValue(key, out object optValue))
+                    return optValue.ToString();
+            }
+
+            // Fall back to top-level (e.g. "stat_randomizer")
+            if (GarfieldKartAPMod.sessionSlotData.TryGetValue(key, out object value))
+                return value.ToString();
+
+            throw new SlotDataException($"Invalid option requested from apworld: {key}. Did you generate on the wrong version?");
         }
 
         public string GetSeed()

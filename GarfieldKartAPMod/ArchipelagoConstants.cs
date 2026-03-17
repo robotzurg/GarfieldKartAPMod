@@ -153,6 +153,24 @@ namespace GarfieldKartAPMod
         public const long LOC_LOOPY_LAGOON_PUZZLE_PIECE_2 = 247;
         public const long LOC_LOOPY_LAGOON_PUZZLE_PIECE_3 = 248;
 
+        // Lap Sanity Locations (500-659) - 10 laps per track, race_index * 10 + 500
+        public const long LOC_CATZ_IN_THE_HOOD_LAP_SANITY     = 500;
+        public const long LOC_CRAZY_DUNES_LAP_SANITY           = 510;
+        public const long LOC_PALEROCK_LAKE_LAP_SANITY          = 520;
+        public const long LOC_CITY_SLICKER_LAP_SANITY           = 530;
+        public const long LOC_COUNTRY_BUMPKIN_LAP_SANITY        = 540;
+        public const long LOC_SPOOKY_MANOR_LAP_SANITY           = 550;
+        public const long LOC_MALLY_MARKET_LAP_SANITY           = 560;
+        public const long LOC_VALLEY_OF_THE_KINGS_LAP_SANITY    = 570;
+        public const long LOC_MISTY_FOR_ME_LAP_SANITY           = 580;
+        public const long LOC_SNEAK_A_PEAK_LAP_SANITY           = 590;
+        public const long LOC_BLAZING_OASIS_LAP_SANITY          = 600;
+        public const long LOC_PASTACOSI_FACTORY_LAP_SANITY      = 610;
+        public const long LOC_MYSTERIOUS_TEMPLE_LAP_SANITY      = 620;
+        public const long LOC_PROHIBITED_SITE_LAP_SANITY        = 630;
+        public const long LOC_CASKOU_PARK_LAP_SANITY            = 640;
+        public const long LOC_LOOPY_LAGOON_LAP_SANITY           = 650;
+
         // Cup Unlock Spoiler Locations (301-374)
         // Combined tier spoiler locations (301-314)
         public const long LOC_LASAGNA_CUP_UNLOCK_SPOILER_1 = 301;
@@ -300,55 +318,8 @@ namespace GarfieldKartAPMod
         // ========== ITEM CONSTANTS (what you receive from the server) ==========
         // These are the item IDs that come from Archipelago
 
-        // Puzzle Pieces as Items (1-48)
-        public const long ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 = 1;
-        public const long ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_2 = 2;
-        public const long ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_3 = 3;
-        public const long ITEM_CRAZY_DUNES_PUZZLE_PIECE_1 = 4;
-        public const long ITEM_CRAZY_DUNES_PUZZLE_PIECE_2 = 5;
-        public const long ITEM_CRAZY_DUNES_PUZZLE_PIECE_3 = 6;
-        public const long ITEM_PALEROCK_LAKE_PUZZLE_PIECE_1 = 7;
-        public const long ITEM_PALEROCK_LAKE_PUZZLE_PIECE_2 = 8;
-        public const long ITEM_PALEROCK_LAKE_PUZZLE_PIECE_3 = 9;
-        public const long ITEM_CITY_SLICKER_PUZZLE_PIECE_1 = 10;
-        public const long ITEM_CITY_SLICKER_PUZZLE_PIECE_2 = 11;
-        public const long ITEM_CITY_SLICKER_PUZZLE_PIECE_3 = 12;
-        public const long ITEM_COUNTRY_BUMPKIN_PUZZLE_PIECE_1 = 13;
-        public const long ITEM_COUNTRY_BUMPKIN_PUZZLE_PIECE_2 = 14;
-        public const long ITEM_COUNTRY_BUMPKIN_PUZZLE_PIECE_3 = 15;
-        public const long ITEM_SPOOKY_MANOR_PUZZLE_PIECE_1 = 16;
-        public const long ITEM_SPOOKY_MANOR_PUZZLE_PIECE_2 = 17;
-        public const long ITEM_SPOOKY_MANOR_PUZZLE_PIECE_3 = 18;
-        public const long ITEM_MALLY_MARKET_PUZZLE_PIECE_1 = 19;
-        public const long ITEM_MALLY_MARKET_PUZZLE_PIECE_2 = 20;
-        public const long ITEM_MALLY_MARKET_PUZZLE_PIECE_3 = 21;
-        public const long ITEM_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1 = 22;
-        public const long ITEM_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_2 = 23;
-        public const long ITEM_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_3 = 24;
-        public const long ITEM_MISTY_FOR_ME_PUZZLE_PIECE_1 = 25;
-        public const long ITEM_MISTY_FOR_ME_PUZZLE_PIECE_2 = 26;
-        public const long ITEM_MISTY_FOR_ME_PUZZLE_PIECE_3 = 27;
-        public const long ITEM_SNEAK_A_PEAK_PUZZLE_PIECE_1 = 28;
-        public const long ITEM_SNEAK_A_PEAK_PUZZLE_PIECE_2 = 29;
-        public const long ITEM_SNEAK_A_PEAK_PUZZLE_PIECE_3 = 30;
-        public const long ITEM_BLAZING_OASIS_PUZZLE_PIECE_1 = 31;
-        public const long ITEM_BLAZING_OASIS_PUZZLE_PIECE_2 = 32;
-        public const long ITEM_BLAZING_OASIS_PUZZLE_PIECE_3 = 33;
-        public const long ITEM_PASTACOSI_FACTORY_PUZZLE_PIECE_1 = 34;
-        public const long ITEM_PASTACOSI_FACTORY_PUZZLE_PIECE_2 = 35;
-        public const long ITEM_PASTACOSI_FACTORY_PUZZLE_PIECE_3 = 36;
-        public const long ITEM_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1 = 37;
-        public const long ITEM_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_2 = 38;
-        public const long ITEM_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_3 = 39;
-        public const long ITEM_PROHIBITED_SITE_PUZZLE_PIECE_1 = 40;
-        public const long ITEM_PROHIBITED_SITE_PUZZLE_PIECE_2 = 41;
-        public const long ITEM_PROHIBITED_SITE_PUZZLE_PIECE_3 = 42;
-        public const long ITEM_CASKOU_PARK_PUZZLE_PIECE_1 = 43;
-        public const long ITEM_CASKOU_PARK_PUZZLE_PIECE_2 = 44;
-        public const long ITEM_CASKOU_PARK_PUZZLE_PIECE_3 = 45;
-        public const long ITEM_LOOPY_LAGOON_PUZZLE_PIECE_1 = 46;
-        public const long ITEM_LOOPY_LAGOON_PUZZLE_PIECE_2 = 47;
-        public const long ITEM_LOOPY_LAGOON_PUZZLE_PIECE_3 = 48;
+        // Puzzle Piece (global item, ID 0)
+        public const long ITEM_PUZZLE_PIECE = 0;
 
         // Course Unlocks (100-116)
         public const long ITEM_PROGRESSIVE_COURSE_UNLOCK = 100;
@@ -565,34 +536,6 @@ namespace GarfieldKartAPMod
 
 
 
-        public static long GetPuzzlePiece(string startScene, int puzzleIndex)
-        {
-            return startScene switch
-            {
-                // LASAGNA CUP
-                "E2C1" => ITEM_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 + puzzleIndex,
-                "E4C1" => ITEM_CRAZY_DUNES_PUZZLE_PIECE_1 + puzzleIndex,
-                "E3C1" => ITEM_PALEROCK_LAKE_PUZZLE_PIECE_1 + puzzleIndex,
-                "E1C1" => ITEM_CITY_SLICKER_PUZZLE_PIECE_1 + puzzleIndex,
-                // PIZZA CUP
-                "E3C2" => ITEM_COUNTRY_BUMPKIN_PUZZLE_PIECE_1 + puzzleIndex,
-                "E2C2" => ITEM_SPOOKY_MANOR_PUZZLE_PIECE_1 + puzzleIndex,
-                "E1C2" => ITEM_MALLY_MARKET_PUZZLE_PIECE_1 + puzzleIndex,
-                "E4C2" => ITEM_VALLEY_OF_THE_KINGS_PUZZLE_PIECE_1 + puzzleIndex,
-                // BURGER CUP
-                "E1C3" => ITEM_MISTY_FOR_ME_PUZZLE_PIECE_1 + puzzleIndex,
-                "E3C3" => ITEM_SNEAK_A_PEAK_PUZZLE_PIECE_1 + puzzleIndex,
-                "E4C3" => ITEM_BLAZING_OASIS_PUZZLE_PIECE_1 + puzzleIndex,
-                "E2C3" => ITEM_PASTACOSI_FACTORY_PUZZLE_PIECE_1 + puzzleIndex,
-                // ICE CREAM CUP
-                "E4C4" => ITEM_MYSTERIOUS_TEMPLE_PUZZLE_PIECE_1 + puzzleIndex,
-                "E1C4" => ITEM_PROHIBITED_SITE_PUZZLE_PIECE_1 + puzzleIndex,
-                "E2C4" => ITEM_CASKOU_PARK_PUZZLE_PIECE_1 + puzzleIndex,
-                "E3C4" => ITEM_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex,
-                _ => -1
-            };
-        }
-
         public static long GetPuzzlePieceLoc(string startScene, int puzzleIndex)
         {
             return startScene switch
@@ -619,6 +562,36 @@ namespace GarfieldKartAPMod
                 "E3C4" => LOC_LOOPY_LAGOON_PUZZLE_PIECE_1 + puzzleIndex,
                 _ => -1
             };
+        }
+
+        public static long GetLapSanityLoc(string startScene, int lapIndex)
+        {
+            long baseId = startScene switch
+            {
+                // LASAGNA CUP
+                "E2C1" => LOC_CATZ_IN_THE_HOOD_LAP_SANITY,
+                "E4C1" => LOC_CRAZY_DUNES_LAP_SANITY,
+                "E3C1" => LOC_PALEROCK_LAKE_LAP_SANITY,
+                "E1C1" => LOC_CITY_SLICKER_LAP_SANITY,
+                // PIZZA CUP
+                "E3C2" => LOC_COUNTRY_BUMPKIN_LAP_SANITY,
+                "E2C2" => LOC_SPOOKY_MANOR_LAP_SANITY,
+                "E1C2" => LOC_MALLY_MARKET_LAP_SANITY,
+                "E4C2" => LOC_VALLEY_OF_THE_KINGS_LAP_SANITY,
+                // BURGER CUP
+                "E1C3" => LOC_MISTY_FOR_ME_LAP_SANITY,
+                "E3C3" => LOC_SNEAK_A_PEAK_LAP_SANITY,
+                "E4C3" => LOC_BLAZING_OASIS_LAP_SANITY,
+                "E2C3" => LOC_PASTACOSI_FACTORY_LAP_SANITY,
+                // ICE CREAM CUP
+                "E4C4" => LOC_MYSTERIOUS_TEMPLE_LAP_SANITY,
+                "E1C4" => LOC_PROHIBITED_SITE_LAP_SANITY,
+                "E2C4" => LOC_CASKOU_PARK_LAP_SANITY,
+                "E3C4" => LOC_LOOPY_LAGOON_LAP_SANITY,
+                _ => -1
+            };
+            if (baseId == -1) return -1;
+            return baseId + lapIndex;
         }
 
         public static List<long> GetTimeTrialLocs(string startScene, E_TimeTrialMedal medal)

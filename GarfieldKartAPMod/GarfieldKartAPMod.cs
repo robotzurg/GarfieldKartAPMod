@@ -3,6 +3,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using GarfieldKartAPMod.Helpers;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -11,9 +12,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using static MenuHDTrackSelection;
 
-#if DEBUG
-using UnityHotReloadNS;
-#endif
+// #if DEBUG
+// using UnityHotReloadNS;
+// #endif
 
 namespace GarfieldKartAPMod
 {
@@ -106,15 +107,15 @@ namespace GarfieldKartAPMod
 
         public void Update()
         {
-#if DEBUG
-            if (Input.GetKeyUp(KeyCode.F2))
-            {
-                UnityHotReload.LoadNewAssemblyVersion(
-                    typeof(GarfieldKartAPMod).Assembly,
-                    "C:\\Users\\robot\\AppData\\Roaming\\r2modmanPlus-local\\GarfieldKartFuriousRacing\\profiles\\Default\\BepInEx\\plugins\\Jeffdev-GarfieldKartArchipelago/GarfieldKartAPMod.dll"
-                );
-            }
-#endif
+// #if DEBUG
+//             if (Input.GetKeyUp(KeyCode.F2))
+//             {
+//                 UnityHotReload.LoadNewAssemblyVersion(
+//                     typeof(GarfieldKartAPMod).Assembly,
+//                     "C:\\Users\\robot\\AppData\\Roaming\\r2modmanPlus-local\\GarfieldKartFuriousRacing\\profiles\\Default\\BepInEx\\plugins\\Jeffdev-GarfieldKartArchipelago/GarfieldKartAPMod.dll"
+//                 );
+//             }
+// #endif
 
             if (APClient == null || !APClient.HasPendingNotifications()) return;
             string notification = APClient.DequeuePendingNotification();
@@ -482,52 +483,87 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    [HarmonyPatch(typeof(RcVehicleRaceStats), "CrossStartLine")]
+    public class RcVehicleRaceStats_CrossStartLine_Patch
+    {
+        static void Prefix(int ___m_iNbLapCompleted, ref int __state)
+        {
+            __state = ___m_iNbLapCompleted;
+        }
+
+        static void Postfix(RcVehicleRaceStats __instance, int ___m_iNbLapCompleted, RcVehicle ___m_pVehicle, int __state)
+        {
+            Log.Debug($"{__instance.GetRank()} RANK");
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (!ArchipelagoHelper.IsLapSanityEnabled()) return;
+            if (___m_iNbLapCompleted <= __state) return;
+            if (___m_pVehicle.IsAutoPilot()) return;
+            if (___m_pVehicle.m_eControlType == RcVehicle.ControlType.AI) return;
+            if (__instance.GetRank() != 0) return;
+
+            string track = Singleton<GameConfigurator>.Instance.StartScene;
+            int lapIndex = ___m_iNbLapCompleted - 1; // 0-indexed
+            long locId = ArchipelagoConstants.GetLapSanityLoc(track, lapIndex);
+            if (locId == -1) return;
+
+            GarfieldKartAPMod.APClient.SendLocation(locId);
+            Log.Message($"Sent lap sanity check for {track}, lap {___m_iNbLapCompleted}");
+        }
+    }
+
     public static class DrivingCaracStatsRando
     {
-        // Stat value range for Speed/Acceleration/Maniability.
-        // GkUtils.ComputeStatsModifiers sums kart+character then multiplies by 0.01.
-        // The gauge formula is 0.5 + result, so the combined sum must stay in -50..+50.
-        // With two components (kart and character), each should be in -25..25.
-        private const float StatMin = -25f;
-        private const float StatMax = 25f;
+        // Character enum values map to these names (offset from 301)
+        private static readonly string[] CharacterNames =
+            { "Garfield", "Jon", "Liz", "Odie", "Arlene", "Nermal", "Squeak", "Harry" };
+
+        // Kart enum values map to these names (offset from 351)
+        private static readonly string[] KartNames =
+            { "Formula Zzzz", "Abstract Kart", "Medi Kart", "Woof Mobile", "Kissy Kart", "Cutie Pie Cat", "Rat Racer", "Muck Madness" };
 
         public static void ApplyAll()
         {
-            Log.Info($"[StatsRando] ApplyAll called. Connected={ArchipelagoHelper.IsConnectedAndEnabled} CharCount={PlayerGameEntities.CharacterList?.Count} KartCount={PlayerGameEntities.KartList?.Count}");
+            Log.Info($"[StatsRando] ApplyAll called. Connected={ArchipelagoHelper.IsConnectedAndEnabled}");
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
-            if (!ArchipelagoHelper.IsStatRandomizationEnabled()) return;
-            string seed = GarfieldKartAPMod.APClient.GetSeed();
-            Log.Info($"[StatsRando] Seed={seed}");
-            if (seed == null) return;
+            if (GarfieldKartAPMod.sessionSlotData == null) return;
 
-#if DEBUG
-            System.Random debugRng = new System.Random();
-#endif
+            if (!GarfieldKartAPMod.sessionSlotData.TryGetValue("randomized_stats", out object statsObj)) return;
+
+            JObject statsRoot = statsObj as JObject ?? (statsObj is Dictionary<string, object> d ? JObject.FromObject(d) : null);
+            if (statsRoot == null) return;
+
+            JObject kartsData   = statsRoot["karts"]      as JObject;
+            JObject charsData   = statsRoot["characters"] as JObject;
+
             foreach (CharacterCarac character in PlayerGameEntities.CharacterList)
-#if DEBUG
-                ApplyStats(character, seed, "Character", debugRng);
-#else
-                ApplyStats(character, seed, "Character");
-#endif
+            {
+                string name = GetName(character.Owner, CharacterNames);
+                JObject stats = charsData?[name] as JObject;
+                if (stats == null) continue;
+                ApplyStats(character, stats);
+            }
+
             foreach (KartCarac kart in PlayerGameEntities.KartList)
-#if DEBUG
-                ApplyStats(kart, seed, "Kart", debugRng);
-#else
-                ApplyStats(kart, seed, "Kart");
-#endif
+            {
+                string name = GetName(kart.Owner, KartNames);
+                JObject stats = kartsData?[name] as JObject;
+                if (stats == null) continue;
+                ApplyStats(kart, stats);
+            }
         }
 
-        private static void ApplyStats(DrivingCarac instance, string seed, string label, System.Random rng = null)
+        private static string GetName(ECharacter owner, string[] names)
         {
-            if (rng == null)
-            {
-                int rngSeed = (seed.GetHashCode() * 397) ^ (int)instance.Owner;
-                rng = new System.Random(rngSeed);
-            }
-            instance.Speed        = (float)(rng.NextDouble() * (StatMax - StatMin) + StatMin);
-            instance.Acceleration = (float)(rng.NextDouble() * (StatMax - StatMin) + StatMin);
-            instance.Maniability  = (float)(rng.NextDouble() * (StatMax - StatMin) + StatMin);
-            Log.Info($"[StatsRando] {label} {instance.Owner}: spd={instance.Speed:F2} acc={instance.Acceleration:F2} man={instance.Maniability:F2}");
+            int idx = (int)owner;
+            return idx >= 0 && idx < names.Length ? names[idx] : owner.ToString();
+        }
+
+        private static void ApplyStats(DrivingCarac instance, JObject stats)
+        {
+            if (stats["Speed"]        is JToken spd)  instance.Speed        = spd.Value<float>();
+            if (stats["Acceleration"] is JToken acc)  instance.Acceleration = acc.Value<float>();
+            if (stats["Maniability"]  is JToken mani) instance.Maniability  = mani.Value<float>();
+            Log.Info($"[StatsRando] {instance.Owner}: spd={instance.Speed:F2} acc={instance.Acceleration:F2} man={instance.Maniability:F2}");
         }
     }
 
@@ -549,8 +585,8 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            // Max out quantity EVERY TIME if in hard mode >:)
-            if (GarfieldKartAPMod.APClient.GetSlotDataValue("hard_mode") == "1" && ___m_kart.Driver.IsAi)
+            // Max out quantity EVERY TIME if in item mania >:)
+            if (GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania") == "1" && ___m_kart.Driver.IsAi)
             {
                 Log.Info("HARD MDOE ACTIVATE!!!");
                 iQuantity = 3;
@@ -691,8 +727,8 @@ namespace GarfieldKartAPMod.Patches
             string[] pieceData = piece.Split('_');
             Int32.TryParse(pieceData[1], out int pieceIndex);
 
-            __result = ArchipelagoItemTracker.HasItem(
-                ArchipelagoConstants.GetPuzzlePiece(pieceData[0], pieceIndex));
+            __result = ArchipelagoItemTracker.HasLocation(
+                ArchipelagoConstants.GetPuzzlePieceLoc(pieceData[0], pieceIndex));
 
             return false;
         }
@@ -967,7 +1003,7 @@ namespace GarfieldKartAPMod.Patches
             ECharacter character = playerConfig.Character;
             ECharacter kart = playerConfig.Kart;
 
-            if (gameMode == E_GameModeType.SINGLE && rank == 0)
+            if ((gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.CHAMPIONSHIP) && rank == 0)
             {
                 string ccReqString = "any";
                 if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_GRAND_PRIX || 
