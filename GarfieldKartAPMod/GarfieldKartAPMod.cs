@@ -519,7 +519,7 @@ namespace GarfieldKartAPMod.Patches
 
         // Kart enum values map to these names (offset from 351)
         private static readonly string[] KartNames =
-            { "Formula Zzzz", "Abstract Kart", "Medi Kart", "Woof Mobile", "Kissy Kart", "Cutie Pie Cat", "Rat Racer", "Muck Madness" };
+            { "Formula Zzzz", "Abstract-Kart", "Medi-Kart", "Woof-Mobile", "Kissy-Kart", "Cutie-Pie Cat", "Rat-Racer", "Muck-Madness" };
 
         public static void ApplyAll()
         {
@@ -558,12 +558,15 @@ namespace GarfieldKartAPMod.Patches
             return idx >= 0 && idx < names.Length ? names[idx] : owner.ToString();
         }
 
+        private const float StatMin = -25f;
+        private const float StatMax = 25f;
+
         private static void ApplyStats(DrivingCarac instance, JObject stats)
         {
-            if (stats["Speed"]        is JToken spd)  instance.Speed        = spd.Value<float>();
-            if (stats["Acceleration"] is JToken acc)  instance.Acceleration = acc.Value<float>();
-            if (stats["Maniability"]  is JToken mani) instance.Maniability  = mani.Value<float>();
-            Log.Info($"[StatsRando] {instance.Owner}: spd={instance.Speed:F2} acc={instance.Acceleration:F2} man={instance.Maniability:F2}");
+            if (stats["Speed"]        != null) instance.Speed        = Mathf.Clamp(stats["Speed"].Value<float>(),        StatMin, StatMax);
+            if (stats["Acceleration"] != null) instance.Acceleration = Mathf.Clamp(stats["Acceleration"].Value<float>(), StatMin, StatMax);
+            if (stats["Maniability"]  != null) instance.Maniability  = Mathf.Clamp(stats["Maniability"].Value<float>(),  StatMin, StatMax);
+            Log.Info($"[StatsRando] {instance.name}: spd={instance.Speed:F2} acc={instance.Acceleration:F2} man={instance.Maniability:F2}");
         }
     }
 
@@ -588,7 +591,6 @@ namespace GarfieldKartAPMod.Patches
             // Max out quantity EVERY TIME if in item mania >:)
             if (GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania") == "1" && ___m_kart.Driver.IsAi)
             {
-                Log.Info("HARD MDOE ACTIVATE!!!");
                 iQuantity = 3;
             }
 

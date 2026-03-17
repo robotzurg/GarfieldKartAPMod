@@ -318,8 +318,8 @@ namespace GarfieldKartAPMod
         // ========== ITEM CONSTANTS (what you receive from the server) ==========
         // These are the item IDs that come from Archipelago
 
-        // Puzzle Piece (global item, ID 0)
-        public const long ITEM_PUZZLE_PIECE = 0;
+        // Puzzle Piece (global item, ID 49)
+        public const long ITEM_PUZZLE_PIECE = 49;
 
         // Course Unlocks (100-116)
         public const long ITEM_PROGRESSIVE_COURSE_UNLOCK = 100;
