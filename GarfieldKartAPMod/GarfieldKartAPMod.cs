@@ -5,6 +5,7 @@ using GarfieldKartAPMod.Helpers;
 using HarmonyLib;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
@@ -477,9 +478,6 @@ namespace GarfieldKartAPMod.Patches
 
             int lapCount = ArchipelagoHelper.GetLapCount();
             __instance.SetRaceNbLap(lapCount);
-#if DEBUG
-            __instance.SetRaceNbLap(1); // For testing, set laps to 1
-#endif
         }
     }
 
@@ -496,18 +494,18 @@ namespace GarfieldKartAPMod.Patches
             Log.Debug($"{__instance.GetRank()} RANK");
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             if (!ArchipelagoHelper.IsLapSanityEnabled()) return;
-            if (___m_iNbLapCompleted <= __state) return;
+            if (___m_iNbLapCompleted <= __state + 1) return;
             if (___m_pVehicle.IsAutoPilot()) return;
             if (___m_pVehicle.m_eControlType == RcVehicle.ControlType.AI) return;
             if (__instance.GetRank() != 0) return;
 
             string track = Singleton<GameConfigurator>.Instance.StartScene;
-            int lapIndex = ___m_iNbLapCompleted - 1; // 0-indexed
+            int lapIndex = ___m_iNbLapCompleted - 2; // 0-indexed
             long locId = ArchipelagoConstants.GetLapSanityLoc(track, lapIndex);
             if (locId == -1) return;
 
             GarfieldKartAPMod.APClient.SendLocation(locId);
-            Log.Message($"Sent lap sanity check for {track}, lap {___m_iNbLapCompleted}");
+            Log.Message($"Sent lap sanity check for {track}, lap {lapIndex + 1}");
         }
     }
 
@@ -576,23 +574,21 @@ namespace GarfieldKartAPMod.Patches
         static bool Prefix(KartBonusMgr __instance, Kart ___m_kart, ref BonusCategory bonus, ref int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
-            if (!___m_kart.Driver.IsHuman) return !ArchipelagoHelper.IsCPUItemsDisabled();
+            if (!___m_kart.Driver.IsHuman)
+            {
+                if (GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania") == "1")
+                    iQuantity = 3;
+                return !ArchipelagoHelper.IsCPUItemsDisabled();
+            }
 
             if (ArchipelagoHelper.IsSpringsOnly()) bonus = BonusCategory.SPRING;
 
             return ArchipelagoItemTracker.HasBonusAvailable(bonus);
-
         }
-        
-        static void Postfix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus, ref int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
+
+        static void Postfix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
-
-            // Max out quantity EVERY TIME if in item mania >:)
-            if (GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania") == "1" && ___m_kart.Driver.IsAi)
-            {
-                iQuantity = 3;
-            }
 
             if (___m_kart.Driver.IsHuman && ArchipelagoItemTracker.HasBonusAvailable(bonus))
             {
@@ -629,6 +625,27 @@ namespace GarfieldKartAPMod.Patches
             }
         }
      }
+
+    [HarmonyPatch(typeof(GkRacingAI), "ActivateBonus")]
+    public class GkRacingAI_ActivateBonus_Patch
+    {
+        static void Postfix(GkRacingAI __instance, Kart pKart)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania") != "1") return;
+            if (!pKart.Driver.IsAi) return;
+
+            if (pKart.GetBonusMgr().GetItem(0) != BonusCategory.NONE)
+                pKart.StartCoroutine(FireNextItem(__instance, pKart));
+        }
+
+        static IEnumerator FireNextItem(GkRacingAI ai, Kart pKart)
+        {
+            yield return new WaitForSeconds(1.0f);
+            if (pKart.GetBonusMgr().GetItem(0) != BonusCategory.NONE)
+                ai.ActivateBonus(pKart, UnityEngine.Random.value < 0.5f);
+        }
+    }
 
     [HarmonyPatch(typeof(RacePuzzlePiece), "DoTrigger")]
     public class RacePuzzlePiece_DoTrigger_Patch
