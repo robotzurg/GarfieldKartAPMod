@@ -641,7 +641,7 @@ namespace GarfieldKartAPMod.Patches
 
         static IEnumerator FireNextItem(GkRacingAI ai, Kart pKart)
         {
-            yield return new WaitForSeconds(1.0f);
+            yield return new WaitForSeconds(2.0f);
             if (pKart.GetBonusMgr().GetItem(0) != BonusCategory.NONE)
                 ai.ActivateBonus(pKart, UnityEngine.Random.value < 0.5f);
         }
