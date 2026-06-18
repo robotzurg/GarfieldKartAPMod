@@ -95,7 +95,7 @@ namespace GarfieldKartAPMod
                 bool relevant = message switch
                 {
                     ItemSendLogMessage m => m.IsSenderTheActivePlayer || m.IsReceiverTheActivePlayer,
-                    _ => true
+                    _ => false
                 };
                 if (!relevant) return;
             }
