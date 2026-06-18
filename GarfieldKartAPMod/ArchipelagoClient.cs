@@ -90,6 +90,15 @@ namespace GarfieldKartAPMod
 
         private void OnMessageReceived(LogMessage message)
         {
+            if (GarfieldKartAPMod.showOnlyRelevantNotifications?.Value == true)
+            {
+                bool relevant = message switch
+                {
+                    ItemSendLogMessage m => m.IsSenderTheActivePlayer || m.IsReceiverTheActivePlayer,
+                    _ => true
+                };
+                if (!relevant) return;
+            }
             pendingNotifications.Enqueue(message.ToString());
         }
 

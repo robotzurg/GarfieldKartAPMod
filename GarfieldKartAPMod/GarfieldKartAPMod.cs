@@ -25,10 +25,13 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "0.5.0";
+        private const string PluginVersion = "0.5.5";
 
         public static ConfigEntry<int> notificationTime;
         public static ConfigEntry<int> lapCountOverride;
+        public static ConfigEntry<bool> showNotifications;
+        public static ConfigEntry<bool> showOnlyRelevantNotifications;
+        public static ConfigEntry<bool> disableStatRandomization;
 
         private Harmony harmony;
         public static Dictionary<string, object> sessionSlotData;
@@ -43,6 +46,9 @@ namespace GarfieldKartAPMod
 
             notificationTime = Config.Bind("Archipelago", "Server Message On-Screen Time", 3, "How long to show archipelago server messages and checks on the screen, in seconds.");
             lapCountOverride = Config.Bind("Archipelago", "Lap Count Override", 0, "Override the lap count for races. Set to 0 to use the lap count from Archipelago slot data.");
+            showNotifications = Config.Bind("Display", "Show Log Messages", true, "Show Archipelago server log messages at the top of the screen.");
+            showOnlyRelevantNotifications = Config.Bind("Display", "Show Only Relevant Messages", true, "Only show log messages relevant to you (items you send or receive, your hints). Other message types still appear.");
+            disableStatRandomization = Config.Bind("Archipelago", "Disable Stat Randomization", false, "Disable kart and character stat randomization, even if the Archipelago slot has it enabled.");
            
             InitializeLogging();
             InitializeAssemblyResolution();
@@ -120,7 +126,8 @@ namespace GarfieldKartAPMod
 
             if (APClient == null || !APClient.HasPendingNotifications()) return;
             string notification = APClient.DequeuePendingNotification();
-            notificationDisplay.ShowNotification(notification);
+            if (showNotifications.Value)
+                notificationDisplay.ShowNotification(notification);
         }
 
         private void OnArchipelagoConnected()
@@ -475,6 +482,7 @@ namespace GarfieldKartAPMod.Patches
         static void Prefix(RcRace __instance)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL) return;
 
             int lapCount = ArchipelagoHelper.GetLapCount();
             __instance.SetRaceNbLap(lapCount);
@@ -494,7 +502,8 @@ namespace GarfieldKartAPMod.Patches
             Log.Debug($"{__instance.GetRank()} RANK");
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             if (!ArchipelagoHelper.IsLapSanityEnabled()) return;
-            if (___m_iNbLapCompleted <= __state + 1) return;
+            if (Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL) return;
+            if (___m_iNbLapCompleted < __state + 1) return;
             if (___m_pVehicle.IsAutoPilot()) return;
             if (___m_pVehicle.m_eControlType == RcVehicle.ControlType.AI) return;
             if (__instance.GetRank() != 0) return;
@@ -523,6 +532,7 @@ namespace GarfieldKartAPMod.Patches
         {
             Log.Info($"[StatsRando] ApplyAll called. Connected={ArchipelagoHelper.IsConnectedAndEnabled}");
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (GarfieldKartAPMod.disableStatRandomization.Value) return;
             if (GarfieldKartAPMod.sessionSlotData == null) return;
 
             if (!GarfieldKartAPMod.sessionSlotData.TryGetValue("randomized_stats", out object statsObj)) return;
@@ -1045,7 +1055,19 @@ namespace GarfieldKartAPMod.Patches
 
                 GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
                 GarfieldKartAPMod.APClient.SendLocation((long)character + ArchipelagoConstants.LOC_WIN_RACE_AS_GARFIELD);
-                GarfieldKartAPMod.APClient.SendLocation((long)kart + ArchipelagoConstants.LOC_WIN_RACE_WITH_FORMULA_ZZZZ); 
+                GarfieldKartAPMod.APClient.SendLocation((long)kart + ArchipelagoConstants.LOC_WIN_RACE_WITH_FORMULA_ZZZZ);
+
+                if (ArchipelagoHelper.IsLapSanityEnabled())
+                {
+                    int lapCount = ArchipelagoHelper.GetLapCount();
+                    int lastLapIndex = lapCount - 1;
+                    long lapSanityLocId = ArchipelagoConstants.GetLapSanityLoc(track, lastLapIndex);
+                    if (lapSanityLocId != -1)
+                    {
+                        GarfieldKartAPMod.APClient.SendLocation(lapSanityLocId);
+                        Log.Message($"Sent final lap sanity check for {track}, lap {lastLapIndex + 1}");
+                    }
+                }
 
                 ArchipelagoGoalManager.CheckAndCompleteGoal();
 
