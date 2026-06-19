@@ -22,3 +22,7 @@ If installing manually, use r2modman and select "Import Local Mod" after making 
 - FeluciaPS for creating the APWorld and being a big motivator and assistant!
 - Vyik and Av for getting me to make this and helping out a ton with logic
 - Everyone else in the Archipelago discord for all the amazing work they do
+
+## Disclosure
+
+Claude was utilized to assist in development of the client mod for Garfield Kart.
