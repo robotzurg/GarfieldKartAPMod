@@ -7,7 +7,7 @@ namespace GarfieldKartAPMod.Helpers
     {
         private static bool IsTrue(string str)
         {
-            return str is "true" or "1";
+            return str is "true" or "1" or "True";
         }
 
         public static bool IsConnectedAndEnabled =>

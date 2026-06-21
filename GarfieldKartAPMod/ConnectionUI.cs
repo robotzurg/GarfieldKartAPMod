@@ -87,6 +87,15 @@ namespace GarfieldKartAPMod
             }
         }
 
+        public void ForceShow()
+        {
+            Time.timeScale = 0f;
+            m_paused = true;
+            showUI = true;
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+
         private void Update()
         {
             bool needsConn = NeedsConnection;
@@ -131,7 +140,7 @@ namespace GarfieldKartAPMod
         {
             GUILayout.BeginVertical();
 
-            GUILayout.Label("Press F1 to toggle this menu");
+            GUILayout.Label("Press F1 to show this menu while connected ingame.");
             GUILayout.Space(15);
 
             GUILayout.Label("Hostname:");

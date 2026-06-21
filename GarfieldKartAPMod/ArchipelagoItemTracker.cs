@@ -275,23 +275,23 @@ namespace GarfieldKartAPMod
             return AmountOfItem(ArchipelagoConstants.ITEM_PUZZLE_PIECE);
         }
 
-        public static int GetCheckedPuzzlePieceCount() { 
-            // Keeping this code in case we want to ever use it
-            var tracks = new List<string>
-            {
-                "E2C1", "E4C1", "E3C1", "E1C1", // Lasagna Cup
-                "E3C2", "E2C2", "E1C2", "E4C2", // Pizza Cup
-                "E1C3", "E3C3", "E4C3", "E2C3", // Burger Cup
-                "E4C4", "E1C4", "E2C4", "E3C4"  // Ice Cream Cup
-            };
-
-            int count = 0;
-            foreach (var track in tracks)
-            {
-                count += GetPuzzlePieceCount(track);
-            }
-            return count;
-        }
+        // public static int GetCheckedPuzzlePieceCount() { 
+        //     // Keeping this code in case we want to ever use it
+        //     var tracks = new List<string>
+        //     {
+        //         "E2C1", "E4C1", "E3C1", "E1C1", // Lasagna Cup
+        //         "E3C2", "E2C2", "E1C2", "E4C2", // Pizza Cup
+        //         "E1C3", "E3C3", "E4C3", "E2C3", // Burger Cup
+        //         "E4C4", "E1C4", "E2C4", "E3C4"  // Ice Cream Cup
+        //     };
+        //
+        //     int count = 0;
+        //     foreach (var track in tracks)
+        //     {
+        //         count += GetPuzzlePieceCount(track);
+        //     }
+        //     return count;
+        // }
 
         public static bool HasBonusAvailable(BonusCategory bonus)
         {

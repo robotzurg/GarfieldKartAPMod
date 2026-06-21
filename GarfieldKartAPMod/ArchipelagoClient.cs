@@ -126,6 +126,7 @@ namespace GarfieldKartAPMod
         private void OnSocketClosed(string reason)
         {
             Log.Warning($"Socket closed: {reason}");
+            session = null;
             OnDisconnected?.Invoke();
         }
 

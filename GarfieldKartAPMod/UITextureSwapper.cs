@@ -145,17 +145,13 @@ namespace GarfieldKartAPMod
         {
             if (hasSwappedThisMenu)
             {
+                Log.Error("Cannot swap - already swapped this menu");
                 return;
             }
             if (baseArchipelagoSprite == null)
             {
                 Log.Error("Cannot swap - Archipelago sprite not loaded");
                 return;
-            }
-
-            if (!GarfieldKartAPMod.APClient.IsConnected)
-            {
-                return; // Only swap when connected
             }
 
             try

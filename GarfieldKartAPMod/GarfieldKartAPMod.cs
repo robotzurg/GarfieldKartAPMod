@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using TMPro;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "0.5.6";
+        private const string PluginVersion = "0.5.7";
 
         public static ConfigEntry<int> notificationTime;
         public static ConfigEntry<int> lapCountOverride;
@@ -104,6 +105,8 @@ namespace GarfieldKartAPMod
             APClient = new ArchipelagoClient();
             APClient.OnConnected += OnArchipelagoConnected;
             APClient.OnDisconnected += OnArchipelagoDisconnected;
+
+            CreateUI();
         }
 
         private void ApplyPatches()
@@ -134,13 +137,13 @@ namespace GarfieldKartAPMod
         {
             Log.Message("Connected to Archipelago - loading items");
             uiObject.GetComponent<ConnectionUI>().ToggleUI();
-            PopupManager.OpenPopup("Connected to Archipelago!", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
+            // PopupManager.OpenPopup("Connected to Archipelago!", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
         }
 
         private void OnArchipelagoDisconnected()
         {
             Log.Message("Disconnected from Archipelago");
-            ArchipelagoItemTracker.Clear();
+            uiObject.GetComponent<ConnectionUI>().ForceShow();
         }
 
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
@@ -272,16 +275,6 @@ namespace GarfieldKartAPMod.Patches
 
     // Menu Patches
 
-    [HarmonyPatch(typeof(MenuHDMain), "Enter")]
-    public class MenuHDMain_Enter_Patch
-    {
-        static void Postfix()
-        {
-            Log.Message("Main menu started, creating UI...");
-            GarfieldKartAPMod.CreateUI();
-        }
-    }
-
     [HarmonyPatch(typeof(MenuHDGameMode), "Enter")]
     public class MenuHDGameMode_Enter_Patch
     {
@@ -342,10 +335,13 @@ namespace GarfieldKartAPMod.Patches
 
             if (ArchipelagoHelper.IsPuzzleRandomizationEnabled())
             {
+                UITextureSwapper.ResetSwapFlag();
                 UITextureSwapper.SwapPuzzlePieceIcons(__instance.gameObject);
             }
 
             int foundTab = SetupCupTabs(___m_tabs, ___m_currentChampionshipIndex);
+            if (foundTab != -1)
+                ___m_currentChampionshipIndex = foundTab;
             ButtonHelper.DisableLockedRaceButtons(__instance, ___m_buttons, foundTab != -1 ? foundTab : ___m_currentChampionshipIndex);
         }
 
@@ -359,7 +355,10 @@ namespace GarfieldKartAPMod.Patches
                 bool activateButton = false;
                 bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i);
 
-                if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i))
+                bool canSeeChampionshipCup = ArchipelagoHelper.IsRacesAndCupsRandomized()
+                    ? ArchipelagoItemTracker.HasCup(i)
+                    : ArchipelagoItemTracker.CanAccessCup(i);
+                if (gameMode == E_GameModeType.CHAMPIONSHIP && canSeeChampionshipCup)
                 {
                     activateButton = true;
                 }
@@ -591,9 +590,46 @@ namespace GarfieldKartAPMod.Patches
                 return !ArchipelagoHelper.IsCPUItemsDisabled();
             }
 
-            if (ArchipelagoHelper.IsSpringsOnly()) bonus = BonusCategory.SPRING;
+            if (ArchipelagoHelper.IsSpringsOnly())
+            {
+                bonus = BonusCategory.SPRING;
+                return ArchipelagoItemTracker.HasBonusAvailable(bonus);
+            }
+
+            if (ArchipelagoHelper.IsItemRandomizerEnabled())
+            {
+                var needed = GetNeededItemsanityBonuses();
+                if (needed.Count > 0)
+                {
+                    var available = needed.Where(ArchipelagoItemTracker.HasBonusAvailable).ToList();
+                    bonus = available[UnityEngine.Random.Range(0, available.Count)];
+                }
+                // If Puzzle rando is enabled and we have springs and puzzle pieces are uncollected, prioritize springs
+                else if (ArchipelagoHelper.IsPuzzleRandomizationEnabled() &&
+                         ArchipelagoItemTracker.HasBonusAvailable(BonusCategory.SPRING))
+                {
+                    string track = Singleton<GameConfigurator>.Instance.StartScene;
+                    if (ArchipelagoItemTracker.GetPuzzlePieceCount(track) < 3 && UnityEngine.Random.value < 0.3f)
+                        bonus = BonusCategory.SPRING;
+                }
+            }
 
             return ArchipelagoItemTracker.HasBonusAvailable(bonus);
+        }
+
+        private static List<BonusCategory> GetNeededItemsanityBonuses()
+        {
+            var needed = new List<BonusCategory>();
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_PIE)) needed.Add(BonusCategory.PIE);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_HOMING_PIE)) needed.Add(BonusCategory.AUTOLOCK_PIE);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_DIAMOND)) needed.Add(BonusCategory.DIAMOND);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_MAGIC_WAND)) needed.Add(BonusCategory.MAGIC);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_PERFUME)) needed.Add(BonusCategory.PARFUME);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_LASAGNA)) needed.Add(BonusCategory.LASAGNA);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_UFO)) needed.Add(BonusCategory.UFO);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_PILLOW)) needed.Add(BonusCategory.NAP);
+            if (!ArchipelagoItemTracker.HasLocation(ArchipelagoConstants.LOC_FIND_ITEM_SPRING)) needed.Add(BonusCategory.SPRING);
+            return needed;
         }
 
         static void Postfix(KartBonusMgr __instance, Kart ___m_kart, BonusCategory bonus)
@@ -991,19 +1027,25 @@ namespace GarfieldKartAPMod.Patches
         static void Postfix(string key, ref string __result)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            Log.Info($"{key}, {__result}");
             switch (key)
             {
                 case "MENU_GARAGE_UNLOCK_SINGLE_RACE":
-                    __result = "Receive the Archipelago item for this hat to utilize it!";
+                    if (ArchipelagoHelper.IsHatRandomizerEnabled())
+                        __result = "You must be sent the Archipelago item for this hat!";
                     break;
                 case "MENU_GARAGE_UNLOCK_GRAND_PRIX":
-                    __result = "Receive the Archipelago item for this spoiler to utilize it!";
+                    Log.Info($"Grand Prix {ArchipelagoHelper.IsSpoilerRandomizerEnabled()}");
+                    if (ArchipelagoHelper.IsSpoilerRandomizerEnabled())
+                        __result = "You must be sent the Archipelago item for this spoiler!";
                     break;
                 case "MENU_GARAGE_UNLOCK_TIME_TRIAL":
-                    __result = "";
+                    if (ArchipelagoHelper.IsHatRandomizerEnabled())
+                        __result = "";
                     break;
                 case "MENU_GARAGE_UNLOCK_OR":
-                    __result = "";
+                    if (ArchipelagoHelper.IsHatRandomizerEnabled())
+                        __result = "";
                     break;
             }
         }
