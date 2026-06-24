@@ -26,7 +26,7 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "0.5.7";
+        private const string PluginVersion = "0.5.8";
 
         public static ConfigEntry<int> notificationTime;
         public static ConfigEntry<int> lapCountOverride;
@@ -602,7 +602,8 @@ namespace GarfieldKartAPMod.Patches
                 if (needed.Count > 0)
                 {
                     var available = needed.Where(ArchipelagoItemTracker.HasBonusAvailable).ToList();
-                    bonus = available[UnityEngine.Random.Range(0, available.Count)];
+                    if (available.Count > 0)
+                        bonus = available[UnityEngine.Random.Range(0, available.Count)];
                 }
                 // If Puzzle rando is enabled and we have springs and puzzle pieces are uncollected, prioritize springs
                 else if (ArchipelagoHelper.IsPuzzleRandomizationEnabled() &&
