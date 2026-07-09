@@ -106,6 +106,19 @@ namespace GarfieldKartAPMod.Helpers
             string cpuItemString = GarfieldKartAPMod.APClient.GetSlotDataValue("disable_cpu_items");
             return IsTrue(cpuItemString);
         }
+
+        public static bool IsItemManiaEnabled()
+        {
+            switch (GarfieldKartAPMod.itemManiaMode.Value)
+            {
+                case ItemManiaMode.On:
+                    return true;
+                case ItemManiaMode.Off:
+                    return false;
+                default:
+                    return IsTrue(GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania"));
+            }
+        }
         public static string GetTimeTrialGoalGrade()
         {
             // TODO: It'd probably be nice to use an enum here

@@ -20,19 +20,29 @@ using static MenuHDTrackSelection;
 
 namespace GarfieldKartAPMod
 {
+    public enum ItemManiaMode
+    {
+        UseYaml,
+        On,
+        Off
+    }
+
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
     public class GarfieldKartAPMod : BaseUnityPlugin
     {
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "0.5.8";
+        private const string PluginVersion = "1.0.0";
 
         public static ConfigEntry<int> notificationTime;
         public static ConfigEntry<int> lapCountOverride;
         public static ConfigEntry<bool> showNotifications;
         public static ConfigEntry<bool> showOnlyRelevantNotifications;
         public static ConfigEntry<bool> disableStatRandomization;
+        public static ConfigEntry<int> lapSanityPlacementRequirement;
+        public static ConfigEntry<bool> strictCpuItems;
+        public static ConfigEntry<ItemManiaMode> itemManiaMode;
 
         private Harmony harmony;
         public static Dictionary<string, object> sessionSlotData;
@@ -50,6 +60,9 @@ namespace GarfieldKartAPMod
             showNotifications = Config.Bind("Display", "Show Log Messages", true, "Show Archipelago server log messages at the top of the screen.");
             showOnlyRelevantNotifications = Config.Bind("Display", "Show Only Relevant Messages", true, "Only show log messages relevant to you (items you send or receive, your hints). Other message types still appear.");
             disableStatRandomization = Config.Bind("Archipelago", "Disable Stat Randomization", false, "Disable kart and character stat randomization, even if the Archipelago slot has it enabled.");
+            lapSanityPlacementRequirement = Config.Bind("Archipelago", "Lap Sanity Placement Requirement", 1, new ConfigDescription("The placement you must be in (or better) when completing a lap for it to count as a lap sanity check. 1 = 1st place only, 8 = any placement.", new AcceptableValueRange<int>(1, 8)));
+            strictCpuItems = Config.Bind("Archipelago", "Strict CPU Items", false, "CPU racers can only use items you have received from Archipelago, instead of being able to use any item.");
+            itemManiaMode = Config.Bind("Archipelago", "Item Mania", ItemManiaMode.UseYaml, "Control Item Mania (CPUs hold 3 items and fire them rapidly). UseYaml follows the Archipelago slot setting; On/Off force it regardless of the yaml.");
            
             InitializeLogging();
             InitializeAssemblyResolution();
@@ -505,7 +518,8 @@ namespace GarfieldKartAPMod.Patches
             if (___m_iNbLapCompleted < __state + 1) return;
             if (___m_pVehicle.IsAutoPilot()) return;
             if (___m_pVehicle.m_eControlType == RcVehicle.ControlType.AI) return;
-            if (__instance.GetRank() != 0) return;
+            // GetRank() is 0-indexed, the config value is 1-indexed (1 = 1st place)
+            if (__instance.GetRank() >= GarfieldKartAPMod.lapSanityPlacementRequirement.Value) return;
 
             string track = Singleton<GameConfigurator>.Instance.StartScene;
             int lapIndex = ___m_iNbLapCompleted - 2; // 0-indexed
@@ -585,9 +599,12 @@ namespace GarfieldKartAPMod.Patches
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
             if (!___m_kart.Driver.IsHuman)
             {
-                if (GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania") == "1")
+                if (ArchipelagoHelper.IsItemManiaEnabled())
                     iQuantity = 3;
-                return !ArchipelagoHelper.IsCPUItemsDisabled();
+                if (ArchipelagoHelper.IsCPUItemsDisabled()) return false;
+                if (GarfieldKartAPMod.strictCpuItems.Value)
+                    return ArchipelagoItemTracker.HasBonusAvailable(bonus);
+                return true;
             }
 
             if (ArchipelagoHelper.IsSpringsOnly())
@@ -679,7 +696,7 @@ namespace GarfieldKartAPMod.Patches
         static void Postfix(GkRacingAI __instance, Kart pKart)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
-            if (GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania") != "1") return;
+            if (!ArchipelagoHelper.IsItemManiaEnabled()) return;
             if (!pKart.Driver.IsAi) return;
 
             if (pKart.GetBonusMgr().GetItem(0) != BonusCategory.NONE)
