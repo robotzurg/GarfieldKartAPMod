@@ -39,7 +39,7 @@
 
         private static void CheckGrandPrixGoal()
         {
-            int winCount = ArchipelagoItemTracker.GetCupVictoryCount();
+            int winCount = GoalProgressStore.GetCupVictoryCount();
             if (winCount == 4)
             {
                 CompleteGoal();
@@ -59,7 +59,7 @@
 
         private static void CheckRacesGoal()
         {
-            int raceWinCount = ArchipelagoItemTracker.GetRaceVictoryCount();
+            int raceWinCount = GoalProgressStore.GetRaceVictoryCount();
             if (raceWinCount == 16)
             {
                 CompleteGoal();
@@ -68,7 +68,7 @@
 
         private static void CheckTimeTrialsGoal()
         {
-            int timeTrialWinCount = ArchipelagoItemTracker.GetTimeTrialVictoryCount();
+            int timeTrialWinCount = GoalProgressStore.GetTimeTrialVictoryCount();
             if (timeTrialWinCount == 16)
             {
                 CompleteGoal();

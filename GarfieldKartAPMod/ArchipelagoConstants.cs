@@ -103,6 +103,14 @@ namespace GarfieldKartAPMod
         public const long LOC_BURGER_CUP_VICTORY = 103;
         public const long LOC_ICE_CREAM_CUP_VICTORY = 104;
 
+        // Per-CC Victories (701-784)
+        // Race: 700 + cc * 20 + race victory id (1-16) -> 50cc 701-716, 100cc 721-736, 150cc 741-756
+        // Cup:  760 + cc * 10 + cup number (1-4)       -> 50cc 761-764, 100cc 771-774, 150cc 781-784
+        public const long LOC_RACE_VICTORY_CC_BASE = 700;
+        public const long LOC_RACE_VICTORY_CC_GAP = 20;
+        public const long LOC_CUP_VICTORY_CC_BASE = 760;
+        public const long LOC_CUP_VICTORY_CC_GAP = 10;
+
         // Puzzle Pieces as Locations (201-248) - Used when puzzle pieces are checks
         public const long LOC_CATZ_IN_THE_HOOD_PUZZLE_PIECE_1 = 201;
         public const long LOC_CATZ_IN_THE_HOOD_PUZZLE_PIECE_2 = 202;
@@ -171,8 +179,8 @@ namespace GarfieldKartAPMod
         public const long LOC_CASKOU_PARK_LAP_SANITY            = 640;
         public const long LOC_LOOPY_LAGOON_LAP_SANITY           = 650;
 
-        // Cup Unlock Spoiler Locations (301-374)
-        // Combined tier spoiler locations (301-314)
+        // Cup Unlock Spoiler Locations (301-314)
+        // Spoiler 1: 301-304, Spoiler 2: 311-314 (sequential by cup index 0-3)
         public const long LOC_LASAGNA_CUP_UNLOCK_SPOILER_1 = 301;
         public const long LOC_PIZZA_CUP_UNLOCK_SPOILER_1 = 302;
         public const long LOC_BURGER_CUP_UNLOCK_SPOILER_1 = 303;
@@ -182,37 +190,7 @@ namespace GarfieldKartAPMod
         public const long LOC_BURGER_CUP_UNLOCK_SPOILER_2 = 313;
         public const long LOC_ICE_CREAM_CUP_UNLOCK_SPOILER_2 = 314;
 
-        // Bronze spoiler locations (321-334)
-        public const long LOC_LASAGNA_CUP_UNLOCK_BRONZE_SPOILER_1 = 321;
-        public const long LOC_PIZZA_CUP_UNLOCK_BRONZE_SPOILER_1 = 322;
-        public const long LOC_BURGER_CUP_UNLOCK_BRONZE_SPOILER_1 = 323;
-        public const long LOC_ICE_CREAM_CUP_UNLOCK_BRONZE_SPOILER_1 = 324;
-        public const long LOC_LASAGNA_CUP_UNLOCK_BRONZE_SPOILER_2 = 331;
-        public const long LOC_PIZZA_CUP_UNLOCK_BRONZE_SPOILER_2 = 332;
-        public const long LOC_BURGER_CUP_UNLOCK_BRONZE_SPOILER_2 = 333;
-        public const long LOC_ICE_CREAM_CUP_UNLOCK_BRONZE_SPOILER_2 = 334;
-
-        // Silver spoiler locations (341-354)
-        public const long LOC_LASAGNA_CUP_UNLOCK_SILVER_SPOILER_1 = 341;
-        public const long LOC_PIZZA_CUP_UNLOCK_SILVER_SPOILER_1 = 342;
-        public const long LOC_BURGER_CUP_UNLOCK_SILVER_SPOILER_1 = 343;
-        public const long LOC_ICE_CREAM_CUP_UNLOCK_SILVER_SPOILER_1 = 344;
-        public const long LOC_LASAGNA_CUP_UNLOCK_SILVER_SPOILER_2 = 351;
-        public const long LOC_PIZZA_CUP_UNLOCK_SILVER_SPOILER_2 = 352;
-        public const long LOC_BURGER_CUP_UNLOCK_SILVER_SPOILER_2 = 353;
-        public const long LOC_ICE_CREAM_CUP_UNLOCK_SILVER_SPOILER_2 = 354;
-
-        // Gold spoiler locations (361-374)
-        public const long LOC_LASAGNA_CUP_UNLOCK_GOLD_SPOILER_1 = 361;
-        public const long LOC_PIZZA_CUP_UNLOCK_GOLD_SPOILER_1 = 362;
-        public const long LOC_BURGER_CUP_UNLOCK_GOLD_SPOILER_1 = 363;
-        public const long LOC_ICE_CREAM_CUP_UNLOCK_GOLD_SPOILER_1 = 364;
-        public const long LOC_LASAGNA_CUP_UNLOCK_GOLD_SPOILER_2 = 371;
-        public const long LOC_PIZZA_CUP_UNLOCK_GOLD_SPOILER_2 = 372;
-        public const long LOC_BURGER_CUP_UNLOCK_GOLD_SPOILER_2 = 373;
-        public const long LOC_ICE_CREAM_CUP_UNLOCK_GOLD_SPOILER_2 = 374;
-
-        // Hat Unlock Locations (401-416) - Combined tier
+        // Hat Unlock Locations (401-416) - ids mirror race victory ids (400 + victory id)
         public const long LOC_CATZ_IN_THE_HOOD_HAT_UNLOCK = 401;
         public const long LOC_CRAZY_DUNES_HAT_UNLOCK = 402;
         public const long LOC_PALEROCK_LAKE_HAT_UNLOCK = 403;
@@ -229,60 +207,6 @@ namespace GarfieldKartAPMod
         public const long LOC_PROHIBITED_SITE_HAT_UNLOCK = 414;
         public const long LOC_CASKOU_PARK_HAT_UNLOCK = 415;
         public const long LOC_LOOPY_LAGOON_HAT_UNLOCK = 416;
-
-        // Hat Bronze Unlock Locations (421-436)
-        public const long LOC_CATZ_IN_THE_HOOD_BRONZE_HAT_UNLOCK = 421;
-        public const long LOC_CRAZY_DUNES_BRONZE_HAT_UNLOCK = 422;
-        public const long LOC_PALEROCK_LAKE_BRONZE_HAT_UNLOCK = 423;
-        public const long LOC_CITY_SLICKER_BRONZE_HAT_UNLOCK = 424;
-        public const long LOC_COUNTRY_BUMPKIN_BRONZE_HAT_UNLOCK = 425;
-        public const long LOC_SPOOKY_MANOR_BRONZE_HAT_UNLOCK = 426;
-        public const long LOC_MALLY_MARKET_BRONZE_HAT_UNLOCK = 427;
-        public const long LOC_VALLEY_OF_THE_KINGS_BRONZE_HAT_UNLOCK = 428;
-        public const long LOC_MISTY_FOR_ME_BRONZE_HAT_UNLOCK = 429;
-        public const long LOC_SNEAK_A_PEAK_BRONZE_HAT_UNLOCK = 430;
-        public const long LOC_BLAZING_OASIS_BRONZE_HAT_UNLOCK = 431;
-        public const long LOC_PASTACOSI_FACTORY_BRONZE_HAT_UNLOCK = 432;
-        public const long LOC_MYSTERIOUS_TEMPLE_BRONZE_HAT_UNLOCK = 433;
-        public const long LOC_PROHIBITED_SITE_BRONZE_HAT_UNLOCK = 434;
-        public const long LOC_CASKOU_PARK_BRONZE_HAT_UNLOCK = 435;
-        public const long LOC_LOOPY_LAGOON_BRONZE_HAT_UNLOCK = 436;
-
-        // Hat Silver Unlock Locations (441-456)
-        public const long LOC_CATZ_IN_THE_HOOD_SILVER_HAT_UNLOCK = 441;
-        public const long LOC_CRAZY_DUNES_SILVER_HAT_UNLOCK = 442;
-        public const long LOC_PALEROCK_LAKE_SILVER_HAT_UNLOCK = 443;
-        public const long LOC_CITY_SLICKER_SILVER_HAT_UNLOCK = 444;
-        public const long LOC_COUNTRY_BUMPKIN_SILVER_HAT_UNLOCK = 445;
-        public const long LOC_SPOOKY_MANOR_SILVER_HAT_UNLOCK = 446;
-        public const long LOC_MALLY_MARKET_SILVER_HAT_UNLOCK = 447;
-        public const long LOC_VALLEY_OF_THE_KINGS_SILVER_HAT_UNLOCK = 448;
-        public const long LOC_MISTY_FOR_ME_SILVER_HAT_UNLOCK = 449;
-        public const long LOC_SNEAK_A_PEAK_SILVER_HAT_UNLOCK = 450;
-        public const long LOC_BLAZING_OASIS_SILVER_HAT_UNLOCK = 451;
-        public const long LOC_PASTACOSI_FACTORY_SILVER_HAT_UNLOCK = 452;
-        public const long LOC_MYSTERIOUS_TEMPLE_SILVER_HAT_UNLOCK = 453;
-        public const long LOC_PROHIBITED_SITE_SILVER_HAT_UNLOCK = 454;
-        public const long LOC_CASKOU_PARK_SILVER_HAT_UNLOCK = 455;
-        public const long LOC_LOOPY_LAGOON_SILVER_HAT_UNLOCK = 456;
-
-        // Hat Gold Unlock Locations (461-476)
-        public const long LOC_CATZ_IN_THE_HOOD_GOLD_HAT_UNLOCK = 461;
-        public const long LOC_CRAZY_DUNES_GOLD_HAT_UNLOCK = 462;
-        public const long LOC_PALEROCK_LAKE_GOLD_HAT_UNLOCK = 463;
-        public const long LOC_CITY_SLICKER_GOLD_HAT_UNLOCK = 464;
-        public const long LOC_COUNTRY_BUMPKIN_GOLD_HAT_UNLOCK = 465;
-        public const long LOC_SPOOKY_MANOR_GOLD_HAT_UNLOCK = 466;
-        public const long LOC_MALLY_MARKET_GOLD_HAT_UNLOCK = 467;
-        public const long LOC_VALLEY_OF_THE_KINGS_GOLD_HAT_UNLOCK = 468;
-        public const long LOC_MISTY_FOR_ME_GOLD_HAT_UNLOCK = 469;
-        public const long LOC_SNEAK_A_PEAK_GOLD_HAT_UNLOCK = 470;
-        public const long LOC_BLAZING_OASIS_GOLD_HAT_UNLOCK = 471;
-        public const long LOC_PASTACOSI_FACTORY_GOLD_HAT_UNLOCK = 472;
-        public const long LOC_MYSTERIOUS_TEMPLE_GOLD_HAT_UNLOCK = 473;
-        public const long LOC_PROHIBITED_SITE_GOLD_HAT_UNLOCK = 474;
-        public const long LOC_CASKOU_PARK_GOLD_HAT_UNLOCK = 475;
-        public const long LOC_LOOPY_LAGOON_GOLD_HAT_UNLOCK = 476;
 
         // Character Victory Locations (1001-1008)
         public const long LOC_WIN_RACE_AS_GARFIELD = 1001;
@@ -340,25 +264,6 @@ namespace GarfieldKartAPMod
         public const long ITEM_COURSE_UNLOCK_CASKOU_PARK = 115;
         public const long ITEM_COURSE_UNLOCK_LOOPY_LAGOON = 116;
 
-        // Time Trial Unlocks (150-166)
-        public const long ITEM_PROGRESSIVE_TIME_TRIAL_UNLOCK = 150;
-        public const long ITEM_TIME_TRIAL_UNLOCK_CATZ_IN_THE_HOOD = 151;
-        public const long ITEM_TIME_TRIAL_UNLOCK_CRAZY_DUNES = 152;
-        public const long ITEM_TIME_TRIAL_UNLOCK_PALEROCK_LAKE = 153;
-        public const long ITEM_TIME_TRIAL_UNLOCK_CITY_SLICKER = 154;
-        public const long ITEM_TIME_TRIAL_UNLOCK_COUNTRY_BUMPKIN = 155;
-        public const long ITEM_TIME_TRIAL_UNLOCK_SPOOKY_MANOR = 156;
-        public const long ITEM_TIME_TRIAL_UNLOCK_MALLY_MARKET = 157;
-        public const long ITEM_TIME_TRIAL_UNLOCK_VALLEY_OF_THE_KINGS = 158;
-        public const long ITEM_TIME_TRIAL_UNLOCK_MISTY_FOR_ME = 159;
-        public const long ITEM_TIME_TRIAL_UNLOCK_SNEAK_A_PEAK = 160;
-        public const long ITEM_TIME_TRIAL_UNLOCK_BLAZING_OASIS = 161;
-        public const long ITEM_TIME_TRIAL_UNLOCK_PASTACOSI_FACTORY = 162;
-        public const long ITEM_TIME_TRIAL_UNLOCK_MYSTERIOUS_TEMPLE = 163;
-        public const long ITEM_TIME_TRIAL_UNLOCK_PROHIBITED_SITE = 164;
-        public const long ITEM_TIME_TRIAL_UNLOCK_CASKOU_PARK = 165;
-        public const long ITEM_TIME_TRIAL_UNLOCK_LOOPY_LAGOON = 166;
-
         // Cup Unlocks (200-204)
         public const long ITEM_PROGRESSIVE_CUP_UNLOCK = 200;
         public const long ITEM_CUP_UNLOCK_LASAGNA = 201;
@@ -386,24 +291,6 @@ namespace GarfieldKartAPMod
         public const long ITEM_KART_RAT_RACER = 357;
         public const long ITEM_KART_MUCK_MADNESS = 358;
 
-        // Progressive Hat Unlocks (401-416)
-        public const long ITEM_PROGRESSIVE_BEDDY_BYE_CAP = 401;
-        public const long ITEM_PROGRESSIVE_WHIZZY_WIZARD = 402;
-        public const long ITEM_PROGRESSIVE_TIC_TOQUE = 403;
-        public const long ITEM_PROGRESSIVE_ELASTO_HAT = 404;
-        public const long ITEM_PROGRESSIVE_CHEFS_SPECIAL = 405;
-        public const long ITEM_PROGRESSIVE_CUTIE_PIE_CROWN = 406;
-        public const long ITEM_PROGRESSIVE_VIKING_HELMET = 407;
-        public const long ITEM_PROGRESSIVE_STINK_O_RAMA = 408;
-        public const long ITEM_PROGRESSIVE_SPACE_BUBBLE = 409;
-        public const long ITEM_PROGRESSIVE_PIZZAIOLO_HAT = 410;
-        public const long ITEM_PROGRESSIVE_BUNNY_BAND = 411;
-        public const long ITEM_PROGRESSIVE_JOE_MONTAGNA = 412;
-        public const long ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN = 413;
-        public const long ITEM_PROGRESSIVE_TOUTANKHAMEOW = 414;
-        public const long ITEM_PROGRESSIVE_APPRENTICE_SORCERER = 415;
-        public const long ITEM_PROGRESSIVE_MULE_HEAD = 416;
-
         // Unlock Hat Items (421-436)
         public const long ITEM_UNLOCK_BEDDY_BYE_CAP = 421;
         public const long ITEM_UNLOCK_WHIZZY_WIZARD = 422;
@@ -421,16 +308,6 @@ namespace GarfieldKartAPMod
         public const long ITEM_UNLOCK_TOUTANKHAMEOW = 434;
         public const long ITEM_UNLOCK_APPRENTICE_SORCERER = 435;
         public const long ITEM_UNLOCK_MULE_HEAD = 436;
-
-        // Progressive Spoiler Unlocks (501-508)
-        public const long ITEM_PROGRESSIVE_BOMBASTIC_SPOILER = 501;
-        public const long ITEM_PROGRESSIVE_WHACKY_SPOILER = 502;
-        public const long ITEM_PROGRESSIVE_SUPERFIT_SPOILER = 503;
-        public const long ITEM_PROGRESSIVE_CYCLOBONE_SPOILER = 504;
-        public const long ITEM_PROGRESSIVE_FOXY_SPOILER = 505;
-        public const long ITEM_PROGRESSIVE_SHIMMERING_SPOILER = 506;
-        public const long ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER = 507;
-        public const long ITEM_PROGRESSIVE_STAINED_SPOILER = 508;
 
         // Unlock Spoiler Items (521-528)
         public const long ITEM_UNLOCK_BOMBASTIC_SPOILER = 521;
@@ -471,10 +348,6 @@ namespace GarfieldKartAPMod
         public const long OPTION_RANDOMIZE_RACES_CUPS = 0;
         public const long OPTION_RANDOMIZE_RACES_RACES = 1;
         public const long OPTION_RANDOMIZE_RACES_BOTH = 2;
-
-        public const long OPTION_RANDOMIZE_HATS_SPOILERS_OFF = 0;
-        public const long OPTION_RANDOMIZE_HATS_SPOILERS_PROG = 1;
-        public const long OPTION_RANDOMIZE_HATS_SPOILERS_COMBINE = 2;
 
         // ========== HELPER METHODS ==========
 
@@ -534,7 +407,35 @@ namespace GarfieldKartAPMod
             };
         }
 
+        // A win on a higher CC also counts as a win on every lower CC
+        public static List<long> GetRaceVictoryCCLocs(string startScene, Difficulty difficulty)
+        {
+            var returnedList = new List<long>();
+            long baseLoc = GetRaceVictoryLoc(startScene);
+            if (baseLoc == -1) return returnedList;
+            for (int cc = 0; cc <= (int)difficulty; cc++)
+            {
+                returnedList.Add(LOC_RACE_VICTORY_CC_BASE + cc * LOC_RACE_VICTORY_CC_GAP + baseLoc);
+            }
+            return returnedList;
+        }
 
+        public static long GetCupVictoryLoc(int cupId)
+        {
+            if (cupId < 0 || cupId > 3) return -1;
+            return LOC_LASAGNA_CUP_VICTORY + cupId;
+        }
+
+        public static List<long> GetCupVictoryCCLocs(int cupId, Difficulty difficulty)
+        {
+            var returnedList = new List<long>();
+            if (cupId < 0 || cupId > 3) return returnedList;
+            for (int cc = 0; cc <= (int)difficulty; cc++)
+            {
+                returnedList.Add(LOC_CUP_VICTORY_CC_BASE + cc * LOC_CUP_VICTORY_CC_GAP + (cupId + 1));
+            }
+            return returnedList;
+        }
 
         public static long GetPuzzlePieceLoc(string startScene, int puzzleIndex)
         {
@@ -714,123 +615,14 @@ namespace GarfieldKartAPMod
             return returnedList;
         }
 
-        public static List<long> GetHatLocs(string startScene, Difficulty difficulty)
+        public static long GetHatLoc(string startScene)
         {
-            int diffIndex = (int)difficulty;
-            var returnedList = new List<long>();
-
-            switch (startScene)
-            {
-                // LASAGNA CUP
-                case "E2C1":
-                    returnedList.Add(LOC_CATZ_IN_THE_HOOD_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_CATZ_IN_THE_HOOD_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_CATZ_IN_THE_HOOD_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CATZ_IN_THE_HOOD_GOLD_HAT_UNLOCK);
-                    break;
-                case "E4C1":
-                    returnedList.Add(LOC_CRAZY_DUNES_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_CRAZY_DUNES_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_CRAZY_DUNES_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CRAZY_DUNES_GOLD_HAT_UNLOCK);
-                    break;
-                case "E3C1":
-                    returnedList.Add(LOC_PALEROCK_LAKE_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_PALEROCK_LAKE_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_PALEROCK_LAKE_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_PALEROCK_LAKE_GOLD_HAT_UNLOCK);
-                    break;
-                case "E1C1":
-                    returnedList.Add(LOC_CITY_SLICKER_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_CITY_SLICKER_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_CITY_SLICKER_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CITY_SLICKER_GOLD_HAT_UNLOCK);
-                    break;
-
-                // PIZZA CUP
-                case "E3C2":
-                    returnedList.Add(LOC_COUNTRY_BUMPKIN_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_COUNTRY_BUMPKIN_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_COUNTRY_BUMPKIN_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_COUNTRY_BUMPKIN_GOLD_HAT_UNLOCK);
-                    break;
-                case "E2C2":
-                    returnedList.Add(LOC_SPOOKY_MANOR_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_SPOOKY_MANOR_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_SPOOKY_MANOR_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_SPOOKY_MANOR_GOLD_HAT_UNLOCK);
-                    break;
-                case "E1C2":
-                    returnedList.Add(LOC_MALLY_MARKET_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_MALLY_MARKET_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_MALLY_MARKET_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_MALLY_MARKET_GOLD_HAT_UNLOCK);
-                    break;
-                case "E4C2":
-                    returnedList.Add(LOC_VALLEY_OF_THE_KINGS_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_GOLD_HAT_UNLOCK);
-                    break;
-
-                // BURGER CUP
-                case "E1C3":
-                    returnedList.Add(LOC_MISTY_FOR_ME_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_MISTY_FOR_ME_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_MISTY_FOR_ME_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_MISTY_FOR_ME_GOLD_HAT_UNLOCK);
-                    break;
-                case "E3C3":
-                    returnedList.Add(LOC_SNEAK_A_PEAK_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_SNEAK_A_PEAK_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_SNEAK_A_PEAK_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_SNEAK_A_PEAK_GOLD_HAT_UNLOCK);
-                    break;
-                case "E4C3":
-                    returnedList.Add(LOC_BLAZING_OASIS_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_BLAZING_OASIS_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_BLAZING_OASIS_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_BLAZING_OASIS_GOLD_HAT_UNLOCK);
-                    break;
-                case "E2C3":
-                    returnedList.Add(LOC_PASTACOSI_FACTORY_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_PASTACOSI_FACTORY_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_PASTACOSI_FACTORY_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_PASTACOSI_FACTORY_GOLD_HAT_UNLOCK);
-                    break;
-
-                // ICE CREAM CUP
-                case "E4C4":
-                    returnedList.Add(LOC_MYSTERIOUS_TEMPLE_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_GOLD_HAT_UNLOCK);
-                    break;
-                case "E1C4":
-                    returnedList.Add(LOC_PROHIBITED_SITE_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_PROHIBITED_SITE_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_PROHIBITED_SITE_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_PROHIBITED_SITE_GOLD_HAT_UNLOCK);
-                    break;
-                case "E2C4":
-                    returnedList.Add(LOC_CASKOU_PARK_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_CASKOU_PARK_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_CASKOU_PARK_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CASKOU_PARK_GOLD_HAT_UNLOCK);
-                    break;
-                case "E3C4":
-                    returnedList.Add(LOC_LOOPY_LAGOON_HAT_UNLOCK);
-                    if (diffIndex >= 0) returnedList.Add(LOC_LOOPY_LAGOON_BRONZE_HAT_UNLOCK);
-                    if (diffIndex >= 1) returnedList.Add(LOC_LOOPY_LAGOON_SILVER_HAT_UNLOCK);
-                    if (diffIndex >= 2) returnedList.Add(LOC_LOOPY_LAGOON_GOLD_HAT_UNLOCK);
-                    break;
-
-            }
-
-            return returnedList;
+            long victoryLoc = GetRaceVictoryLoc(startScene);
+            if (victoryLoc == -1) return -1;
+            return LOC_CATZ_IN_THE_HOOD_HAT_UNLOCK - LOC_CATZ_IN_THE_HOOD_VICTORY + victoryLoc;
         }
 
-        public static long GetHatItemId(string hat, bool progressive)
+        public static long GetHatItemId(string hat)
         {
             switch (hat)
             {
@@ -838,222 +630,126 @@ namespace GarfieldKartAPMod
                 // CATZ IN THE HOOD
                 case "EgyptPriestHatN":
                 case "EgyptPriestHatR":
-                case "EgyptPriestHatU": return progressive ? ITEM_PROGRESSIVE_TIC_TOQUE : ITEM_UNLOCK_TIC_TOQUE;
+                case "EgyptPriestHatU": return ITEM_UNLOCK_TIC_TOQUE;
                 // CRAZY DUNES
                 case "SleepingHatN":
                 case "SleepingHatR":
-                case "SleepingHatU": return progressive ? ITEM_PROGRESSIVE_BEDDY_BYE_CAP : ITEM_UNLOCK_BEDDY_BYE_CAP;
+                case "SleepingHatU": return ITEM_UNLOCK_BEDDY_BYE_CAP;
                 // PALEROCK LAKE
                 case "PharaonHatN":
                 case "PharaonHatR":
-                case "PharaonHatU": return progressive ? ITEM_PROGRESSIVE_TOUTANKHAMEOW : ITEM_UNLOCK_TOUTANKHAMEOW;
+                case "PharaonHatU": return ITEM_UNLOCK_TOUTANKHAMEOW;
                 // CITY SLICKER
                 case "BeautyHatN":
                 case "BeautyHatR":
-                case "BeautyHatU": return progressive ? ITEM_PROGRESSIVE_ARISTO_CATIC_BICORN : ITEM_UNLOCK_ARISTO_CATIC_BICORN;
+                case "BeautyHatU": return ITEM_UNLOCK_ARISTO_CATIC_BICORN;
 
                 // PIZZA CUP
                 // COUNTRY BUMPKIN
                 case "PiratHatN":
                 case "PiratHatR":
-                case "PiratHatU": return progressive ? ITEM_PROGRESSIVE_STINK_O_RAMA : ITEM_UNLOCK_STINK_O_RAMA;
+                case "PiratHatU": return ITEM_UNLOCK_STINK_O_RAMA;
                 // SPOOKY MANOR
                 case "FootballHelmetN":
                 case "FootballHelmetR":
-                case "FootballHelmetU": return progressive ? ITEM_PROGRESSIVE_JOE_MONTAGNA : ITEM_UNLOCK_JOE_MONTAGNA;
+                case "FootballHelmetU": return ITEM_UNLOCK_JOE_MONTAGNA;
                 // MALLY MARKET
                 case "ChickenHatN":
                 case "ChickenHatR":
-                case "ChickenHatU": return progressive ? ITEM_PROGRESSIVE_ELASTO_HAT : ITEM_UNLOCK_ELASTO_HAT;
+                case "ChickenHatU": return ITEM_UNLOCK_ELASTO_HAT;
                 // VALLEY OF THE KINGS
                 case "SpaceHelmetN":
                 case "SpaceHelmetR":
-                case "SpaceHelmetU": return progressive ? ITEM_PROGRESSIVE_SPACE_BUBBLE : ITEM_UNLOCK_SPACE_BUBBLE;
+                case "SpaceHelmetU": return ITEM_UNLOCK_SPACE_BUBBLE;
 
                 // BURGER CUP
                 // PLAY MISTY FOR ME
                 case "CrownHatN":
                 case "CrownHatR":
-                case "CrownHatU": return progressive ? ITEM_PROGRESSIVE_CUTIE_PIE_CROWN : ITEM_UNLOCK_CUTIE_PIE_CROWN;
+                case "CrownHatU": return ITEM_UNLOCK_CUTIE_PIE_CROWN;
                 // SNEAK-A-PEAK
                 case "PizzaioloHatN":
                 case "PizzaioloHatR":
-                case "PizzaioloHatU": return progressive ? ITEM_PROGRESSIVE_PIZZAIOLO_HAT : ITEM_UNLOCK_PIZZAIOLO_HAT;
+                case "PizzaioloHatU": return ITEM_UNLOCK_PIZZAIOLO_HAT;
                 // BLAZING OASIS
                 case "VikingHelmetN":
                 case "VikingHelmetR":
-                case "VikingHelmetU": return progressive ? ITEM_PROGRESSIVE_VIKING_HELMET : ITEM_UNLOCK_VIKING_HELMET;
+                case "VikingHelmetU": return ITEM_UNLOCK_VIKING_HELMET;
                 // PASTACOSI FACTORY
                 case "MagicHatN":
                 case "MagicHatR":
-                case "MagicHatU": return progressive ? ITEM_PROGRESSIVE_WHIZZY_WIZARD : ITEM_UNLOCK_WHIZZY_WIZARD;
+                case "MagicHatU": return ITEM_UNLOCK_WHIZZY_WIZARD;
 
                 // ICE CREAM CUP
                 // MYSTERIOUS TEMPLE
                 case "WizardHatN":
                 case "WizardHatR":
-                case "WizardHatU": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "WizardHatU": return ITEM_UNLOCK_APPRENTICE_SORCERER;
                 // PROHIBITED SITE
                 case "DunkeyHatN":
                 case "DunkeyHatR":
-                case "DunkeyHatU": return progressive ? ITEM_PROGRESSIVE_MULE_HEAD : ITEM_UNLOCK_MULE_HEAD;
+                case "DunkeyHatU": return ITEM_UNLOCK_MULE_HEAD;
                 // CASKOU PARK
                 case "PastryHatN":
                 case "PastryHatR":
-                case "PastryHatU": return progressive ? ITEM_PROGRESSIVE_CHEFS_SPECIAL : ITEM_UNLOCK_CHEFS_SPECIAL;
+                case "PastryHatU": return ITEM_UNLOCK_CHEFS_SPECIAL;
                 // LOOPY LAGOON
                 case "RabbitHatN":
                 case "RabbitHatR":
-                case "RabbitHatU": return progressive ? ITEM_PROGRESSIVE_BUNNY_BAND : ITEM_UNLOCK_BUNNY_BAND;
+                case "RabbitHatU": return ITEM_UNLOCK_BUNNY_BAND;
 
                 default: return -1;
             }
         }
 
-        public static List<long> GetSpoilerLocs(int cupId, Difficulty difficulty)
+        public static List<long> GetSpoilerLocs(int cupId)
         {
-            int diffIndex = (int)difficulty;
             var returnedList = new List<long>();
-
-            switch (cupId)
-            {
-                case 0: // Lasagna Cup
-                    // Combined tier (both variants)
-                    returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SPOILER_1);
-                    returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SPOILER_2);
-
-                    if (diffIndex >= 0)
-                    {
-                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_BRONZE_SPOILER_1);
-                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_BRONZE_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 1)
-                    {
-                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SILVER_SPOILER_1);
-                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SILVER_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 2)
-                    {
-                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_GOLD_SPOILER_1);
-                        returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_GOLD_SPOILER_2);
-                    }
-                    break;
-
-                case 1: // Pizza Cup
-                    returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SPOILER_1);
-                    returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SPOILER_2);
-
-                    if (diffIndex >= 0)
-                    {
-                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_BRONZE_SPOILER_1);
-                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_BRONZE_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 1)
-                    {
-                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SILVER_SPOILER_1);
-                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_SILVER_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 2)
-                    {
-                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_GOLD_SPOILER_1);
-                        returnedList.Add(LOC_PIZZA_CUP_UNLOCK_GOLD_SPOILER_2);
-                    }
-                    break;
-
-                case 2: // Burger Cup
-                    returnedList.Add(LOC_BURGER_CUP_UNLOCK_SPOILER_1);
-                    returnedList.Add(LOC_BURGER_CUP_UNLOCK_SPOILER_2);
-
-                    if (diffIndex >= 0)
-                    {
-                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_BRONZE_SPOILER_1);
-                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_BRONZE_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 1)
-                    {
-                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_SILVER_SPOILER_1);
-                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_SILVER_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 2)
-                    {
-                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_GOLD_SPOILER_1);
-                        returnedList.Add(LOC_BURGER_CUP_UNLOCK_GOLD_SPOILER_2);
-                    }
-                    break;
-
-                case 3: // Ice Cream Cup
-                    returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SPOILER_1);
-                    returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SPOILER_2);
-
-                    if (diffIndex >= 0)
-                    {
-                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_BRONZE_SPOILER_1);
-                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_BRONZE_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 1)
-                    {
-                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SILVER_SPOILER_1);
-                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_SILVER_SPOILER_2);
-                    }
-
-                    if (diffIndex >= 2)
-                    {
-                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_GOLD_SPOILER_1);
-                        returnedList.Add(LOC_ICE_CREAM_CUP_UNLOCK_GOLD_SPOILER_2);
-                    }
-                    break;
-
-            }
-
+            if (cupId < 0 || cupId > 3) return returnedList;
+            returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SPOILER_1 + cupId);
+            returnedList.Add(LOC_LASAGNA_CUP_UNLOCK_SPOILER_2 + cupId);
             return returnedList;
         }
 
-        public static long GetSpoilerItemId(string custom, bool progressive)
+        public static long GetSpoilerItemId(string custom)
         {
             switch (custom)
             {
                 // LASAGNA CUP
                 case "KGC_ManiabilityN":
                 case "KGC_ManiabilityR":
-                case "KGC_ManiabilityU": return progressive ? ITEM_PROGRESSIVE_APPRENTICE_SORCERER : ITEM_UNLOCK_APPRENTICE_SORCERER;
+                case "KGC_ManiabilityU": return ITEM_UNLOCK_BOMBASTIC_SPOILER;
 
                 case "KJC_SpeedN":
                 case "KJC_SpeedR":
-                case "KJC_SpeedU": return progressive ? ITEM_PROGRESSIVE_WHACKY_SPOILER: ITEM_UNLOCK_WHACKY_SPOILER;
+                case "KJC_SpeedU": return ITEM_UNLOCK_WHACKY_SPOILER;
 
                 // PIZZA CUP
                 case "KLC_AccelerationN":
                 case "KLC_AccelerationR":
-                case "KLC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_SUPERFIT_SPOILER : ITEM_UNLOCK_SUPERFIT_SPOILER;
+                case "KLC_AccelerationU": return ITEM_UNLOCK_SUPERFIT_SPOILER;
 
                 case "KOC_AccelerationN":
                 case "KOC_AccelerationR":
-                case "KOC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_CYCLOBONE_SPOILER : ITEM_UNLOCK_CYCLOBONE_SPOILER;
+                case "KOC_AccelerationU": return ITEM_UNLOCK_CYCLOBONE_SPOILER;
 
                 // BURGER CUP
                 case "KAC_AccelerationN":
                 case "KAC_AccelerationR":
-                case "KAC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_FOXY_SPOILER : ITEM_UNLOCK_FOXY_SPOILER;
+                case "KAC_AccelerationU": return ITEM_UNLOCK_FOXY_SPOILER;
 
                 case "KNC_AccelerationN":
                 case "KNC_AccelerationR":
-                case "KNC_AccelerationU": return progressive ? ITEM_PROGRESSIVE_SHIMMERING_SPOILER : ITEM_UNLOCK_SHIMMERING_SPOILER;
+                case "KNC_AccelerationU": return ITEM_UNLOCK_SHIMMERING_SPOILER;
 
                 // ICE CREAM CUP
                 case "KSC_ManiabilityN":
                 case "KSC_ManiabilityR":
-                case "KSC_ManiabilityU": return progressive ? ITEM_PROGRESSIVE_HOLEY_MOLEY_SPOILER : ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
+                case "KSC_ManiabilityU": return ITEM_UNLOCK_HOLEY_MOLEY_SPOILER;
 
                 case "KHC_SpeedN":
                 case "KHC_SpeedR":
-                case "KHC_SpeedU": return progressive ? ITEM_PROGRESSIVE_STAINED_SPOILER : ITEM_UNLOCK_STAINED_SPOILER;
+                case "KHC_SpeedU": return ITEM_UNLOCK_STAINED_SPOILER;
 
                 default: return -1;
             }

@@ -40,29 +40,13 @@ namespace GarfieldKartAPMod.Helpers
         public static bool IsHatRandomizerEnabled()
         {
             string hatRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_hats");
-            int hatRandoInt = Parse(hatRandoString);
-            return hatRandoInt != ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_OFF;
-        }
-
-        public static bool IsProgressiveHatEnabled()
-        {
-            string hatRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_hats");
-            int hatProgInt = Parse(hatRandoString);
-            return hatProgInt == ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_PROG;
+            return IsTrue(hatRandoString);
         }
 
         public static bool IsSpoilerRandomizerEnabled()
         {
             string spoilerRandoString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_spoilers");
-            int spoilerRandoInt = Parse(spoilerRandoString);
-            return spoilerRandoInt != ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_OFF;
-        }
-
-        public static bool IsProgressiveSpoilerEnabled()
-        {
-            string spoilerProgString = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_spoilers");
-            int spoilerProgInt = Parse(spoilerProgString);
-            return spoilerProgInt == ArchipelagoConstants.OPTION_RANDOMIZE_HATS_SPOILERS_PROG;
+            return IsTrue(spoilerRandoString);
         }
 
         public static bool IsItemRandomizerEnabled()
@@ -119,19 +103,32 @@ namespace GarfieldKartAPMod.Helpers
                     return IsTrue(GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania"));
             }
         }
-        public static string GetTimeTrialGoalGrade()
+        public static int GetTimeTrialGoalGrade()
         {
-            // TODO: It'd probably be nice to use an enum here
-            // For now though, this is fine as just a central helper function
+            // Minimum medal grade for the Time Trials goal: 0 = bronze, 1 = silver, 2 = gold
             string grade = GarfieldKartAPMod.APClient.GetSlotDataValue("time_trial_goal_grade");
-            return grade;
+            TryParse(grade, out int gradeValue);
+            return gradeValue;
         }
 
-        public static string GetCCRequirement()
+        public static bool MeetsTimeTrialGoalGrade(E_TimeTrialMedal medal)
         {
-            // TODO: Same as above
+            // Medals are 1-indexed (Bronze = 1) while grades are 0-indexed (bronze = 0)
+            return (int)medal >= GetTimeTrialGoalGrade() + 1;
+        }
+
+        public static int GetCCRequirement()
+        {
+            // Minimum CC a win must be raced on to count toward the goal: 0 = any, 1 = 50cc, 2 = 100cc, 3 = 150cc
             string requirement = GarfieldKartAPMod.APClient.GetSlotDataValue("cc_requirement");
-            return requirement;
+            TryParse(requirement, out int ccRequirement);
+            return ccRequirement;
+        }
+
+        public static bool MeetsCCRequirement(Difficulty difficulty)
+        {
+            // Difficulty EASY/NORMAL/HARD (0-2) races on 50/100/150cc (requirement values 1-3)
+            return (int)difficulty + 1 >= GetCCRequirement();
         }
 
         public static int GetPuzzlePieceCount()

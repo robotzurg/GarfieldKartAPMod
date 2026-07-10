@@ -14,6 +14,9 @@ namespace GarfieldKartAPMod
         
         public bool IsConnected => session?.Socket.Connected ?? false;
 
+        // The slot name used for the current connection (stable, unlike server-side aliases)
+        public string SlotName { get; private set; }
+
         public event Action OnConnected;
         public event Action<string> OnConnectionFailed;
         public event Action OnDisconnected;
@@ -40,6 +43,7 @@ namespace GarfieldKartAPMod
                 if (result.Successful)
                 {
                     LoginSuccessful loginSuccess = (LoginSuccessful)result;
+                    SlotName = slotName;
                     GarfieldKartAPMod.sessionSlotData = loginSuccess.SlotData;
                     Log.Message($"Connected successfully! Slot: {loginSuccess.Slot}");
                     foreach (var data in loginSuccess.SlotData)

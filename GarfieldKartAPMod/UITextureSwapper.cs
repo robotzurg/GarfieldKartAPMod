@@ -12,6 +12,7 @@ namespace GarfieldKartAPMod
         private static Sprite baseArchipelagoSprite;
         public static Sprite puzzlePieceFilledSprite;
         public static Sprite puzzlePieceEmptySprite;
+        public static Sprite mainMenuLogoSprite;
         private static bool initialized;
         private static bool hasSwappedThisMenu;
 
@@ -22,9 +23,10 @@ namespace GarfieldKartAPMod
             Log.Message("Initializing UI texture swapper...");
 
             bool allSpritesLoaded = true;
-            allSpritesLoaded = TryLoadSprite("archipelago_logo.png", out baseArchipelagoSprite);
+            allSpritesLoaded = TryLoadSprite("garfkart_ap_puzzle_filled.png", out baseArchipelagoSprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_puzzle_filled.png", out puzzlePieceFilledSprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_puzzle_empty.png", out puzzlePieceEmptySprite);
+            allSpritesLoaded = allSpritesLoaded && TryLoadSprite("logo_garfAP_complete.png", out mainMenuLogoSprite);
 
             if (allSpritesLoaded)
             {
@@ -139,6 +141,50 @@ namespace GarfieldKartAPMod
         public static void ResetSwapFlag()
         {
             hasSwappedThisMenu = false;
+        }
+
+        public static void SwapMainMenuLogo(GameObject root)
+        {
+            if (mainMenuLogoSprite == null)
+            {
+                Log.Error("Cannot swap - main menu logo sprite not loaded");
+                return;
+            }
+
+            try
+            {
+                int swapCount = 0;
+                bool alreadySwapped = false;
+
+                var images = root.GetComponentsInChildren<UnityEngine.UI.Image>(true);
+                foreach (var image in images)
+                {
+                    if (image.sprite == null) continue;
+                    if (image.sprite == mainMenuLogoSprite)
+                    {
+                        alreadySwapped = true;
+                        continue;
+                    }
+
+                    string spriteName = image.sprite.name.ToLower();
+                    string objName = image.gameObject.name.ToLower();
+
+                    if (!spriteName.Contains("titlelogo") && !objName.Contains("titlelogo")) continue;
+                    image.sprite = mainMenuLogoSprite;
+                    image.preserveAspect = true;
+                    swapCount++;
+                    Log.Message($"Swapped main menu logo on: {image.gameObject.name}");
+                }
+
+                if (swapCount == 0 && !alreadySwapped)
+                {
+                    Log.Warning("No main menu logo image found to swap");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to swap main menu logo: {ex.Message}");
+            }
         }
 
         public static void SwapPuzzlePieceIcons(GameObject menu)

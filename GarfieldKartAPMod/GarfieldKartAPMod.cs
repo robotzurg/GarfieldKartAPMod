@@ -250,6 +250,9 @@ namespace GarfieldKartAPMod.Patches
                 // Get the indexer with specific parameters (int index)
                 PropertyInfo indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
 
+                // Time trials only need the course reachable by any unlock, not the race itself
+                bool isTimeTrial = Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL;
+
                 for (int i = 0; i < length; i++)
                 {
                     if (indexerProp != null)
@@ -264,8 +267,11 @@ namespace GarfieldKartAPMod.Patches
                         }
 
                         int raceId = 4 * currentCupId + i; // Race IDs
-                    
-                        if (!ArchipelagoItemTracker.HasRace(raceId))
+
+                        bool accessible = isTimeTrial
+                            ? ArchipelagoItemTracker.CanAccessTimeTrial(raceId)
+                            : ArchipelagoItemTracker.HasRace(raceId);
+                        if (!accessible)
                         {
                             button.interactable = false;
                             continue;
@@ -287,6 +293,25 @@ namespace GarfieldKartAPMod.Patches
     }
 
     // Menu Patches
+
+    [HarmonyPatch(typeof(MenuHDMain), "Enter")]
+    public class MenuHDMain_Enter_Patch
+    {
+        static void Postfix(MenuHDMain __instance)
+        {
+            UITextureSwapper.SwapMainMenuLogo(__instance.transform.root.gameObject);
+        }
+    }
+
+    // The "press any button" screen shows before the main menu, and has its own copy of the logo
+    [HarmonyPatch(typeof(MenuHDEngagementScreen), "Enter")]
+    public class MenuHDEngagementScreen_Enter_Patch
+    {
+        static void Postfix(MenuHDEngagementScreen __instance)
+        {
+            UITextureSwapper.SwapMainMenuLogo(__instance.transform.root.gameObject);
+        }
+    }
 
     [HarmonyPatch(typeof(MenuHDGameMode), "Enter")]
     public class MenuHDGameMode_Enter_Patch
@@ -375,7 +400,11 @@ namespace GarfieldKartAPMod.Patches
                 {
                     activateButton = true;
                 }
-                else if ((gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.TIME_TRIAL) && hasRaceInCup)
+                else if (gameMode == E_GameModeType.SINGLE && hasRaceInCup)
+                {
+                    activateButton = true;
+                }
+                else if (gameMode == E_GameModeType.TIME_TRIAL && ArchipelagoItemTracker.HasTimeTrialInCup(i))
                 {
                     activateButton = true;
                 }
@@ -957,37 +986,14 @@ namespace GarfieldKartAPMod.Patches
     {
         static bool Prefix(GameSaveManager __instance, string hat, ref UnlockableItemSate __result)
         {
-            bool hatRando = ArchipelagoHelper.IsHatRandomizerEnabled();
-            bool hatProgressive = ArchipelagoHelper.IsProgressiveHatEnabled();
-            char hatTierChar = hat[hat.Length - 1];
-            int hatTier = 1;
-
-            switch (hatTierChar)
-            {
-                case 'N':
-                    hatTier = 1;
-                    break;
-                case 'R':
-                    hatTier = 2;
-                    break;
-                case 'U':
-                    hatTier = 3;
-                    break;
-            }
-
-            long hatItemId = ArchipelagoConstants.GetHatItemId(hat, hatProgressive);
-
-            if (!hatRando || !ArchipelagoHelper.IsConnectedAndEnabled)
+            if (!ArchipelagoHelper.IsHatRandomizerEnabled() || !ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
 
-            if (ArchipelagoItemTracker.HasItem(hatItemId) && !hatProgressive || hatProgressive && ArchipelagoItemTracker.AmountOfItem(hatItemId) >= hatTier)
-            {
-                __result = UnlockableItemSate.UNLOCKED;
-            }
-            else
-            {
-                __result = UnlockableItemSate.LOCKED;
-            }
+            long hatItemId = ArchipelagoConstants.GetHatItemId(hat);
+
+            __result = ArchipelagoItemTracker.HasItem(hatItemId)
+                ? UnlockableItemSate.UNLOCKED
+                : UnlockableItemSate.LOCKED;
 
             return false;
         }
@@ -998,42 +1004,14 @@ namespace GarfieldKartAPMod.Patches
     {
         static bool Prefix(GameSaveManager __instance, string custom, ref UnlockableItemSate __result)
         {
-            bool spoilerRando = ArchipelagoHelper.IsSpoilerRandomizerEnabled();
-            bool spoilerProgressive = ArchipelagoHelper.IsProgressiveSpoilerEnabled();
-            char customTierChar = custom[custom.Length - 1];
-            int customTier = 1;
-
-            switch (customTierChar)
-            {
-                case 'N':
-                    customTier = 1;
-                    break;
-                case 'R':
-                    customTier = 2;
-                    break;
-                case 'U':
-                    customTier = 3;
-                    break;
-            }
-
-            if (!spoilerRando || !ArchipelagoHelper.IsConnectedAndEnabled) 
+            if (!ArchipelagoHelper.IsSpoilerRandomizerEnabled() || !ArchipelagoHelper.IsConnectedAndEnabled)
                 return true;
 
+            long customItemId = ArchipelagoConstants.GetSpoilerItemId(custom);
 
-            long customItemId = ArchipelagoConstants.GetSpoilerItemId(custom, spoilerProgressive);
-
-            if (ArchipelagoItemTracker.HasItem(customItemId) && !spoilerProgressive)
-            {
-                __result = UnlockableItemSate.UNLOCKED;
-            } 
-            else if (spoilerProgressive && ArchipelagoItemTracker.AmountOfItem(customItemId) >= customTier)
-            {
-                __result = UnlockableItemSate.UNLOCKED;
-            }
-            else
-            {
-                __result = UnlockableItemSate.LOCKED;
-            }
+            __result = ArchipelagoItemTracker.HasItem(customItemId)
+                ? UnlockableItemSate.UNLOCKED
+                : UnlockableItemSate.LOCKED;
 
             return false;
         }
@@ -1094,26 +1072,24 @@ namespace GarfieldKartAPMod.Patches
 
             if ((gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.CHAMPIONSHIP) && rank == 0)
             {
-                string ccReqString = "any";
-                if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_GRAND_PRIX || 
-                    ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_RACES)
+                long goalId = ArchipelagoGoalManager.GetGoalId();
+                bool ccGated = (goalId == ArchipelagoConstants.GOAL_GRAND_PRIX || goalId == ArchipelagoConstants.GOAL_RACES)
+                               && !ArchipelagoHelper.MeetsCCRequirement(difficulty);
+
+                if (ccGated)
                 {
-                    ccReqString = ArchipelagoHelper.GetCCRequirement();
+                    Log.Message("Skipping race victory location send due to CC requirement");
+                }
+                else
+                {
+                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
+                    GoalProgressStore.RecordRaceVictory(track);
                 }
 
-                // TODO: Verify this value actually contains a string in slot data. I'm pretty sure all slot data values are a number at the moment
-                if (ccReqString != "any")
+                foreach (long ccLoc in ArchipelagoConstants.GetRaceVictoryCCLocs(track, difficulty))
                 {
-                    if ((ccReqString == "easy" && difficulty != Difficulty.EASY) ||
-                        (ccReqString == "normal" && difficulty != Difficulty.NORMAL) ||
-                        (ccReqString == "hard" && difficulty != Difficulty.HARD))
-                    {
-                        Log.Message($"Skipping cup victory location send due to CC requirement ({ccReqString})");
-                        return;
-                    }
+                    GarfieldKartAPMod.APClient.SendLocation(ccLoc);
                 }
-
-                GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
                 GarfieldKartAPMod.APClient.SendLocation((long)character + ArchipelagoConstants.LOC_WIN_RACE_AS_GARFIELD);
                 GarfieldKartAPMod.APClient.SendLocation((long)kart + ArchipelagoConstants.LOC_WIN_RACE_WITH_FORMULA_ZZZZ);
 
@@ -1131,60 +1107,42 @@ namespace GarfieldKartAPMod.Patches
 
                 ArchipelagoGoalManager.CheckAndCompleteGoal();
 
-                var hatLocs = ArchipelagoConstants.GetHatLocs(track, difficulty);
-                foreach (var loc in hatLocs)
+                long hatLoc = ArchipelagoConstants.GetHatLoc(track);
+                if (hatLoc != -1)
                 {
-                    GarfieldKartAPMod.APClient.SendLocation(loc);
+                    GarfieldKartAPMod.APClient.SendLocation(hatLoc);
                 }
 
             }
 
             if (gameMode == E_GameModeType.TIME_TRIAL && medal != E_TimeTrialMedal.None)
             {
-
-                var timeTrialLocs = ArchipelagoConstants.GetTimeTrialLocs(track, medal);
-
-                string ttReqString = "bronze";
-                if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_TIME_TRIALS)
-                {
-                    ttReqString = ArchipelagoHelper.GetTimeTrialGoalGrade();
-                }
-
-                if ((ttReqString == "bronze" && medal != E_TimeTrialMedal.Bronze) ||
-                    (ttReqString == "silver" && medal != E_TimeTrialMedal.Silver) ||
-                    (ttReqString == "gold" && medal != E_TimeTrialMedal.Gold) ||
-                    (ttReqString == "platinum" && medal != E_TimeTrialMedal.Platinium))
-                {
-                    Log.Message($"Skipping cup victory location send due to CC requirement ({ttReqString})");
-                    return;
-                }
-
-                foreach (var loc in timeTrialLocs)
+                foreach (var loc in ArchipelagoConstants.GetTimeTrialLocs(track, medal))
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
 
-                // Persist the completed time trial locally since there is no AP location for the goal
-                var fw = GameObject.FindObjectOfType<FileWriter>();
-                fw?.WriteTimeTrialData(track);
-
-                // We do -1 here because medals go from 1 to 3 and difficulties 0 to 2
-                Difficulty medalDiff = (Difficulty)((int)difficulty - 1);
-
-                var hatLocs = ArchipelagoConstants.GetHatLocs(track, medalDiff);
-                foreach (long loc in hatLocs)
+                long hatLoc = ArchipelagoConstants.GetHatLoc(track);
+                if (hatLoc != -1)
                 {
-                    GarfieldKartAPMod.APClient.SendLocation(loc);
+                    GarfieldKartAPMod.APClient.SendLocation(hatLoc);
                 }
 
-                // Re-` goals after persisting
-                ArchipelagoGoalManager.CheckAndCompleteGoal();
+                if (ArchipelagoGoalManager.GetGoalId() != ArchipelagoConstants.GOAL_TIME_TRIALS ||
+                    ArchipelagoHelper.MeetsTimeTrialGoalGrade(medal))
+                {
+                    // Persist the completed time trial locally since there is no AP location for the goal
+                    GoalProgressStore.RecordTimeTrialVictory(track);
+
+                    // Re-check goals after persisting
+                    ArchipelagoGoalManager.CheckAndCompleteGoal();
+                }
             }
 
             // ReSharper disable once InvertIf
             if (gameMode == E_GameModeType.CHAMPIONSHIP && nbFirstPlace == 4)
             {
-                var spoilerLocs = ArchipelagoConstants.GetSpoilerLocs(cup, difficulty);
+                var spoilerLocs = ArchipelagoConstants.GetSpoilerLocs(cup);
                 foreach (long loc in spoilerLocs)
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
@@ -1206,39 +1164,35 @@ namespace GarfieldKartAPMod.Patches
         private static void SendCupVictoryLocation()
         {
             string name = Singleton<GameConfigurator>.Instance.ChampionShipData.ChampionShipNameId;
-            string ccReqString = "any";
-            if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_GRAND_PRIX || 
-                ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_RACES)
+            Difficulty difficulty = Singleton<GameConfigurator>.Instance.Difficulty;
+
+            int cupId = name switch
             {
-                ccReqString = ArchipelagoHelper.GetCCRequirement();
+                "CHAMPIONSHIP_NAME_1" => 0,
+                "CHAMPIONSHIP_NAME_2" => 1,
+                "CHAMPIONSHIP_NAME_3" => 2,
+                "CHAMPIONSHIP_NAME_4" => 3,
+                _ => -1
+            };
+            if (cupId == -1) return;
+
+            long goalId = ArchipelagoGoalManager.GetGoalId();
+            bool ccGated = (goalId == ArchipelagoConstants.GOAL_GRAND_PRIX || goalId == ArchipelagoConstants.GOAL_RACES)
+                           && !ArchipelagoHelper.MeetsCCRequirement(difficulty);
+
+            if (ccGated)
+            {
+                Log.Message("Skipping cup victory location send due to CC requirement");
+            }
+            else
+            {
+                GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetCupVictoryLoc(cupId));
+                GoalProgressStore.RecordCupVictory(cupId);
             }
 
-            if (ccReqString != "any")
+            foreach (long ccLoc in ArchipelagoConstants.GetCupVictoryCCLocs(cupId, difficulty))
             {
-                Difficulty difficulty = Singleton<GameConfigurator>.Instance.Difficulty;
-                if ((ccReqString == "easy" && difficulty != Difficulty.EASY) ||
-                    (ccReqString == "normal" && difficulty != Difficulty.NORMAL) ||
-                    (ccReqString == "hard" && difficulty != Difficulty.HARD))
-                {
-                    Log.Message($"Skipping cup victory location send due to CC requirement ({ccReqString})");
-                    return;
-                }
-            }
-
-            switch (name)
-            {
-                case "CHAMPIONSHIP_NAME_1":
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY);
-                    break;
-                case "CHAMPIONSHIP_NAME_2":
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_PIZZA_CUP_VICTORY);
-                    break;
-                case "CHAMPIONSHIP_NAME_3":
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_BURGER_CUP_VICTORY);
-                    break;
-                case "CHAMPIONSHIP_NAME_4":
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY);
-                    break;
+                GarfieldKartAPMod.APClient.SendLocation(ccLoc);
             }
         }
     }

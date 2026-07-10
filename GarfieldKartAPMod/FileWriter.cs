@@ -9,33 +9,6 @@ namespace GarfieldKartAPMod
     {
         private const string LastConnectionFileName = "last_connection.txt";
 
-        // Persist a completed time-trial scene to a separate per-session file.
-        public void WriteTimeTrialData(string track)
-        {
-            if (GarfieldKartAPMod.APClient == null || !GarfieldKartAPMod.APClient.IsConnected)
-                return;
-
-            ArchipelagoSession session = GarfieldKartAPMod.APClient.GetSession();
-            if (session == null)
-                return;
-
-            string sessionSeed = session.RoomState.Seed;
-            string path = Application.persistentDataPath + $"/{sessionSeed}_timetrials.txt";
-
-            HashSet<string> existingLines = [];
-            if (File.Exists(path))
-            {
-                existingLines = new HashSet<string>(File.ReadAllLines(path));
-            }
-
-            if (existingLines.Contains(track)) return;
-            using (StreamWriter writer = new StreamWriter(path, true))
-            {
-                writer.WriteLine(track);
-            }
-            Debug.Log($"AP TimeTrial file written to: {path}");
-        }
-
         public void WriteFillerData(string data)
         {
             if (GarfieldKartAPMod.APClient == null || !GarfieldKartAPMod.APClient.IsConnected)

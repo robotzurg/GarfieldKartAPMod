@@ -115,57 +115,6 @@ namespace GarfieldKartAPMod
 
         // ========== HELPER METHODS ==========
 
-        public static int GetCupVictoryCount()
-        {
-            return (int)checkedLocations.Keys.Count(loc => loc >= ArchipelagoConstants.LOC_LASAGNA_CUP_VICTORY && loc <= ArchipelagoConstants.LOC_ICE_CREAM_CUP_VICTORY);
-        }
-
-        public static int GetRaceVictoryCount()
-        {
-            const long startPos = ArchipelagoConstants.LOC_CATZ_IN_THE_HOOD_VICTORY;
-            int count = 0;
-            for (int i = 0; i < 16; i++)
-            {
-                if (HasLocation(startPos + i))
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        // Time-trial wins are stored in a per-session file by FileWriter. Only count wins for the active session.
-        public static int GetTimeTrialVictoryCount()
-        {
-            try
-            {
-                var session = GarfieldKartAPMod.APClient?.GetSession();
-                if (session == null)
-                    return 0;
-
-                string sessionSeed = session.RoomState.Seed;
-                if (string.IsNullOrWhiteSpace(sessionSeed))
-                    return 0;
-
-                string path = Application.persistentDataPath + $"/{sessionSeed}_timetrials.txt";
-                if (!File.Exists(path))
-                    return 0;
-
-                var lines = File.ReadAllLines(path)
-                                .Where(l => !string.IsNullOrWhiteSpace(l))
-                                .Select(l => l.Trim())
-                                .Distinct();
-
-                return lines.Count();
-            }
-            catch (System.Exception ex)
-            {
-                Log.Error($"Failed to read time-trial file: {ex.Message}");
-                return 0;
-            }
-        }
-
         public static List<long> GetAvailableCups()
         {
             var cupUnlocks = new List<long>();
@@ -246,11 +195,51 @@ namespace GarfieldKartAPMod
 
             for (int i = 0; i < 4; i++)
             {
-                if (!HasRace(startRaceId + i)) 
+                if (!HasRace(startRaceId + i))
                     return false;
             }
 
             return true;
+        }
+
+        // A course's time trials are accessible once the course can be reached by
+        // ANY unlock - its own course unlock OR the cup it belongs to
+        public static bool CanAccessTimeTrial(int raceId)
+        {
+            bool raceRando = ArchipelagoHelper.IsRacesRandomized();
+            bool cupRando = ArchipelagoHelper.IsCupsRandomized();
+
+            if (!raceRando && !cupRando)
+                return true;
+
+            if (raceRando && HasItem(ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD + raceId))
+                return true;
+
+            if (cupRando)
+            {
+                int cupId = raceId / 4;
+                if (ArchipelagoHelper.IsProgressiveCupsEnabled())
+                {
+                    return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
+                }
+
+                return HasItem(ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA + cupId);
+            }
+
+            return false;
+        }
+
+        public static bool HasTimeTrialInCup(int cupId)
+        {
+            int startRaceId = cupId * 4;
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (CanAccessTimeTrial(startRaceId + i))
+                    return true;
+            }
+
+            return false;
         }
 
         public static int GetPuzzlePieceCount(string startScene)
