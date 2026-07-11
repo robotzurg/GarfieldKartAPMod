@@ -103,6 +103,19 @@ namespace GarfieldKartAPMod.Helpers
                     return IsTrue(GarfieldKartAPMod.APClient.GetSlotDataValue("item_mania"));
             }
         }
+
+        public static bool IsDeathLinkEnabled()
+        {
+            switch (GarfieldKartAPMod.deathLink.Value)
+            {
+                case DeathLinkMode.On:
+                    return true;
+                case DeathLinkMode.Off:
+                    return false;
+                default:
+                    return IsTrue(GarfieldKartAPMod.APClient.GetSlotDataValue("death_link"));
+            }
+        }
         public static int GetTimeTrialGoalGrade()
         {
             // Minimum medal grade for the Time Trials goal: 0 = bronze, 1 = silver, 2 = gold

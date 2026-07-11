@@ -39,7 +39,7 @@
 
         private static void CheckGrandPrixGoal()
         {
-            int winCount = GoalProgressStore.GetCupVictoryCount();
+            int winCount = ApJsonSaveFile.GetCupVictoryCount();
             if (winCount == 4)
             {
                 CompleteGoal();
@@ -59,7 +59,7 @@
 
         private static void CheckRacesGoal()
         {
-            int raceWinCount = GoalProgressStore.GetRaceVictoryCount();
+            int raceWinCount = ApJsonSaveFile.GetRaceVictoryCount();
             if (raceWinCount == 16)
             {
                 CompleteGoal();
@@ -68,7 +68,7 @@
 
         private static void CheckTimeTrialsGoal()
         {
-            int timeTrialWinCount = GoalProgressStore.GetTimeTrialVictoryCount();
+            int timeTrialWinCount = ApJsonSaveFile.GetTimeTrialVictoryCount();
             if (timeTrialWinCount == 16)
             {
                 CompleteGoal();

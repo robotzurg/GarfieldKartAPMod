@@ -54,6 +54,8 @@ namespace GarfieldKartAPMod
                     // Subscribe to message received
                     session.MessageLog.OnMessageReceived += OnMessageReceived;
 
+                    DeathLinkManager.OnSessionConnected(session);
+
                     // Load items we already have
                     ArchipelagoItemTracker.LoadFromServer();
 
@@ -89,6 +91,7 @@ namespace GarfieldKartAPMod
             if (session == null) return;
             session.Socket.DisconnectAsync();
             session = null;
+            DeathLinkManager.OnDisconnected();
             Log.Message("Disconnected from Archipelago");
         }
 
@@ -131,6 +134,7 @@ namespace GarfieldKartAPMod
         {
             Log.Warning($"Socket closed: {reason}");
             session = null;
+            DeathLinkManager.OnDisconnected();
             OnDisconnected?.Invoke();
         }
 
@@ -169,6 +173,13 @@ namespace GarfieldKartAPMod
         public string GetSeed()
         {
             return session?.RoomState?.Seed;
+        }
+
+        // Lets other systems (e.g. DeathLink) surface a message through the normal
+        // on-screen notification flow
+        public void QueueNotification(string message)
+        {
+            pendingNotifications.Enqueue(message);
         }
 
         public bool HasPendingNotifications()

@@ -329,14 +329,19 @@ namespace GarfieldKartAPMod
         public const long ITEM_UFO = 907;
         public const long ITEM_PILLOW = 908;
         public const long ITEM_SPRING = 909;
-
+        
         // Filler Items (1000+)
-        public const long ITEM_FILLER = 1000;
-        public const long ITEM_GIVE_ITEM_FILLER = 1001;
+        public const long ITEM_RANDOM_ITEM_BOX_FILLER = 1000;
+        public const long ITEM_START_BOOST_HELPER_FILLER = 1001;
+        public const long ITEM_STRONGER_ITEM_BOXES_FILLER = 1002;
+        public const long ITEM_QUOTE_FILLER = 1003;
 
         // Trap Items (1500+)
-        public const long ITEM_TRAP = 1500;
-        public const long ITEM_HANDLING_TRAP = 1501;
+        public const long ITEM_MIRROR_TRAP = 1500;
+        public const long ITEM_SLEEP_TRAP = 1501;
+        public const long ITEM_GRAYSCALE_TRAP = 1502;
+        public const long ITEM_BROKEN_DRIFT_TRAP = 1503;
+        public const long ITEM_BOUNCE_TRAP = 1504;
 
         // Goals
         public const long GOAL_GRAND_PRIX = 0;

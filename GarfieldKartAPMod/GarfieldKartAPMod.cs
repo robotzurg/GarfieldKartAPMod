@@ -12,15 +12,19 @@ using System.Reflection;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityHotReloadNS;
 using static MenuHDTrackSelection;
-
-// #if DEBUG
-// using UnityHotReloadNS;
-// #endif
 
 namespace GarfieldKartAPMod
 {
     public enum ItemManiaMode
+    {
+        UseYaml,
+        On,
+        Off
+    }
+
+    public enum DeathLinkMode
     {
         UseYaml,
         On,
@@ -43,6 +47,7 @@ namespace GarfieldKartAPMod
         public static ConfigEntry<int> lapSanityPlacementRequirement;
         public static ConfigEntry<bool> strictCpuItems;
         public static ConfigEntry<ItemManiaMode> itemManiaMode;
+        public static ConfigEntry<DeathLinkMode> deathLink;
 
         private Harmony harmony;
         public static Dictionary<string, object> sessionSlotData;
@@ -63,6 +68,8 @@ namespace GarfieldKartAPMod
             lapSanityPlacementRequirement = Config.Bind("Archipelago", "Lap Sanity Placement Requirement", 1, new ConfigDescription("The placement you must be in (or better) when completing a lap for it to count as a lap sanity check. 1 = 1st place only, 8 = any placement.", new AcceptableValueRange<int>(1, 8)));
             strictCpuItems = Config.Bind("Archipelago", "Strict CPU Items", false, "CPU racers can only use items you have received from Archipelago, instead of being able to use any item.");
             itemManiaMode = Config.Bind("Archipelago", "Item Mania", ItemManiaMode.UseYaml, "Control Item Mania (CPUs hold 3 items and fire them rapidly). UseYaml follows the Archipelago slot setting; On/Off force it regardless of the yaml.");
+            deathLink = Config.Bind("Archipelago", "Death Link", DeathLinkMode.UseYaml, "Control DeathLink (falling off the track sends a death to other DeathLink players, and their deaths force your kart to respawn). UseYaml follows the Archipelago slot setting; On/Off force it regardless of the yaml.");
+            deathLink.SettingChanged += (_, _) => DeathLinkManager.ApplyConfig();
            
             InitializeLogging();
             InitializeAssemblyResolution();
@@ -130,15 +137,21 @@ namespace GarfieldKartAPMod
 
         public void Update()
         {
-// #if DEBUG
-//             if (Input.GetKeyUp(KeyCode.F2))
-//             {
-//                 UnityHotReload.LoadNewAssemblyVersion(
-//                     typeof(GarfieldKartAPMod).Assembly,
-//                     "C:\\Users\\robot\\AppData\\Roaming\\r2modmanPlus-local\\GarfieldKartFuriousRacing\\profiles\\Default\\BepInEx\\plugins\\Jeffdev-GarfieldKartArchipelago/GarfieldKartAPMod.dll"
-//                 );
-//             }
-// #endif
+#if DEBUG
+             if (Input.GetKeyUp(KeyCode.F2))
+             {
+                 UnityHotReload.LoadNewAssemblyVersion(
+                     typeof(GarfieldKartAPMod).Assembly,
+                     "C:\\Users\\robot\\AppData\\Roaming\\r2modmanPlus-local\\GarfieldKartFuriousRacing\\profiles\\Default\\BepInEx\\plugins\\Jeffdev-GarfieldKartArchipelago/GarfieldKartAPMod.dll"
+                 );
+             }
+
+            // Debug keybinds for testing DeathLink: F8 broadcasts a death, F9 fakes receiving one
+            if (Input.GetKeyUp(KeyCode.F8)) DeathLinkManager.SendDebugDeath();
+            if (Input.GetKeyUp(KeyCode.F9)) DeathLinkManager.SimulateReceivedDeath();
+#endif
+            
+            DeathLinkManager.ProcessPendingDeath();
 
             if (APClient == null || !APClient.HasPendingNotifications()) return;
             string notification = APClient.DequeuePendingNotification();
@@ -474,6 +487,21 @@ namespace GarfieldKartAPMod.Patches
             }
 
             return false;
+        }
+    }
+
+    // Separate postfix so the checks display updates whether or not the puzzle
+    // prefix above skipped the original method
+    [HarmonyPatch(typeof(MenuHDTrackSelection), "UpdateRacesButtons")]
+    public class MenuHDTrackSelection_UpdateRacesButtons_ChecksDisplay_Patch
+    {
+        static void Postfix(List<HD_TrackSelection_Item> ___m_itemsButtons)
+        {
+            string[] tracks = Singleton<GameConfigurator>.Instance.ChampionShipData.Tracks;
+            for (int i = 0; i < ___m_itemsButtons.Count - 1 && i < tracks.Length; i++)
+            {
+                TrackChecksDisplay.AttachOrUpdate(___m_itemsButtons[i], tracks[i]);
+            }
         }
     }
 
@@ -1023,7 +1051,6 @@ namespace GarfieldKartAPMod.Patches
         static void Postfix(string key, ref string __result)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
-            Log.Info($"{key}, {__result}");
             switch (key)
             {
                 case "MENU_GARAGE_UNLOCK_SINGLE_RACE":
@@ -1047,6 +1074,25 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+
+    // ========== DEATHLINK PATCHES ==========
+
+    // Entering the fall state (driving off the track) is the closest thing Garfield
+    // Kart has to dying, so it's what triggers an outgoing DeathLink
+    [HarmonyPatch(typeof(RcVehicle), "OnStartFallState")]
+    public class RcVehicle_OnStartFallState_Patch
+    {
+        static void Postfix(RcVehicle __instance)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (__instance is not Kart kart) return;
+
+            Driver driver = kart.Driver;
+            if (driver == null || !driver.IsHuman || !driver.IsLocal) return;
+
+            DeathLinkManager.OnLocalPlayerFell();
+        }
+    }
 
     // ========== REWARD PATCHES ==========
 
@@ -1083,7 +1129,7 @@ namespace GarfieldKartAPMod.Patches
                 else
                 {
                     GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
-                    GoalProgressStore.RecordRaceVictory(track);
+                    ApJsonSaveFile.RecordRaceVictory(track);
                 }
 
                 foreach (long ccLoc in ArchipelagoConstants.GetRaceVictoryCCLocs(track, difficulty))
@@ -1132,7 +1178,7 @@ namespace GarfieldKartAPMod.Patches
                     ArchipelagoHelper.MeetsTimeTrialGoalGrade(medal))
                 {
                     // Persist the completed time trial locally since there is no AP location for the goal
-                    GoalProgressStore.RecordTimeTrialVictory(track);
+                    ApJsonSaveFile.RecordTimeTrialVictory(track);
 
                     // Re-check goals after persisting
                     ArchipelagoGoalManager.CheckAndCompleteGoal();
@@ -1187,7 +1233,7 @@ namespace GarfieldKartAPMod.Patches
             else
             {
                 GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetCupVictoryLoc(cupId));
-                GoalProgressStore.RecordCupVictory(cupId);
+                ApJsonSaveFile.RecordCupVictory(cupId);
             }
 
             foreach (long ccLoc in ArchipelagoConstants.GetCupVictoryCCLocs(cupId, difficulty))
