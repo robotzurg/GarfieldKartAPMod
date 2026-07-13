@@ -97,6 +97,9 @@ namespace GarfieldKartAPMod
         public const long LOC_CASKOU_PARK_TIME_TRIAL_PLATINUM = 95;
         public const long LOC_LOOPY_LAGOON_TIME_TRIAL_PLATINUM = 96;
 
+        // Each medal grade's block sits this far above the previous one - see GetTimeTrialLoc
+        public const long LOC_TIME_TRIAL_MEDAL_GAP = 20;
+
         // Cup Victories (101-104)
         public const long LOC_LASAGNA_CUP_VICTORY = 101;
         public const long LOC_PIZZA_CUP_VICTORY = 102;
@@ -524,123 +527,28 @@ namespace GarfieldKartAPMod
             return baseId + lapIndex;
         }
 
+        // Medals are 1-indexed (Bronze = 1 ... Platinum = 4), each grade a fixed gap above the
+        // race victory ids: Catz in the Hood (victory 1) has bronze at 21, silver at 41...
+        public static long GetTimeTrialLoc(string startScene, E_TimeTrialMedal medal)
+        {
+            int grade = (int)medal;
+            if (grade < 1 || grade > 4) return -1;
+
+            long victoryLoc = GetRaceVictoryLoc(startScene);
+            if (victoryLoc == -1) return -1;
+
+            return LOC_TIME_TRIAL_MEDAL_GAP * grade + victoryLoc;
+        }
+
+        // A medal also counts as every lower medal
         public static List<long> GetTimeTrialLocs(string startScene, E_TimeTrialMedal medal)
         {
-            int diffIndex = (int)medal;
             var returnedList = new List<long>();
-
-            if (diffIndex == 0)
+            for (int grade = 1; grade <= (int)medal; grade++)
             {
-                return returnedList;
+                long loc = GetTimeTrialLoc(startScene, (E_TimeTrialMedal)grade);
+                if (loc != -1) returnedList.Add(loc);
             }
-
-            switch (startScene)
-            {
-                // LASAGNA CUP
-                case "E2C1":
-                    if (diffIndex >= 1) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_CATZ_IN_THE_HOOD_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E4C1":
-                    if (diffIndex >= 1) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_CRAZY_DUNES_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E3C1":
-                    if (diffIndex >= 1) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_PALEROCK_LAKE_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E1C1":
-                    if (diffIndex >= 1) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_CITY_SLICKER_TIME_TRIAL_PLATINUM);
-                    break;
-
-                // PIZZA CUP
-                case "E3C2":
-                    if (diffIndex >= 1) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_COUNTRY_BUMPKIN_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E2C2":
-                    if (diffIndex >= 1) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_SPOOKY_MANOR_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E1C2":
-                    if (diffIndex >= 1) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_MALLY_MARKET_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E4C2":
-                    if (diffIndex >= 1) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_VALLEY_OF_THE_KINGS_TIME_TRIAL_PLATINUM);
-                    break;
-
-                // BURGER CUP
-                case "E1C3":
-                    if (diffIndex >= 1) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_MISTY_FOR_ME_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E3C3":
-                    if (diffIndex >= 1) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_SNEAK_A_PEAK_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E4C3":
-                    if (diffIndex >= 1) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_BLAZING_OASIS_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E2C3":
-                    if (diffIndex >= 1) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_PASTACOSI_FACTORY_TIME_TRIAL_PLATINUM);
-                    break;
-
-                // ICE CREAM CUP
-                case "E4C4":
-                    if (diffIndex >= 1) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_MYSTERIOUS_TEMPLE_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E1C4":
-                    if (diffIndex >= 1) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_PROHIBITED_SITE_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E2C4":
-                    if (diffIndex >= 1) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_CASKOU_PARK_TIME_TRIAL_PLATINUM);
-                    break;
-                case "E3C4":
-                    if (diffIndex >= 1) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_BRONZE);
-                    if (diffIndex >= 2) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_SILVER);
-                    if (diffIndex >= 3) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_GOLD);
-                    if (diffIndex >= 4) returnedList.Add(LOC_LOOPY_LAGOON_TIME_TRIAL_PLATINUM);
-                    break;
-            }
-
             return returnedList;
         }
 

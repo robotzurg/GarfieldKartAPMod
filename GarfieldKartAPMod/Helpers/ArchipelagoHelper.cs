@@ -13,21 +13,30 @@ namespace GarfieldKartAPMod.Helpers
         public static bool IsConnectedAndEnabled =>
             GarfieldKartAPMod.APClient?.IsConnected ?? false;
 
-        public static bool IsRacing()
+        public static Kart GetLocalHumanKart()
         {
             GameManager gameManager = Singleton<GameManager>.Instance;
-            if (gameManager?.GameMode?.Drivers == null) return false;
+            if (gameManager?.GameMode?.Drivers == null) return null;
 
             foreach (Driver driver in gameManager.GameMode.Drivers.Values)
             {
-                if (driver.IsHuman && driver.IsLocal)
-                {
-                    return driver.Kart != null && !driver.Kart.IsRaceEnded() &&
-                           gameManager.GameMode is InGameGameMode inGame && inGame.HasRaceStarted;
-                }
+                if (driver.IsHuman && driver.IsLocal) return driver.Kart;
             }
 
-            return false;
+            return null;
+        }
+
+        public static bool IsRacing()
+        {
+            Kart kart = GetLocalHumanKart();
+            if (kart == null || kart.IsRaceEnded()) return false;
+
+            return Singleton<GameManager>.Instance?.GameMode is InGameGameMode inGame && inGame.HasRaceStarted;
+        }
+
+        public static bool IsTimeTrial()
+        {
+            return Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL;
         }
 
         public static bool IsPuzzleRandomizationEnabled()
@@ -135,10 +144,18 @@ namespace GarfieldKartAPMod.Helpers
         }
         public static long GetTrapHandling()
         {
-            // When traps disable: 0 = after 60s of in-race time, 1 = after finishing a race, 2 = after finishing 1st
+            // Duration traps always run on a 60s in-race timer. This only says how many races the
+            // trap comes back for: 0 = just the one, 1 = until a race is finished, 2 = until one is won
             string trapHandlingString = GarfieldKartAPMod.APClient.GetSlotDataValue("trap_handling");
             TryParse(trapHandlingString, out int trapHandling);
             return trapHandling;
+        }
+
+        public static int GetTimeTrialRandomization()
+        {
+            string randomization = GarfieldKartAPMod.APClient.GetSlotDataValue("time_trial_randomization");
+            TryParse(randomization, out int randomizationValue);
+            return randomizationValue;
         }
 
         public static int GetTimeTrialGoalGrade()
@@ -153,6 +170,22 @@ namespace GarfieldKartAPMod.Helpers
         {
             // Medals are 1-indexed (Bronze = 1) while grades are 0-indexed (bronze = 0)
             return (int)medal >= GetTimeTrialGoalGrade() + 1;
+        }
+
+        // EarnReward's medal is max(medal already in the game's save, medal earned this run), so
+        // score the run itself off the same thresholds TimeTrialGameMode.GetMedalBeaten reads
+        public static E_TimeTrialMedal GetMedalEarnedThisRun()
+        {
+            TimeTrialConfig timeToBeat = TimeTrialConfigsContainer.GetTimeToBeatFromTrack(LoadingManager.LevelToLoad);
+            Kart kart = GetLocalHumanKart();
+            if (timeToBeat == null || kart?.RaceStats == null) return E_TimeTrialMedal.None;
+
+            int raceTime = kart.RaceStats.GetRaceTime();
+            if (raceTime < timeToBeat.Platinium) return E_TimeTrialMedal.Platinium;
+            if (raceTime <= timeToBeat.Gold) return E_TimeTrialMedal.Gold;
+            if (raceTime <= timeToBeat.Silver) return E_TimeTrialMedal.Silver;
+            if (raceTime <= timeToBeat.Bronze) return E_TimeTrialMedal.Bronze;
+            return E_TimeTrialMedal.None;
         }
 
         public static int GetCCRequirement()

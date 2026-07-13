@@ -6,12 +6,6 @@ namespace GarfieldKartAPMod.Helpers
 {
     // Tracks the filler/trap items the server has sent and decides when each may fire. The
     // effects themselves live in ArchipelagoFillerEffects and ArchipelagoTrapEffects.
-    //
-    // Instant filler (item box, sleep, bounce, start boost) has nothing to expire, so it skips
-    // the queue entirely: a copy received mid-race fires at once, one received in a menu is held
-    // and drained a copy per kind per race. Duration filler (mirror, grayscale, broken drift,
-    // quote) waits in a backup queue instead, and each race start pulls one copy of every kind
-    // that isn't already running. Only duration filler answers to trap_handling.
     internal static class ArchipelagoFillerManager
     {
         public enum FillerKind
@@ -31,11 +25,9 @@ namespace GarfieldKartAPMod.Helpers
             public bool RaceStartOnly;
         }
 
+        // Marker for the items trap_handling applies to
         private class TrapItem : FillerItem
         {
-            // Traps that could make a race unwinnable ignore trap_handling and always expire on
-            // the in-race timer
-            public bool AlwaysTimed;
         }
 
         public class ActiveFillerItem
@@ -76,8 +68,7 @@ namespace GarfieldKartAPMod.Helpers
                 Id = ArchipelagoConstants.ITEM_MIRROR_TRAP,
                 Name = "Mirror Trap",
                 Description = "Mirrors the player's controls.",
-                Kind = FillerKind.Duration,
-                AlwaysTimed = true
+                Kind = FillerKind.Duration
             },
             new TrapItem()
             {
@@ -138,8 +129,8 @@ namespace GarfieldKartAPMod.Helpers
                 return;
             }
 
-            // Use it now if we're on track, but only one copy of a kind runs at a time
-            if (ArchipelagoHelper.IsRacing() && !IsFillerActive(filler.Id))
+            // Use it now if we're on track, but only one copy of a kind is ever in hand at a time
+            if (ArchipelagoHelper.IsRacing() && !IsFillerHeld(filler.Id))
             {
                 Activate(filler);
                 SaveFiller();
@@ -157,10 +148,21 @@ namespace GarfieldKartAPMod.Helpers
             foreach (KeyValuePair<long, int> entry in pendingInstant.Where(entry => entry.Value > 0))
                 armedInstant.Add(entry.Key);
 
+            // A trap still owed a race gets its full timer over again, so quitting out doesn't
+            // eat into the time it's owed
+            if (ArchipelagoHelper.GetTrapHandling() != ArchipelagoConstants.OPTION_TRAP_HANDLING_TIME)
+            {
+                foreach (ActiveFillerItem active in activeDuration.Where(active => active.Item is TrapItem))
+                {
+                    active.TrapSecondsActive = 0f;
+                    GarfieldKartAPMod.APClient.QueueNotification($"{active.Item.Name} Activated!");
+                }
+            }
+
             foreach (long id in queuedDuration.Where(entry => entry.Value > 0).Select(entry => entry.Key).ToList())
             {
                 FillerItem filler = GetFillerById(id);
-                if (filler == null || IsFillerActive(id)) continue;
+                if (filler == null || IsFillerHeld(id)) continue;
 
                 queuedDuration[id]--;
                 Activate(filler);
@@ -170,49 +172,85 @@ namespace GarfieldKartAPMod.Helpers
             SaveFiller();
         }
 
+        // Finishing a race discharges race/win traps; time traps answer to their timer instead
         public static void OnRaceEnd(bool wonRace)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
-            
+
             armedInstant.Clear();
 
             long trapHandling = ArchipelagoHelper.GetTrapHandling();
-            foreach (ActiveFillerItem active in activeDuration)
+            for (int i = activeDuration.Count - 1; i >= 0; i--)
             {
-                if (UsesTimeHandling(active.Item)) continue;
-                if (active.Item is TrapItem
-                    && trapHandling == ArchipelagoConstants.OPTION_TRAP_HANDLING_WIN
-                    && !wonRace) continue;
+                ActiveFillerItem active = activeDuration[i];
 
-                active.RemainingRaces--;
+                if (active.Item is not TrapItem)
+                {
+                    active.RemainingRaces--;
+                    if (active.RemainingRaces <= 0) Discharge(i);
+                    continue;
+                }
+
+                if (trapHandling == ArchipelagoConstants.OPTION_TRAP_HANDLING_TIME) continue;
+                // Anything short of a win and it's back next race
+                if (trapHandling == ArchipelagoConstants.OPTION_TRAP_HANDLING_WIN && !wonRace) continue;
+
+                Discharge(i);
             }
 
-            ExpireFinished();
             SaveFiller();
         }
 
         // Ticked every frame the local player is actively racing
         public static void TickTrapTimers(float deltaSeconds)
         {
-            bool anyExpired = false;
-            foreach (ActiveFillerItem active in activeDuration)
+            bool anyFinished = false;
+            long trapHandling = ArchipelagoHelper.GetTrapHandling();
+
+            for (int i = activeDuration.Count - 1; i >= 0; i--)
             {
-                if (!UsesTimeHandling(active.Item)) continue;
-                if (active.TrapSecondsActive >= ArchipelagoConstants.TRAP_DISABLE_SECONDS) continue;
+                ActiveFillerItem active = activeDuration[i];
+                if (active.Item is not TrapItem) continue;
+                if (HasRunItsTime(active)) continue;
 
                 active.TrapSecondsActive += deltaSeconds;
-                if (active.TrapSecondsActive >= ArchipelagoConstants.TRAP_DISABLE_SECONDS) anyExpired = true;
+                if (!HasRunItsTime(active)) continue;
+
+                anyFinished = true;
+
+                // A time trap is spent once its effect is off; a race/win trap only goes quiet
+                if (trapHandling == ArchipelagoConstants.OPTION_TRAP_HANDLING_TIME)
+                {
+                    Discharge(i);
+                    continue;
+                }
+
+                GarfieldKartAPMod.APClient.QueueNotification($"{active.Item.Name} Wore Off!");
+                Log.Message($"[Filler] {active.Item.Name} wore off, still owed a race");
             }
 
-            if (!anyExpired) return;
-            ExpireFinished();
+            if (!anyFinished) return;
             SaveFiller();
         }
 
-        // Continuous effects re-check this every frame, so one expiring mid-race switches itself off
+        // Re-checked every frame by the continuous effects, so one whose timer runs out mid-race
+        // switches itself off
         public static bool IsFillerActive(long fillerId)
         {
+            return activeDuration.Any(active => active.Item.Id == fillerId && !HasRunItsTime(active));
+        }
+
+        // In hand at all, effect running or not - gates pulling another copy off the queue
+        private static bool IsFillerHeld(long fillerId)
+        {
             return activeDuration.Any(active => active.Item.Id == fillerId);
+        }
+
+        // Traps run for a fixed slice of in-race time; the quote has no timer and lasts its race
+        private static bool HasRunItsTime(ActiveFillerItem active)
+        {
+            return active.Item is TrapItem
+                   && active.TrapSecondsActive >= ArchipelagoConstants.TRAP_DISABLE_SECONDS;
         }
 
         // Effects that can fail to land (nothing unlocked yet, bonus effects still loading) check
@@ -237,38 +275,21 @@ namespace GarfieldKartAPMod.Helpers
         private static void Activate(FillerItem filler)
         {
             activeDuration.Add(new ActiveFillerItem { Item = filler, RemainingRaces = 1 });
-            GarfieldKartAPMod.APClient.QueueNotification($"{filler.Name} Activated!");
+            // The quote announces itself at the end of the race, so it doesn't need this
+            if (filler.Id != ArchipelagoConstants.ITEM_QUOTE_FILLER)
+                GarfieldKartAPMod.APClient.QueueNotification($"{filler.Name} Activated!");
             Log.Message($"[Filler] Activated {filler.Name}");
         }
 
-        private static void ExpireFinished()
+        // The copy is spent - effect over, nothing left to come back for
+        private static void Discharge(int index)
         {
-            for (int i = activeDuration.Count - 1; i >= 0; i--)
-            {
-                ActiveFillerItem active = activeDuration[i];
-                if (!IsExpired(active)) continue;
+            ActiveFillerItem active = activeDuration[index];
+            activeDuration.RemoveAt(index);
+            usedFiller.Add(active.Item.Id);
 
-                Log.Message($"[Filler] Expired {active.Item.Name}");
-                GarfieldKartAPMod.APClient.QueueNotification($"{active.Item.Name} Expired!");
-                usedFiller.Add(active.Item.Id);
-                activeDuration.RemoveAt(i);
-            }
-        }
-
-        private static bool IsExpired(ActiveFillerItem active)
-        {
-            if (UsesTimeHandling(active.Item))
-                return active.TrapSecondsActive >= ArchipelagoConstants.TRAP_DISABLE_SECONDS;
-            return active.RemainingRaces <= 0;
-        }
-
-        // Only traps answer to trap_handling; the quote is a plain filler, so it always just
-        // lasts the race it was pulled for
-        private static bool UsesTimeHandling(FillerItem item)
-        {
-            if (item is not TrapItem trap) return false;
-            return trap.AlwaysTimed
-                   || ArchipelagoHelper.GetTrapHandling() == ArchipelagoConstants.OPTION_TRAP_HANDLING_TIME;
+            Log.Message($"[Filler] Expired {active.Item.Name}");
+            GarfieldKartAPMod.APClient.QueueNotification($"{active.Item.Name} Expired!");
         }
 
         // The save holds only what's active and what's used up, so anything else the server has

@@ -8,16 +8,24 @@ namespace GarfieldKartAPMod.Helpers
     {
         private const string ObjectName = "APTrackChecksText";
         private const string LapsanityObjectName = "APLapsanityText";
-        
-        private const string FoundMark = "<color=#6BE36B>Y</color>";
-        private const string MissingMark = "<color=#999999>N</color>";
+        private const string TimeTrialObjectName = "APTimeTrialText";
+
+        private const string FoundColor = "#6BE36B";
+        private const string MissingColor = "#999999";
+
+        private const string FoundMark = "<color=" + FoundColor + ">Y</color>";
+        private const string MissingMark = "<color=" + MissingColor + ">N</color>";
+
+        // Medal grades in E_TimeTrialMedal order (Bronze = 1), so index + 1 is the medal
+        private static readonly string[] MedalLabels = ["Bronze", "Silver", "Gold", "Plat"];
 
         public static void AttachOrUpdate(HD_TrackSelection_Item item, string trackScene)
         {
             if (item == null) return;
 
-            bool isTimeTrial = Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL;
-            bool shouldShow = ArchipelagoHelper.IsConnectedAndEnabled && !isTimeTrial && !string.IsNullOrEmpty(trackScene);
+            bool connected = ArchipelagoHelper.IsConnectedAndEnabled && !string.IsNullOrEmpty(trackScene);
+            bool isTimeTrial = ArchipelagoHelper.IsTimeTrial();
+            bool shouldShow = connected && !isTimeTrial;
 
             // General checks
             TextMeshProUGUI mainText = GetOrCreateText(item, ObjectName, false);
@@ -39,6 +47,18 @@ namespace GarfieldKartAPMod.Helpers
                 if (showLaps)
                 {
                     lapText.text = BuildLapsanityText(trackScene);
+                }
+            }
+
+            // Time trial medal checks, in the top spot lapsanity takes on the race menu
+            TextMeshProUGUI timeTrialText = GetOrCreateText(item, TimeTrialObjectName, true);
+            if (timeTrialText != null)
+            {
+                bool showTimeTrials = connected && isTimeTrial && ArchipelagoHelper.GetTimeTrialRandomization() > 0;
+                timeTrialText.gameObject.SetActive(showTimeTrials);
+                if (showTimeTrials)
+                {
+                    timeTrialText.text = BuildTimeTrialText(trackScene);
                 }
             }
         }
@@ -141,6 +161,25 @@ namespace GarfieldKartAPMod.Helpers
                 lapMarks.Add(Mark(lapLoc));
             }
             return $"Lapsanity\n{string.Join("/", lapMarks)}";
+        }
+
+        // Only the grades the seed put checks on
+        private static string BuildTimeTrialText(string trackScene)
+        {
+            int highestGrade = ArchipelagoHelper.GetTimeTrialRandomization();
+
+            var medalMarks = new List<string>();
+            for (int grade = 1; grade <= highestGrade && grade <= MedalLabels.Length; grade++)
+            {
+                long medalLoc = ArchipelagoConstants.GetTimeTrialLoc(trackScene, (E_TimeTrialMedal)grade);
+                if (medalLoc == -1) continue;
+
+                string color = ArchipelagoItemTracker.HasLocation(medalLoc) ? FoundColor : MissingColor;
+                medalMarks.Add($"<color={color}>{MedalLabels[grade - 1]}</color>");
+            }
+
+            if (medalMarks.Count == 0) return "";
+            return $"Time Trials\n{string.Join("/", medalMarks)}";
         }
 
         private static string Mark(long locationId)

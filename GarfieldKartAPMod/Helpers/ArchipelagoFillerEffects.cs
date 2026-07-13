@@ -21,6 +21,16 @@ namespace GarfieldKartAPMod.Helpers
             { BonusCategory.MAGIC, "Magic Wand" }
         };
 
+        // A Random Item Box lands the moment it arrives, but can't while the item slot is full or
+        // nothing is unlocked to put in it, so poll for the opening
+        public static void Update()
+        {
+            if (!ArchipelagoFillerManager.IsFillerArmed(ArchipelagoConstants.ITEM_RANDOM_ITEM_BOX_FILLER)) return;
+            if (ArchipelagoHelper.IsTimeTrial() || !ArchipelagoHelper.IsRacing()) return;
+
+            TryGrantRandomItemBox(ArchipelagoHelper.GetLocalHumanKart()?.GetBonusMgr());
+        }
+
         // Guarantee the best possible boost off the starting line. Nothing can stop the boost
         // applying, so the copy is consumed up front. Call right before the boost is applied
         // (Kart.StartRace -> KartBonusMgr.StartRace).
@@ -43,9 +53,8 @@ namespace GarfieldKartAPMod.Helpers
             Log.Message("[Filler] Inspirational Garfield Quote shown");
         }
 
-        // Give a random unlocked item the next time a slot is empty. Polled at race start and
-        // again whenever the player uses an item, since a full slot can't take the box.
-        public static void TryGrantRandomItemBox(KartBonusMgr bonusMgr)
+        // Give a random unlocked item as soon as a slot is empty
+        private static void TryGrantRandomItemBox(KartBonusMgr bonusMgr)
         {
             if (bonusMgr == null || !bonusMgr.CanGetItem()) return;
             if (!ArchipelagoFillerManager.IsFillerArmed(ArchipelagoConstants.ITEM_RANDOM_ITEM_BOX_FILLER)) return;

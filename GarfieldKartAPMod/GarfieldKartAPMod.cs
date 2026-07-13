@@ -157,6 +157,7 @@ namespace GarfieldKartAPMod
             if (ArchipelagoHelper.IsConnectedAndEnabled)
             {
                 ArchipelagoItemTracker.ProcessLiveReceivedItems();
+                ArchipelagoFillerEffects.Update();
                 ArchipelagoTrapEffects.Update();
             }
 
@@ -662,7 +663,6 @@ namespace GarfieldKartAPMod.Patches
             ArchipelagoFillerManager.OnRaceStart();
 
             ArchipelagoFillerEffects.TryApplyStartBoost(__instance);
-            ArchipelagoFillerEffects.TryGrantRandomItemBox(__instance.GetBonusMgr());
             ArchipelagoTrapEffects.OnRaceStart(__instance);
         }
     }
@@ -706,23 +706,6 @@ namespace GarfieldKartAPMod.Patches
 
             // Drop any duration trap effects now the race is over
             ArchipelagoTrapEffects.ClearAll();
-        }
-    }
-
-    // A Random Item Box received mid-race fires as soon as an item slot frees up
-    [HarmonyPatch(typeof(KartBonusMgr), "DoActivateBonus")]
-    public class KartBonusMgr_DoActivateBonus_Patch
-    {
-        static void Postfix(Kart ___m_kart)
-        {
-            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
-            if (Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL) return;
-
-            Driver driver = ___m_kart?.Driver;
-            if (driver == null || !driver.IsHuman || !driver.IsLocal) return;
-            if (!(Singleton<GameManager>.Instance.GameMode is InGameGameMode gameMode) || !gameMode.HasRaceStarted) return;
-
-            ArchipelagoFillerEffects.TryGrantRandomItemBox(___m_kart.GetBonusMgr());
         }
     }
 
@@ -811,12 +794,18 @@ namespace GarfieldKartAPMod.Patches
 
             if (ArchipelagoHelper.IsItemRandomizerEnabled())
             {
-                var needed = GetNeededItemsanityBonuses();
+                // An itemsanity check only fires on an item we already own, so only unlocked ones
+                // are worth steering the roll toward
+                var needed = GetNeededItemsanityBonuses().Where(ArchipelagoItemTracker.HasBonusAvailable).ToList();
                 if (needed.Count > 0)
                 {
-                    var available = needed.Where(ArchipelagoItemTracker.HasBonusAvailable).ToList();
-                    if (available.Count > 0)
-                        bonus = available[UnityEngine.Random.Range(0, available.Count)];
+                    bonus = needed[UnityEngine.Random.Range(0, needed.Count)];
+                }
+                else if (!ArchipelagoItemTracker.HasBonusAvailable(bonus))
+                {
+                    var availableBonuses = GetAvailableItemsanityBonuses();
+                    if (availableBonuses.Count > 0 && UnityEngine.Random.value <= 0.5f)
+                        bonus = availableBonuses[UnityEngine.Random.Range(0, availableBonuses.Count)];
                 }
             }
             
@@ -873,6 +862,17 @@ namespace GarfieldKartAPMod.Patches
                 hud.ResetSlots();
             else
                 hud.ResetSlot2();
+        }
+        
+        private static List<BonusCategory> GetAvailableItemsanityBonuses()
+        {
+            var availableBonuses = new List<BonusCategory>();
+            foreach (BonusCategory bonus in Enum.GetValues(typeof(BonusCategory)))
+            {
+                if (bonus != BonusCategory.NONE && ArchipelagoItemTracker.HasBonusAvailable(bonus))
+                    availableBonuses.Add(bonus);
+            }
+            return availableBonuses;
         }
 
         private static List<BonusCategory> GetNeededItemsanityBonuses()
@@ -1350,61 +1350,22 @@ namespace GarfieldKartAPMod.Patches
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
 
-            Difficulty difficulty = Singleton<GameConfigurator>.Instance.Difficulty;
-            PlayerConfig playerConfig = Singleton<GameConfigurator>.Instance.GetPlayerConfig();
-            ECharacter character = playerConfig.Character;
-            ECharacter kart = playerConfig.Kart;
-
-            if ((gameMode == E_GameModeType.SINGLE || gameMode == E_GameModeType.CHAMPIONSHIP) && rank == 0)
+            // Cups pass a hardcoded rank of 0, so they're credited per race in the
+            // ChampionShipGameMode patch instead
+            if (gameMode == E_GameModeType.SINGLE)
             {
-                long goalId = ArchipelagoGoalManager.GetGoalId();
-                bool ccGated = (goalId == ArchipelagoConstants.GOAL_GRAND_PRIX || goalId == ArchipelagoConstants.GOAL_RACES)
-                               && !ArchipelagoHelper.MeetsCCRequirement(difficulty);
-
-                if (ccGated)
-                {
-                    Log.Message("Skipping race victory location send due to CC requirement");
-                }
-                else
-                {
-                    GarfieldKartAPMod.APClient.SendLocation(ArchipelagoConstants.GetRaceVictoryLoc(track));
-                    ApJsonSaveFile.RecordRaceVictory(track);
-                }
-
-                foreach (long ccLoc in ArchipelagoConstants.GetRaceVictoryCCLocs(track, difficulty))
-                {
-                    GarfieldKartAPMod.APClient.SendLocation(ccLoc);
-                }
-                GarfieldKartAPMod.APClient.SendLocation((long)character + ArchipelagoConstants.LOC_WIN_RACE_AS_GARFIELD);
-                GarfieldKartAPMod.APClient.SendLocation((long)kart + ArchipelagoConstants.LOC_WIN_RACE_WITH_FORMULA_ZZZZ);
-
-                // The final lap never crosses the start line, so it's sent here instead of from
-                // the CrossStartLine patch - and needs the same CC gate that one has
-                if (ArchipelagoHelper.IsLapSanityEnabled() && ArchipelagoHelper.MeetsCCRequirement(difficulty))
-                {
-                    int lapCount = ArchipelagoHelper.GetLapCount();
-                    int lastLapIndex = lapCount - 1;
-                    long lapSanityLocId = ArchipelagoConstants.GetLapSanityLoc(track, lastLapIndex);
-                    if (lapSanityLocId != -1)
-                    {
-                        GarfieldKartAPMod.APClient.SendLocation(lapSanityLocId);
-                        Log.Message($"Sent final lap sanity check for {track}, lap {lastLapIndex + 1}");
-                    }
-                }
-
-                ArchipelagoGoalManager.CheckAndCompleteGoal();
-
-                long hatLoc = ArchipelagoConstants.GetHatLoc(track);
-                if (hatLoc != -1)
-                {
-                    GarfieldKartAPMod.APClient.SendLocation(hatLoc);
-                }
-
+                ArchipelagoRaceVictory.SendChecks(track, rank);
             }
 
-            if (gameMode == E_GameModeType.TIME_TRIAL && medal != E_TimeTrialMedal.None)
+            if (gameMode == E_GameModeType.TIME_TRIAL)
             {
-                foreach (var loc in ArchipelagoConstants.GetTimeTrialLocs(track, medal))
+                // Not the medal parameter - that one carries over the game's saved medal
+                E_TimeTrialMedal earnedMedal = ArchipelagoHelper.GetMedalEarnedThisRun();
+                if (earnedMedal == E_TimeTrialMedal.None) return;
+
+                Log.Message($"Time trial run on {track} earned {earnedMedal} (save reported {medal})");
+
+                foreach (var loc in ArchipelagoConstants.GetTimeTrialLocs(track, earnedMedal))
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
@@ -1416,7 +1377,7 @@ namespace GarfieldKartAPMod.Patches
                 }
 
                 if (ArchipelagoGoalManager.GetGoalId() != ArchipelagoConstants.GOAL_TIME_TRIALS ||
-                    ArchipelagoHelper.MeetsTimeTrialGoalGrade(medal))
+                    ArchipelagoHelper.MeetsTimeTrialGoalGrade(earnedMedal))
                 {
                     // Persist the completed time trial locally since there is no AP location for the goal
                     ApJsonSaveFile.RecordTimeTrialVictory(track);
@@ -1435,6 +1396,21 @@ namespace GarfieldKartAPMod.Patches
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
             }
+        }
+    }
+
+    // EarnReward only fires after a cup's final track and always claims rank 0, so cup race wins
+    // are caught here instead, where the placement is real
+    [HarmonyPatch(typeof(ChampionShipGameMode), "OnLocalHumanDriverRaceEnded")]
+    public class ChampionShipGameMode_OnLocalHumanDriverRaceEnded_Patch
+    {
+        static void Postfix(RcVehicle pVehicle)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (pVehicle?.RaceStats == null) return;
+
+            ArchipelagoRaceVictory.SendChecks(
+                Singleton<GameConfigurator>.Instance.StartScene, pVehicle.RaceStats.GetRank());
         }
     }
 

@@ -20,10 +20,9 @@ namespace GarfieldKartAPMod.Helpers
         // The timed-trap countdown itself lives in GarfieldKartAPMod.TickActiveTrapTimers
         public static void Update()
         {
-            Kart localKart = GetLocalHumanKart();
-            bool racing = IsRacing(localKart);
+            bool racing = ArchipelagoHelper.IsRacing();
 
-            SyncMirror(localKart, racing);
+            SyncMirror(ArchipelagoHelper.GetLocalHumanKart(), racing);
             SyncGrayscale(racing);
         }
         
@@ -42,15 +41,14 @@ namespace GarfieldKartAPMod.Helpers
             if (itemId != ArchipelagoConstants.ITEM_SLEEP_TRAP
                 && itemId != ArchipelagoConstants.ITEM_BOUNCE_TRAP) return;
 
-            Kart kart = GetLocalHumanKart();
-            if (!IsRacing(kart)) return;
+            if (!ArchipelagoHelper.IsRacing()) return;
 
-            TryFireInstantTrap(kart, itemId);
+            TryFireInstantTrap(ArchipelagoHelper.GetLocalHumanKart(), itemId);
         }
 
         public static void ClearAll()
         {
-            SyncMirror(GetLocalHumanKart(), false);
+            SyncMirror(ArchipelagoHelper.GetLocalHumanKart(), false);
             SyncGrayscale(false);
         }
 
@@ -60,7 +58,7 @@ namespace GarfieldKartAPMod.Helpers
         {
             if (!ArchipelagoFillerManager.IsFillerArmed(itemId)) return;
 
-            BonusEffectMgr mgr = kart.GetBonusMgr()?.GetBonusEffectMgr();
+            BonusEffectMgr mgr = kart?.GetBonusMgr()?.GetBonusEffectMgr();
             if (mgr == null || !mgr.AreEffectsLoaded) return;
 
             if (itemId == ArchipelagoConstants.ITEM_SLEEP_TRAP)
@@ -156,23 +154,6 @@ namespace GarfieldKartAPMod.Helpers
             }
 
             return 0;
-        }
-
-        private static bool IsRacing(Kart kart)
-        {
-            if (kart == null || kart.IsRaceEnded()) return false;
-            return Singleton<GameManager>.Instance?.GameMode is InGameGameMode inGame && inGame.HasRaceStarted;
-        }
-
-        private static Kart GetLocalHumanKart()
-        {
-            GameManager gameManager = Singleton<GameManager>.Instance;
-            if (gameManager?.GameMode?.Drivers == null) return null;
-
-            foreach (Driver driver in gameManager.GameMode.Drivers.Values)
-                if (driver.IsHuman && driver.IsLocal) return driver.Kart;
-
-            return null;
         }
     }
 }
