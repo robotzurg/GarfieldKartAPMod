@@ -31,6 +31,7 @@ namespace GarfieldKartAPMod
         {
             public long Id;
             public int RemainingRaces;
+            public float TrapSecondsActive;
         }
 
         private static SlotSaveData cached;

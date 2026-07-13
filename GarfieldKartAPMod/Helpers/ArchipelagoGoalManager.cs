@@ -48,7 +48,8 @@
 
         private static void CheckPuzzlePieceGoal()
         {
-            long reqPuzzleCount = ArchipelagoHelper.GetPuzzlePieceCount();
+            // The goal needs a percentage of the pool, not all of it
+            long reqPuzzleCount = ArchipelagoHelper.GetRequiredPuzzlePieceCount();
             int puzzlePieceCount = ArchipelagoItemTracker.GetOverallPuzzlePieceCount();
 
             if (puzzlePieceCount >= reqPuzzleCount)

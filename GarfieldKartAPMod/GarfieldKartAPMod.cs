@@ -152,11 +152,36 @@ namespace GarfieldKartAPMod
 #endif
             
             DeathLinkManager.ProcessPendingDeath();
+            TickActiveTrapTimers();
+
+            if (ArchipelagoHelper.IsConnectedAndEnabled)
+            {
+                ArchipelagoItemTracker.ProcessLiveReceivedItems();
+                ArchipelagoTrapEffects.Update();
+            }
 
             if (APClient == null || !APClient.HasPendingNotifications()) return;
             string notification = APClient.DequeuePendingNotification();
             if (showNotifications.Value)
                 notificationDisplay.ShowNotification(notification);
+        }
+
+        // Timed traps only count down while the local player is actively racing:
+        // race started, not finished, and not a time trial
+        private static void TickActiveTrapTimers()
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (!(Singleton<GameManager>.Instance?.GameMode is InGameGameMode gameMode) || !gameMode.HasRaceStarted) return;
+            if (Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL) return;
+
+            foreach (Driver driver in gameMode.Drivers.Values)
+            {
+                if (!driver.IsHuman || !driver.IsLocal) continue;
+                if (driver.Kart == null || driver.Kart.IsRaceEnded()) return;
+
+                ArchipelagoFillerManager.TickTrapTimers(Time.deltaTime);
+                return;
+            }
         }
 
         private void OnArchipelagoConnected()
@@ -310,9 +335,33 @@ namespace GarfieldKartAPMod.Patches
     [HarmonyPatch(typeof(MenuHDMain), "Enter")]
     public class MenuHDMain_Enter_Patch
     {
-        static void Postfix(MenuHDMain __instance)
+        // Index of BUTTON.GALLERY in MenuHDMain's private button array
+        private const int GalleryButtonIndex = 3;
+
+        static void Postfix(MenuHDMain __instance, object ___m_buttons)
         {
             UITextureSwapper.SwapMainMenuLogo(__instance.transform.root.gameObject);
+
+            // Without a session the button still leads to the real gallery, so leave it alone
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+
+            Button gallery = GetButton(___m_buttons, GalleryButtonIndex);
+            if (gallery != null) UITextureSwapper.SwapGalleryButtonIcon(gallery.gameObject);
+        }
+
+        // m_buttons is an EnumArray keyed by a private enum, so it can't be named in the patch
+        // signature - reach the entry through the indexer instead
+        private static Button GetButton(object buttons, int index)
+        {
+            MethodInfo indexer = buttons?.GetType().GetMethod(
+                "get_Item",
+                BindingFlags.Public | BindingFlags.Instance,
+                null,
+                [typeof(int)],
+                null
+            );
+
+            return indexer?.Invoke(buttons, [index]) as Button;
         }
     }
 
@@ -352,7 +401,7 @@ namespace GarfieldKartAPMod.Patches
 
             var cupList = ArchipelagoItemTracker.GetAvailableCups();
             if (cupList.Count != 0) return true;
-            PopupManager.OpenPopup("You haven't unlocked any cups!", PopupHD.POPUP_TYPE.WARNING, PopupHD.POPUP_PRIORITY.NORMAL);
+            ArchipelagoPopupManager.ShowWarning("You haven't unlocked any cups!");
             return false;
         }
     }
@@ -575,6 +624,13 @@ namespace GarfieldKartAPMod.Patches
             if (___m_iNbLapCompleted < __state + 1) return;
             if (___m_pVehicle.IsAutoPilot()) return;
             if (___m_pVehicle.m_eControlType == RcVehicle.ControlType.AI) return;
+            
+            if (!ArchipelagoHelper.MeetsCCRequirement(Singleton<GameConfigurator>.Instance.Difficulty))
+            {
+                Log.Message("Skipping lap sanity check due to CC requirement");
+                return;
+            }
+
             // GetRank() is 0-indexed, the config value is 1-indexed (1 = 1st place)
             if (__instance.GetRank() >= GarfieldKartAPMod.lapSanityPlacementRequirement.Value) return;
 
@@ -585,6 +641,88 @@ namespace GarfieldKartAPMod.Patches
 
             GarfieldKartAPMod.APClient.SendLocation(locId);
             Log.Message($"Sent lap sanity check for {track}, lap {lapIndex + 1}");
+        }
+    }
+    
+    // Apply fillers
+    [HarmonyPatch(typeof(Kart), "StartRace")]
+    public class Kart_StartRace_Patch
+    {
+        static void Prefix(Kart __instance)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL) return;
+
+            // StartRace runs once per kart, so gate on the local driver or the race's filler gets
+            // pulled out of the backlogs once per racer
+            Driver driver = __instance.Driver;
+            if (driver == null || !driver.IsHuman || !driver.IsLocal) return;
+
+            // Must come before the effects below go looking for their filler
+            ArchipelagoFillerManager.OnRaceStart();
+
+            ArchipelagoFillerEffects.TryApplyStartBoost(__instance);
+            ArchipelagoFillerEffects.TryGrantRandomItemBox(__instance.GetBonusMgr());
+            ArchipelagoTrapEffects.OnRaceStart(__instance);
+        }
+    }
+
+    // Broken Drift Trap: cap the local player's drift charge just below the second boost
+    // threshold so a drift can never reach the best (blue) boost while the trap is active
+    [HarmonyPatch(typeof(Kart), "UpdateDriftState")]
+    public class Kart_UpdateDriftState_Patch
+    {
+        private static readonly AccessTools.FieldRef<Kart, float> BoostChargedRef =
+            AccessTools.FieldRefAccess<Kart, float>("m_boostAmountCharged");
+
+        static void Prefix(Kart __instance)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (!ArchipelagoFillerManager.IsFillerActive(ArchipelagoConstants.ITEM_BROKEN_DRIFT_TRAP)) return;
+
+            Driver driver = __instance.Driver;
+            if (driver == null || !driver.IsHuman || !driver.IsLocal) return;
+
+            float cap = __instance.FirstBoostThreshold - 0.01f;
+            if (BoostChargedRef(__instance) > cap)
+                BoostChargedRef(__instance) = cap;
+        }
+    }
+
+    // Race-duration fillers (traps) tick down once per completed race.
+    [HarmonyPatch(typeof(RaceGameState), "OnLocalHumanDriverRaceEnded")]
+    public class RaceGameState_OnLocalHumanDriverRaceEnded_Patch
+    {
+        static void Postfix(RcVehicle pVehicle)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL) return;
+
+            ArchipelagoFillerEffects.TryShowGarfieldQuote();
+
+            // GetRank() is 0-indexed, so rank 0 is 1st place
+            bool wonRace = pVehicle?.RaceStats != null && pVehicle.RaceStats.GetRank() == 0;
+            ArchipelagoFillerManager.OnRaceEnd(wonRace);
+
+            // Drop any duration trap effects now the race is over
+            ArchipelagoTrapEffects.ClearAll();
+        }
+    }
+
+    // A Random Item Box received mid-race fires as soon as an item slot frees up
+    [HarmonyPatch(typeof(KartBonusMgr), "DoActivateBonus")]
+    public class KartBonusMgr_DoActivateBonus_Patch
+    {
+        static void Postfix(Kart ___m_kart)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL) return;
+
+            Driver driver = ___m_kart?.Driver;
+            if (driver == null || !driver.IsHuman || !driver.IsLocal) return;
+            if (!(Singleton<GameManager>.Instance.GameMode is InGameGameMode gameMode) || !gameMode.HasRaceStarted) return;
+
+            ArchipelagoFillerEffects.TryGrantRandomItemBox(___m_kart.GetBonusMgr());
         }
     }
 
@@ -654,6 +792,7 @@ namespace GarfieldKartAPMod.Patches
         static bool Prefix(KartBonusMgr __instance, Kart ___m_kart, ref BonusCategory bonus, ref int iQuantity, int byPassSlot = -1, bool isFromCheat = false)
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return true;
+            if (isFromCheat) return true;
             if (!___m_kart.Driver.IsHuman)
             {
                 if (ArchipelagoHelper.IsItemManiaEnabled())
@@ -667,7 +806,7 @@ namespace GarfieldKartAPMod.Patches
             if (ArchipelagoHelper.IsSpringsOnly())
             {
                 bonus = BonusCategory.SPRING;
-                return ArchipelagoItemTracker.HasBonusAvailable(bonus);
+                return FinishItemRoll(__instance, ___m_kart, bonus);
             }
 
             if (ArchipelagoHelper.IsItemRandomizerEnabled())
@@ -679,17 +818,61 @@ namespace GarfieldKartAPMod.Patches
                     if (available.Count > 0)
                         bonus = available[UnityEngine.Random.Range(0, available.Count)];
                 }
-                // If Puzzle rando is enabled and we have springs and puzzle pieces are uncollected, prioritize springs
-                else if (ArchipelagoHelper.IsPuzzleRandomizationEnabled() &&
-                         ArchipelagoItemTracker.HasBonusAvailable(BonusCategory.SPRING))
-                {
-                    string track = Singleton<GameConfigurator>.Instance.StartScene;
-                    if (ArchipelagoItemTracker.GetPuzzlePieceCount(track) < 3 && UnityEngine.Random.value < 0.3f)
-                        bonus = BonusCategory.SPRING;
-                }
+            }
+            
+            // If Puzzle rando is enabled and we have springs and puzzle pieces are uncollected, prioritize springs
+            if (ArchipelagoHelper.IsPuzzleRandomizationEnabled() &&
+                ArchipelagoItemTracker.HasBonusAvailable(BonusCategory.SPRING))
+            {
+                string track = Singleton<GameConfigurator>.Instance.StartScene;
+                if (ArchipelagoItemTracker.GetPuzzlePieceCount(track) < 3 && UnityEngine.Random.value < 0.5f)
+                    bonus = BonusCategory.SPRING;
             }
 
-            return ArchipelagoItemTracker.HasBonusAvailable(bonus);
+            return FinishItemRoll(__instance, ___m_kart, bonus);
+        }
+        
+        private static bool FinishItemRoll(KartBonusMgr bonusMgr, Kart kart, BonusCategory bonus)
+        {
+            if (ArchipelagoItemTracker.HasBonusAvailable(bonus)) return true;
+
+            kart.KartSound.PlaySound(10, sendToOtherClients: false);
+
+            HUDBonusHD hud = bonusMgr.HUDBonus;
+            if (hud != null)
+            {
+                int slot = -1;
+                for (int i = 0; i < KartBonusMgr.NB_BONUS_SLOTS; i++)
+                {
+                    if (bonusMgr.GetItem(i) == BonusCategory.NONE)
+                    {
+                        slot = i;
+                        break;
+                    }
+                }
+                if (slot >= 0)
+                {
+                    hud.StartAnimation(slot, bonus);
+                    kart.StartCoroutine(ClearLockedItemSlot(bonusMgr, hud, slot, bonus));
+                }
+            }
+            return false;
+        }
+
+        private static IEnumerator ClearLockedItemSlot(KartBonusMgr bonusMgr, HUDBonusHD hud, int slot, BonusCategory bonus)
+        {
+            while (hud.Slots[slot].State != BONUS_ANIM_STATE.STOPPED)
+                yield return null;
+            yield return new WaitForSeconds(0.4f);
+
+            // A real item may have claimed this slot while we waited
+            if (bonusMgr.GetItem(slot) != BonusCategory.NONE || hud.Slots[slot].WantedBonus != bonus)
+                yield break;
+
+            if (slot == 0)
+                hud.ResetSlots();
+            else
+                hud.ResetSlot2();
         }
 
         private static List<BonusCategory> GetNeededItemsanityBonuses()
@@ -711,7 +894,7 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            if (___m_kart.Driver.IsHuman && ArchipelagoItemTracker.HasBonusAvailable(bonus))
+            if (___m_kart.Driver.IsHuman && !___m_kart.IsAutoPilot() && ArchipelagoItemTracker.HasBonusAvailable(bonus))
             {
                 switch (bonus)
                 {
@@ -907,6 +1090,18 @@ namespace GarfieldKartAPMod.Patches
         }
     }
 
+    // Swap the artwork gallery out for the Archipelago item list. Postfix rather than a skip, so
+    // the menu still sets itself up and B backs out of it normally.
+    [HarmonyPatch(typeof(MenuHDGallery), "Enter")]
+    public class MenuHDGallery_Enter_Patch
+    {
+        static void Postfix(MenuHDGallery __instance, TextMeshProUGUI ___m_titleLabel, Canvas ___m_listCanvas,
+            GameObject ___m_submitButton, InfoBox ___m_infoBox)
+        {
+            ApGalleryMenu.Refresh(__instance, ___m_titleLabel, ___m_listCanvas, ___m_submitButton, ___m_infoBox);
+        }
+    }
+
     [HarmonyPatch(typeof(KartSelectionNavigation), "Enter")]
     public class KartSelectionNavigation_Enter_Patch
     {
@@ -919,6 +1114,43 @@ namespace GarfieldKartAPMod.Patches
             UpdateKartUnlocks(__instance, ___m_items);
 
             return true; // Continue to original method after doing character/kart unlocks
+        }
+        
+        static void Postfix(KartSelectionNavigation __instance,
+            EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> ___m_items,
+            EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem> ___m_selectedItems)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+
+            ForceUnlockedSelection(__instance, ___m_items, ___m_selectedItems, MenuHDKartSelection.KARTSELECT_TYPE.CHARACTER);
+            ForceUnlockedSelection(__instance, ___m_items, ___m_selectedItems, MenuHDKartSelection.KARTSELECT_TYPE.KART);
+        }
+
+        private static void ForceUnlockedSelection(
+            KartSelectionNavigation navigation,
+            EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> items,
+            EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem> selectedItems,
+            MenuHDKartSelection.KARTSELECT_TYPE type)
+        {
+            if (items == null || selectedItems == null) return;
+
+            KartSelectionItem selected = selectedItems[(int)type];
+            if (selected != null && !selected.Locked) return;
+
+            KartSelectionItem[] all = items[(int)type];
+            KartSelectionItem replacement = all?.FirstOrDefault(item =>
+                item != null && !item.Locked && item.gameObject.activeSelf);
+
+            if (replacement == null)
+            {
+                Log.Warning($"[KartSelect] Selected {type} is locked and there's no unlocked one to fall back to");
+                return;
+            }
+
+            // Goes through the game's own selection path, so the 3D preview, default hat/custom
+            // and scroll position all follow along
+            navigation.OnChangeSelectedItem(replacement);
+            Log.Message($"[KartSelect] Selected {type} was locked, switched to {replacement.IconCarac.name}");
         }
 
         private static void UpdateCharacterUnlocks(KartSelectionNavigation instance, EnumArray<MenuHDKartSelection.KARTSELECT_TYPE, KartSelectionItem[]> items)
@@ -942,6 +1174,7 @@ namespace GarfieldKartAPMod.Patches
 
                 bool isUnlocked = state is UnlockableItemSate.UNLOCKED or UnlockableItemSate.NEWUNLOCKED;
                 item.SetLock(!isUnlocked);
+                KartSelectionWinDisplay.AttachOrUpdate(item);
             }
         }
 
@@ -966,6 +1199,7 @@ namespace GarfieldKartAPMod.Patches
 
                 bool isUnlocked = (state == UnlockableItemSate.UNLOCKED || state == UnlockableItemSate.NEWUNLOCKED);
                 item.SetLock(!isUnlocked);
+                KartSelectionWinDisplay.AttachOrUpdate(item);
             }
         }
     }
@@ -1070,6 +1304,11 @@ namespace GarfieldKartAPMod.Patches
                     if (ArchipelagoHelper.IsHatRandomizerEnabled())
                         __result = "";
                     break;
+                // The main menu button is text rather than art, and shares this key with the
+                // gallery's own title, so renaming it here covers both
+                case "MENU_MAIN_GALLERY":
+                    __result = "Archipelago";
+                    break;
             }
         }
     }
@@ -1110,7 +1349,7 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
             E_GameModeType gameMode = Singleton<GameConfigurator>.Instance.GameModeType;
-            
+
             Difficulty difficulty = Singleton<GameConfigurator>.Instance.Difficulty;
             PlayerConfig playerConfig = Singleton<GameConfigurator>.Instance.GetPlayerConfig();
             ECharacter character = playerConfig.Character;
@@ -1139,7 +1378,9 @@ namespace GarfieldKartAPMod.Patches
                 GarfieldKartAPMod.APClient.SendLocation((long)character + ArchipelagoConstants.LOC_WIN_RACE_AS_GARFIELD);
                 GarfieldKartAPMod.APClient.SendLocation((long)kart + ArchipelagoConstants.LOC_WIN_RACE_WITH_FORMULA_ZZZZ);
 
-                if (ArchipelagoHelper.IsLapSanityEnabled())
+                // The final lap never crosses the start line, so it's sent here instead of from
+                // the CrossStartLine patch - and needs the same CC gate that one has
+                if (ArchipelagoHelper.IsLapSanityEnabled() && ArchipelagoHelper.MeetsCCRequirement(difficulty))
                 {
                     int lapCount = ArchipelagoHelper.GetLapCount();
                     int lastLapIndex = lapCount - 1;

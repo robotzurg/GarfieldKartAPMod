@@ -4,8 +4,6 @@ using UnityEngine;
 
 namespace GarfieldKartAPMod.Helpers
 {
-    // Mockup: injects a brand-new text line inside each track select item showing
-    // check marks for the AP checks on that course (found vs. not found).
     public static class TrackChecksDisplay
     {
         private const string ObjectName = "APTrackChecksText";

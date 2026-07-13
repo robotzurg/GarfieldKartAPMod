@@ -1,9 +1,14 @@
 ﻿using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
+using Archipelago.MultiClient.Net.MessageLog.Parts;
+using GarfieldKartAPMod.Helpers;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using ArchipelagoColor = Archipelago.MultiClient.Net.Models.Color;
 
 namespace GarfieldKartAPMod
 {
@@ -106,7 +111,41 @@ namespace GarfieldKartAPMod
                 };
                 if (!relevant) return;
             }
-            pendingNotifications.Enqueue(message.ToString());
+            pendingNotifications.Enqueue(FormatLogMessage(message));
+        }
+
+        private string FormatLogMessage(LogMessage message)
+        {
+            var sb = new StringBuilder();
+            foreach (var part in message.Parts)
+            {
+                string colorHex = GetColorHex(part.Color);
+                if (colorHex != null)
+                {
+                    sb.Append($"<color=#{colorHex}>{part.Text}</color>");
+                }
+                else
+                {
+                    sb.Append(part.Text);
+                }
+            }
+            return sb.ToString();
+        }
+
+        private string GetColorHex(ArchipelagoColor color)
+        {
+            if (color == ArchipelagoColor.Black) return "000000";
+            if (color == ArchipelagoColor.Red) return "EE0000";
+            if (color == ArchipelagoColor.Green) return "00FF7F";
+            if (color == ArchipelagoColor.Yellow) return "FAFAD2";
+            if (color == ArchipelagoColor.Blue) return "6495ED";
+            if (color == ArchipelagoColor.Magenta) return "EE00EE";
+            if (color == ArchipelagoColor.Cyan) return "00EEEE";
+            if (color == ArchipelagoColor.White) return "FFFFFF";
+            if (color == ArchipelagoColor.Plum) return "DDA0DD";
+            if (color == ArchipelagoColor.SlateBlue) return "6A5ACD";
+            if (color == ArchipelagoColor.Salmon) return "FA8072";
+            return null;
         }
 
         //private void OnItemReceived(ReceivedItemsHelper helper)

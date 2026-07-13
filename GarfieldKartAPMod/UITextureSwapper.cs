@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.IO;
 using System;
 using System.Reflection;
@@ -13,6 +14,7 @@ namespace GarfieldKartAPMod
         public static Sprite puzzlePieceFilledSprite;
         public static Sprite puzzlePieceEmptySprite;
         public static Sprite mainMenuLogoSprite;
+        public static Sprite galleryIconSprite;
         private static bool initialized;
         private static bool hasSwappedThisMenu;
 
@@ -27,6 +29,7 @@ namespace GarfieldKartAPMod
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_puzzle_filled.png", out puzzlePieceFilledSprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_puzzle_empty.png", out puzzlePieceEmptySprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("logo_garfAP_complete.png", out mainMenuLogoSprite);
+            allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_icon.png", out galleryIconSprite);
 
             if (allSpritesLoaded)
             {
@@ -184,6 +187,59 @@ namespace GarfieldKartAPMod
             catch (Exception ex)
             {
                 Log.Error($"Failed to swap main menu logo: {ex.Message}");
+            }
+        }
+        
+        private const float GalleryIconScale = 0.7f;
+
+        // Shift it a bit to line up
+        private static readonly Vector2 GalleryIconNudge = new Vector2(10f, 0f);
+
+        public static void SwapGalleryButtonIcon(GameObject galleryButton)
+        {
+            if (galleryButton == null) return;
+            if (galleryIconSprite == null)
+            {
+                Log.Error("Cannot swap - AP gallery icon sprite not loaded");
+                return;
+            }
+
+            try
+            {
+                Button button = galleryButton.GetComponent<Button>();
+                Graphic background = button != null ? button.targetGraphic : null;
+
+                int swapCount = 0;
+                foreach (Image image in galleryButton.GetComponentsInChildren<Image>(true))
+                {
+                    if (image == background) continue;
+                    // Already ours, so the scale and nudge below must not be applied a second time
+                    if (image.sprite == galleryIconSprite) continue;
+
+                    string objName = image.gameObject.name.ToLower();
+                    string spriteName = image.sprite != null ? image.sprite.name.ToLower() : "";
+
+                    // Logged either way, so the BepInEx log shows what's actually on the button
+                    // if this heuristic picks the wrong image (or none at all)
+                    Log.Message($"Gallery button image: {image.gameObject.name} (sprite: {spriteName})");
+                    if (!objName.Contains("icn") && !objName.Contains("icon")
+                        && !spriteName.Contains("icn") && !spriteName.Contains("icon")) continue;
+
+                    image.sprite = galleryIconSprite;
+                    image.preserveAspect = true;
+
+                    // Set rather than multiplied, so re-entering the menu can't shrink it again.
+                    // Scaled instead of resized because a stretched icon has no sizeDelta to cut.
+                    image.rectTransform.localScale = Vector3.one * GalleryIconScale;
+                    image.rectTransform.anchoredPosition += GalleryIconNudge;
+                    swapCount++;
+                }
+
+                if (swapCount == 0) Log.Warning("No icon image found on the Gallery button to swap");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to swap gallery button icon: {ex.Message}");
             }
         }
 

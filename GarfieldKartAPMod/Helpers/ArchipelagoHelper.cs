@@ -13,6 +13,23 @@ namespace GarfieldKartAPMod.Helpers
         public static bool IsConnectedAndEnabled =>
             GarfieldKartAPMod.APClient?.IsConnected ?? false;
 
+        public static bool IsRacing()
+        {
+            GameManager gameManager = Singleton<GameManager>.Instance;
+            if (gameManager?.GameMode?.Drivers == null) return false;
+
+            foreach (Driver driver in gameManager.GameMode.Drivers.Values)
+            {
+                if (driver.IsHuman && driver.IsLocal)
+                {
+                    return driver.Kart != null && !driver.Kart.IsRaceEnded() &&
+                           gameManager.GameMode is InGameGameMode inGame && inGame.HasRaceStarted;
+                }
+            }
+
+            return false;
+        }
+
         public static bool IsPuzzleRandomizationEnabled()
         {
             string pcs = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
@@ -116,6 +133,14 @@ namespace GarfieldKartAPMod.Helpers
                     return IsTrue(GarfieldKartAPMod.APClient.GetSlotDataValue("death_link"));
             }
         }
+        public static long GetTrapHandling()
+        {
+            // When traps disable: 0 = after 60s of in-race time, 1 = after finishing a race, 2 = after finishing 1st
+            string trapHandlingString = GarfieldKartAPMod.APClient.GetSlotDataValue("trap_handling");
+            TryParse(trapHandlingString, out int trapHandling);
+            return trapHandling;
+        }
+
         public static int GetTimeTrialGoalGrade()
         {
             // Minimum medal grade for the Time Trials goal: 0 = bronze, 1 = silver, 2 = gold
@@ -144,12 +169,27 @@ namespace GarfieldKartAPMod.Helpers
             return (int)difficulty + 1 >= GetCCRequirement();
         }
 
+        // How many puzzle pieces the seed put in the item pool - NOT how many the goal needs.
+        // Use GetRequiredPuzzlePieceCount for that.
         public static int GetPuzzlePieceCount()
         {
             string puzzleCountString = GarfieldKartAPMod.APClient.GetSlotDataValue("puzzle_piece_count");
 
             return !TryParse(puzzleCountString, out int reqPuzzleCount) ? throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {puzzleCountString}") : reqPuzzleCount;
 
+        }
+
+        // puzzle_piece_required is a percentage (10-100) of the pool, not an absolute count.
+        // Mirrors get_required_puzzle_pieces in the apworld's rules.py, which the generator uses
+        // for the completion condition - the two have to round the same way or the goal fires at
+        // the wrong time.
+        public static int GetRequiredPuzzlePieceCount()
+        {
+            string requiredString = GarfieldKartAPMod.APClient.GetSlotDataValue("puzzle_piece_required");
+            if (!TryParse(requiredString, out int requiredPercent))
+                throw new SlotDataException($"Invalid puzzle piece required value passed from slot data: {requiredString}");
+
+            return (int)System.Math.Ceiling(GetPuzzlePieceCount() * requiredPercent / 100.0);
         }
 
         public static bool IsLapSanityEnabled()

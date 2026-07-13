@@ -1,6 +1,7 @@
 ﻿using Archipelago.MultiClient.Net.Models;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.IO;
 using UnityEngine;
@@ -14,6 +15,10 @@ namespace GarfieldKartAPMod
         private static readonly ConcurrentDictionary<long, int> receivedItems = new ConcurrentDictionary<long, int>();
         private static readonly ConcurrentDictionary<long, byte> checkedLocations = new ConcurrentDictionary<long, byte>();
 
+        // How far into session.Items.AllItemsReceived the main-thread live poll has processed.
+        // Kept in sync with every full LoadFromServer rebuild so the two can't double-count.
+        private static int liveItemCursor;
+
         public static void Initialize()
         {
             Log.Message("Initializing Archipelago Item Tracker");
@@ -24,7 +29,24 @@ namespace GarfieldKartAPMod
         public static void AddReceivedItem(long itemId)
         {
             receivedItems.AddOrUpdate(itemId, 1, (_, existing) => existing + 1);
-            // ArchipelagoFillerManager.TryQueueFiller(itemId);
+            ArchipelagoFillerManager.TryReceiveFiller(itemId);
+        }
+
+        // Handle items that land mid-session (e.g. during a race) the moment they arrive
+        // rather than waiting for the next menu resync. Polled from the main thread so it
+        // can safely mutate the non-concurrent filler queues and call into Unity; the socket
+        // thread only ever appends to AllItemsReceived, which is index-stable and growing.
+        public static void ProcessLiveReceivedItems()
+        {
+            ReadOnlyCollection<ItemInfo> allItems = GarfieldKartAPMod.APClient?.GetSession()?.Items?.AllItemsReceived;
+            if (allItems == null) return;
+
+            for (; liveItemCursor < allItems.Count; liveItemCursor++)
+            {
+                long itemId = allItems[liveItemCursor].ItemId;
+                AddReceivedItem(itemId);
+                ArchipelagoTrapEffects.OnMidRaceReceive(itemId);
+            }
         }
 
         public static bool HasItem(long itemId)
@@ -87,8 +109,12 @@ namespace GarfieldKartAPMod
                     }
 
                     // Throw all the received items into the filler manager to load the state.
-                    // ArchipelagoFillerManager.LoadFillerFromReceivedItems(itemsList);
+                    ArchipelagoFillerManager.LoadFillerFromReceivedItems(itemsList);
                 }
+
+                // This rebuild already accounts for every item received so far, so the live
+                // poll should only handle items that arrive after this point
+                liveItemCursor = session.Items?.Index ?? liveItemCursor;
 
                 // Load locations
                 List<long> locationsList = session.Locations.AllLocationsChecked?.ToList();

@@ -333,7 +333,7 @@ namespace GarfieldKartAPMod
         // Filler Items (1000+)
         public const long ITEM_RANDOM_ITEM_BOX_FILLER = 1000;
         public const long ITEM_START_BOOST_HELPER_FILLER = 1001;
-        public const long ITEM_STRONGER_ITEM_BOXES_FILLER = 1002;
+        public const long ITEM_STRONGER_ITEM_BOXES_FILLER = 1002; // Unused
         public const long ITEM_QUOTE_FILLER = 1003;
 
         // Trap Items (1500+)
@@ -353,6 +353,30 @@ namespace GarfieldKartAPMod
         public const long OPTION_RANDOMIZE_RACES_CUPS = 0;
         public const long OPTION_RANDOMIZE_RACES_RACES = 1;
         public const long OPTION_RANDOMIZE_RACES_BOTH = 2;
+
+        public const long OPTION_TRAP_HANDLING_TIME = 0;
+        public const long OPTION_TRAP_HANDLING_RACE = 1;
+        public const long OPTION_TRAP_HANDLING_WIN = 2;
+
+        // Time traps stay active
+        public const float TRAP_DISABLE_SECONDS = 60f;
+        
+        // ========== GARFIELD QUOTES ==========
+        public static readonly string[] GARFIELD_QUOTES = [
+            "Love me, feed me, never leave me.",
+            "I am hungry. Therefore I am.",
+            "Oh no! I overslept! I’m late! For my nap.",
+            "Eat every meal as though it were your last.",
+            "The most active thing about me is my imagination.",
+            "A little ego goes nowhere.",
+            "I’ll rise, but I won’t shine.",
+            "Once again I’m saved by the miracle of… lasagna!",
+            "So much time, and so little... I need to do.",
+            "I just need a little quality time with man's real best friend, television.",
+            "Sure, Jon. I'll eat all your lasagna for you.",
+            "I'll purr like a Ferrari. Make that a Jaguar.",
+            "A smart cat knows just how far to go without crossing over the line"
+        ];
 
         // ========== HELPER METHODS ==========
 
