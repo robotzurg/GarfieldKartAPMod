@@ -37,7 +37,7 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "1.0.0";
+        private const string PluginVersion = "1.0.1";
 
         public static ConfigEntry<int> notificationTime;
         public static ConfigEntry<int> lapCountOverride;
@@ -1357,36 +1357,6 @@ namespace GarfieldKartAPMod.Patches
                 ArchipelagoRaceVictory.SendChecks(track, rank);
             }
 
-            if (gameMode == E_GameModeType.TIME_TRIAL)
-            {
-                // Not the medal parameter - that one carries over the game's saved medal
-                E_TimeTrialMedal earnedMedal = ArchipelagoHelper.GetMedalEarnedThisRun();
-                if (earnedMedal == E_TimeTrialMedal.None) return;
-
-                Log.Message($"Time trial run on {track} earned {earnedMedal} (save reported {medal})");
-
-                foreach (var loc in ArchipelagoConstants.GetTimeTrialLocs(track, earnedMedal))
-                {
-                    GarfieldKartAPMod.APClient.SendLocation(loc);
-                }
-
-                long hatLoc = ArchipelagoConstants.GetHatLoc(track);
-                if (hatLoc != -1)
-                {
-                    GarfieldKartAPMod.APClient.SendLocation(hatLoc);
-                }
-
-                if (ArchipelagoGoalManager.GetGoalId() != ArchipelagoConstants.GOAL_TIME_TRIALS ||
-                    ArchipelagoHelper.MeetsTimeTrialGoalGrade(earnedMedal))
-                {
-                    // Persist the completed time trial locally since there is no AP location for the goal
-                    ApJsonSaveFile.RecordTimeTrialVictory(track);
-
-                    // Re-check goals after persisting
-                    ArchipelagoGoalManager.CheckAndCompleteGoal();
-                }
-            }
-
             // ReSharper disable once InvertIf
             if (gameMode == E_GameModeType.CHAMPIONSHIP && nbFirstPlace == 4)
             {
@@ -1395,6 +1365,41 @@ namespace GarfieldKartAPMod.Patches
                 {
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
+            }
+        }
+    }
+
+    // The medal EarnReward reports is the game's saved medal if the run didn't beat it, so the
+    // run is scored here off its own time instead
+    [HarmonyPatch(typeof(TimeTrialGameMode), "OnLocalHumanDriverRaceEnded")]
+    public class TimeTrialGameMode_OnLocalHumanDriverRaceEnded_Patch
+    {
+        static void Postfix(RcVehicle pVehicle)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+            if (pVehicle?.RaceStats == null) return;
+
+            string track = Singleton<GameConfigurator>.Instance.StartScene;
+            E_TimeTrialMedal medal = ArchipelagoHelper.GetMedalForRaceTime(pVehicle.RaceStats.GetRaceTime());
+            if (medal == E_TimeTrialMedal.None) return;
+
+            foreach (long loc in ArchipelagoConstants.GetTimeTrialLocs(track, medal))
+            {
+                GarfieldKartAPMod.APClient.SendLocation(loc);
+            }
+
+            long hatLoc = ArchipelagoConstants.GetHatLoc(track);
+            if (hatLoc != -1)
+            {
+                GarfieldKartAPMod.APClient.SendLocation(hatLoc);
+            }
+
+            if (ArchipelagoGoalManager.GetGoalId() != ArchipelagoConstants.GOAL_TIME_TRIALS ||
+                ArchipelagoHelper.MeetsTimeTrialGoalGrade(medal))
+            {
+                // Persist the completed time trial locally since there is no AP location for the goal
+                ApJsonSaveFile.RecordTimeTrialVictory(track);
+                ArchipelagoGoalManager.CheckAndCompleteGoal();
             }
         }
     }

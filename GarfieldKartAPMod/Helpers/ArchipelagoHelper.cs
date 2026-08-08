@@ -172,20 +172,27 @@ namespace GarfieldKartAPMod.Helpers
             return (int)medal >= GetTimeTrialGoalGrade() + 1;
         }
 
-        // EarnReward's medal is max(medal already in the game's save, medal earned this run), so
-        // score the run itself off the same thresholds TimeTrialGameMode.GetMedalBeaten reads
-        public static E_TimeTrialMedal GetMedalEarnedThisRun()
+        // The medal the game reports at race end is max(medal already in its save, medal earned
+        // this run), so score the run itself off the same thresholds GetMedalBeaten reads
+        public static E_TimeTrialMedal GetMedalForRaceTime(int raceTimeMs)
         {
             TimeTrialConfig timeToBeat = TimeTrialConfigsContainer.GetTimeToBeatFromTrack(LoadingManager.LevelToLoad);
-            Kart kart = GetLocalHumanKart();
-            if (timeToBeat == null || kart?.RaceStats == null) return E_TimeTrialMedal.None;
+            if (timeToBeat == null)
+            {
+                Log.Warning($"[TimeTrial] No times to beat for level '{LoadingManager.LevelToLoad}'");
+                return E_TimeTrialMedal.None;
+            }
 
-            int raceTime = kart.RaceStats.GetRaceTime();
-            if (raceTime < timeToBeat.Platinium) return E_TimeTrialMedal.Platinium;
-            if (raceTime <= timeToBeat.Gold) return E_TimeTrialMedal.Gold;
-            if (raceTime <= timeToBeat.Silver) return E_TimeTrialMedal.Silver;
-            if (raceTime <= timeToBeat.Bronze) return E_TimeTrialMedal.Bronze;
-            return E_TimeTrialMedal.None;
+            E_TimeTrialMedal medal = E_TimeTrialMedal.None;
+            if (raceTimeMs < timeToBeat.Platinium) medal = E_TimeTrialMedal.Platinium;
+            else if (raceTimeMs <= timeToBeat.Gold) medal = E_TimeTrialMedal.Gold;
+            else if (raceTimeMs <= timeToBeat.Silver) medal = E_TimeTrialMedal.Silver;
+            else if (raceTimeMs <= timeToBeat.Bronze) medal = E_TimeTrialMedal.Bronze;
+
+            Log.Message($"[TimeTrial] Ran {raceTimeMs}ms on {LoadingManager.LevelToLoad} "
+                        + $"(bronze {timeToBeat.Bronze}, silver {timeToBeat.Silver}, gold {timeToBeat.Gold}, "
+                        + $"platinum {timeToBeat.Platinium}) -> {medal}");
+            return medal;
         }
 
         public static int GetCCRequirement()
