@@ -58,16 +58,25 @@ namespace GarfieldKartAPMod
         public static void ProcessPendingDeath()
         {
             if (!deathPending) return;
-            deathPending = false;
 
-            if (!ArchipelagoHelper.IsDeathLinkEnabled()) return;
+            if (!ArchipelagoHelper.IsDeathLinkEnabled())
+            {
+                deathPending = false;
+                return;
+            }
 
             Kart kart = FindLocalPlayerKart();
             if (kart == null)
             {
+                deathPending = false;
                 Log.Message($"DeathLink from {pendingSource} ignored (not in a race)");
                 return;
             }
+
+            // Respawning mid-abduction leaves the kart hanging in the air, so hold the death until the UFO drops it
+            if (ArchipelagoHelper.IsBeingAbductedByUfo(kart)) return;
+
+            deathPending = false;
 
             string reason = string.IsNullOrEmpty(pendingCause) ? $"DeathLink from {pendingSource}" : pendingCause;
             Log.Message($"DeathLink received: {reason}");

@@ -37,7 +37,7 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "1.0.1";
+        private const string PluginVersion = "1.0.2";
 
         public static ConfigEntry<int> notificationTime;
         public static ConfigEntry<int> lapCountOverride;
@@ -289,9 +289,6 @@ namespace GarfieldKartAPMod.Patches
                 // Get the indexer with specific parameters (int index)
                 PropertyInfo indexerProp = buttonsType.GetProperty("Item", [typeof(int)]);
 
-                // Time trials only need the course reachable by any unlock, not the race itself
-                bool isTimeTrial = Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL;
-
                 for (int i = 0; i < length; i++)
                 {
                     if (indexerProp != null)
@@ -307,10 +304,7 @@ namespace GarfieldKartAPMod.Patches
 
                         int raceId = 4 * currentCupId + i; // Race IDs
 
-                        bool accessible = isTimeTrial
-                            ? ArchipelagoItemTracker.CanAccessTimeTrial(raceId)
-                            : ArchipelagoItemTracker.HasRace(raceId);
-                        if (!accessible)
+                        if (!ArchipelagoItemTracker.HasRace(raceId))
                         {
                             button.interactable = false;
                             continue;
@@ -419,7 +413,7 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            // Disable Versus and Time Trial buttons
+            // Disable Versus and Time Trial buttons from being pressed
             ButtonHelper.DisableButtonsByIndices(___m_buttons, 1, 2);
         }
     }
@@ -455,11 +449,8 @@ namespace GarfieldKartAPMod.Patches
             {
                 bool activateButton = false;
                 bool hasRaceInCup = ArchipelagoItemTracker.HasRaceInCup(i);
-
-                bool canSeeChampionshipCup = ArchipelagoHelper.IsRacesAndCupsRandomized()
-                    ? ArchipelagoItemTracker.HasCup(i)
-                    : ArchipelagoItemTracker.CanAccessCup(i);
-                if (gameMode == E_GameModeType.CHAMPIONSHIP && canSeeChampionshipCup)
+                
+                if (gameMode == E_GameModeType.CHAMPIONSHIP && ArchipelagoItemTracker.CanAccessCup(i))
                 {
                     activateButton = true;
                 }
@@ -467,7 +458,7 @@ namespace GarfieldKartAPMod.Patches
                 {
                     activateButton = true;
                 }
-                else if (gameMode == E_GameModeType.TIME_TRIAL && ArchipelagoItemTracker.HasTimeTrialInCup(i))
+                else if (gameMode == E_GameModeType.TIME_TRIAL && hasRaceInCup)
                 {
                     activateButton = true;
                 }
@@ -1366,6 +1357,31 @@ namespace GarfieldKartAPMod.Patches
                     GarfieldKartAPMod.APClient.SendLocation(loc);
                 }
             }
+        }
+    }
+
+    // Vanilla aims "time to beat" at the next medal above the saved one; the seed's best medal is what matters
+    [HarmonyPatch(typeof(HUDPositionHD), "InitTimeTrial")]
+    public class HUDPositionHD_InitTimeTrial_Patch
+    {
+        static void Postfix(ref int ___m_raceTimeToBeat,
+            ref int ___m_lapTimeToBeat,
+            Image ___m_timeToBeatMedal,
+            TextMeshProUGUI ___m_timeToBeatTimeLabel)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+
+            E_TimeTrialMedal medal = ArchipelagoHelper.GetHighestRequiredMedal();
+            if (medal == E_TimeTrialMedal.None) return;
+
+            string track = Singleton<GameConfigurator>.Instance.StartScene;
+            int timeToBeat = ArchipelagoHelper.GetTimeForMedal(track, medal);
+            if (timeToBeat <= 0) return;
+
+            ___m_raceTimeToBeat = timeToBeat;
+            ___m_lapTimeToBeat = timeToBeat / 3; // Matches vanilla's per-lap split
+            ___m_timeToBeatMedal.sprite = UISprites.MedalIcons[(int)medal];
+            ___m_timeToBeatTimeLabel.text = TimeSpan.FromMilliseconds(timeToBeat).FormatRaceTime();
         }
     }
 

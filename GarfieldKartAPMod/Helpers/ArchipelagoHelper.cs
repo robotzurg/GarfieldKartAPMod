@@ -39,6 +39,15 @@ namespace GarfieldKartAPMod.Helpers
             return Singleton<GameConfigurator>.Instance.GameModeType == E_GameModeType.TIME_TRIAL;
         }
 
+        // A UFO abduction holds the kart in the Levitate bonus effect for its whole duration
+        public static bool IsBeingAbductedByUfo(Kart kart)
+        {
+            BonusEffect levitate = kart?.GetBonusMgr()?.GetBonusEffectMgr()
+                ?.GetBonusEffect(EBonusEffect.BONUSEFFECT_LEVITATE);
+
+            return levitate != null && levitate.Activated;
+        }
+
         public static bool IsPuzzleRandomizationEnabled()
         {
             string pcs = GarfieldKartAPMod.APClient.GetSlotDataValue("randomize_puzzle_pieces");
@@ -171,9 +180,40 @@ namespace GarfieldKartAPMod.Helpers
             // Medals are 1-indexed (Bronze = 1) while grades are 0-indexed (bronze = 0)
             return (int)medal >= GetTimeTrialGoalGrade() + 1;
         }
+        
+        public static E_TimeTrialMedal GetHighestRequiredMedal()
+        {
+            int medal = GetTimeTrialRandomization();
 
-        // The medal the game reports at race end is max(medal already in its save, medal earned
-        // this run), so score the run itself off the same thresholds GetMedalBeaten reads
+            if (ArchipelagoGoalManager.GetGoalId() == ArchipelagoConstants.GOAL_TIME_TRIALS)
+            {
+                int goalMedal = GetTimeTrialGoalGrade() + 1;
+                if (goalMedal > medal) medal = goalMedal;
+            }
+
+            if (medal > (int)E_TimeTrialMedal.Platinium) medal = (int)E_TimeTrialMedal.Platinium;
+            return (E_TimeTrialMedal)medal;
+        }
+        
+        public static int GetTimeForMedal(string trackName, E_TimeTrialMedal medal)
+        {
+            TimeTrialConfig timeToBeat = TimeTrialConfigsContainer.GetTimeToBeatFromTrack(trackName);
+            if (timeToBeat == null)
+            {
+                Log.Warning($"[TimeTrial] No times to beat for level '{trackName}'");
+                return 0;
+            }
+
+            switch (medal)
+            {
+                case E_TimeTrialMedal.Bronze: return timeToBeat.Bronze;
+                case E_TimeTrialMedal.Silver: return timeToBeat.Silver;
+                case E_TimeTrialMedal.Gold: return timeToBeat.Gold;
+                case E_TimeTrialMedal.Platinium: return timeToBeat.Platinium;
+                default: return 0;
+            }
+        }
+        
         public static E_TimeTrialMedal GetMedalForRaceTime(int raceTimeMs)
         {
             TimeTrialConfig timeToBeat = TimeTrialConfigsContainer.GetTimeToBeatFromTrack(LoadingManager.LevelToLoad);
@@ -218,11 +258,7 @@ namespace GarfieldKartAPMod.Helpers
             return !TryParse(puzzleCountString, out int reqPuzzleCount) ? throw new SlotDataException($"Invalid puzzle piece goal value passed from slot data: {puzzleCountString}") : reqPuzzleCount;
 
         }
-
-        // puzzle_piece_required is a percentage (10-100) of the pool, not an absolute count.
-        // Mirrors get_required_puzzle_pieces in the apworld's rules.py, which the generator uses
-        // for the completion condition - the two have to round the same way or the goal fires at
-        // the wrong time.
+        
         public static int GetRequiredPuzzlePieceCount()
         {
             string requiredString = GarfieldKartAPMod.APClient.GetSlotDataValue("puzzle_piece_required");

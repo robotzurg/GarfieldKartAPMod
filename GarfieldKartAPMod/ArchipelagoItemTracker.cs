@@ -147,7 +147,7 @@ namespace GarfieldKartAPMod
 
             for (int cupId = 0; cupId < 4; cupId++)
             {
-                if (HasCup(cupId)) cupUnlocks.Add(cupId);
+                if (CanAccessCup(cupId)) cupUnlocks.Add(cupId);
             }
 
             return cupUnlocks;
@@ -160,12 +160,15 @@ namespace GarfieldKartAPMod
 
             bool raceRando = ArchipelagoHelper.IsRacesRandomized();
             bool cupRando = ArchipelagoHelper.IsCupsRandomized();
-            
+
+            if (!raceRando && !cupRando)
+                return true;
+
             if (cupRando && !raceRando )
             {
                 return HasCup(cupId);
             }
-            
+
             long raceItemId = ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD + raceId;
             return HasItem(raceItemId);
         }
@@ -226,46 +229,6 @@ namespace GarfieldKartAPMod
             }
 
             return true;
-        }
-
-        // A course's time trials are accessible once the course can be reached by
-        // ANY unlock - its own course unlock OR the cup it belongs to
-        public static bool CanAccessTimeTrial(int raceId)
-        {
-            bool raceRando = ArchipelagoHelper.IsRacesRandomized();
-            bool cupRando = ArchipelagoHelper.IsCupsRandomized();
-
-            if (!raceRando && !cupRando)
-                return true;
-
-            if (raceRando && HasItem(ArchipelagoConstants.ITEM_COURSE_UNLOCK_CATZ_IN_THE_HOOD + raceId))
-                return true;
-
-            if (cupRando)
-            {
-                int cupId = raceId / 4;
-                if (ArchipelagoHelper.IsProgressiveCupsEnabled())
-                {
-                    return AmountOfItem(ArchipelagoConstants.ITEM_PROGRESSIVE_CUP_UNLOCK) >= cupId;
-                }
-
-                return HasItem(ArchipelagoConstants.ITEM_CUP_UNLOCK_LASAGNA + cupId);
-            }
-
-            return false;
-        }
-
-        public static bool HasTimeTrialInCup(int cupId)
-        {
-            int startRaceId = cupId * 4;
-
-            for (int i = 0; i < 4; i++)
-            {
-                if (CanAccessTimeTrial(startRaceId + i))
-                    return true;
-            }
-
-            return false;
         }
 
         public static int GetPuzzlePieceCount(string startScene)
