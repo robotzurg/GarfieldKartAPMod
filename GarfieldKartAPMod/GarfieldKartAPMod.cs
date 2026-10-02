@@ -37,7 +37,7 @@ namespace GarfieldKartAPMod
         private const string PluginGuid = PluginAuthor + "." + PluginName;
         private const string PluginAuthor = "Jeffdev";
         private const string PluginName = "GarfieldKartAPMod";
-        private const string PluginVersion = "1.0.2";
+        private const string PluginVersion = "1.1.0";
 
         public static ConfigEntry<int> notificationTime;
         public static ConfigEntry<int> lapCountOverride;
@@ -125,6 +125,7 @@ namespace GarfieldKartAPMod
             APClient = new ArchipelagoClient();
             APClient.OnConnected += OnArchipelagoConnected;
             APClient.OnDisconnected += OnArchipelagoDisconnected;
+            ArchipelagoConnection.Initialize();
 
             CreateUI();
         }
@@ -151,6 +152,7 @@ namespace GarfieldKartAPMod
             if (Input.GetKeyUp(KeyCode.F9)) DeathLinkManager.SimulateReceivedDeath();
 #endif
             
+            ArchipelagoConnection.Update();
             DeathLinkManager.ProcessPendingDeath();
             TickActiveTrapTimers();
 
@@ -188,14 +190,12 @@ namespace GarfieldKartAPMod
         private void OnArchipelagoConnected()
         {
             Log.Message("Connected to Archipelago - loading items");
-            uiObject.GetComponent<ConnectionUI>().ToggleUI();
-            // PopupManager.OpenPopup("Connected to Archipelago!", PopupHD.POPUP_TYPE.INFORMATION, PopupHD.POPUP_PRIORITY.NORMAL);
         }
 
+        // Socket thread - the reconnect popup is raised from ArchipelagoConnection.Update
         private void OnArchipelagoDisconnected()
         {
             Log.Message("Disconnected from Archipelago");
-            uiObject.GetComponent<ConnectionUI>().ForceShow();
         }
 
         private Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
@@ -220,9 +220,6 @@ namespace GarfieldKartAPMod
             Log.Message("Creating Archipelago UI...");
             uiObject = new GameObject("ArchipelagoUI");
             DontDestroyOnLoad(uiObject);
-
-            var ui = uiObject.AddComponent<ConnectionUI>();
-            ui.Initialize(APClient);
 
             notificationDisplay = uiObject.AddComponent<NotificationDisplay>();
             notificationDisplay.Initialize();
@@ -250,6 +247,11 @@ namespace GarfieldKartAPMod.Patches
     {
         public static void DisableButtonsByIndices(object buttonsArray, params int[] indices)
         {
+            SetButtonsInteractable(buttonsArray, false, indices);
+        }
+
+        public static void SetButtonsInteractable(object buttonsArray, bool interactable, params int[] indices)
+        {
             try
             {
                 Type buttonsType = buttonsArray.GetType();
@@ -265,8 +267,7 @@ namespace GarfieldKartAPMod.Patches
                     if (indexerProp == null) continue;
                     BetterButton button = indexerProp.GetValue(buttonsArray, [i]) as BetterButton;
                     if (button == null) continue;
-                    button.interactable = false;
-                    Log.Info($"Disabled button at index {i}");
+                    button.interactable = interactable;
                 }
             }
             catch (Exception ex)
@@ -336,6 +337,7 @@ namespace GarfieldKartAPMod.Patches
         static void Postfix(MenuHDMain __instance, object ___m_buttons)
         {
             UITextureSwapper.SwapMainMenuLogo(__instance.transform.root.gameObject);
+            UITextureSwapper.SwapMedalIcons();
 
             // Without a session the button still leads to the real gallery, so leave it alone
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
@@ -367,6 +369,26 @@ namespace GarfieldKartAPMod.Patches
         static void Postfix(MenuHDEngagementScreen __instance)
         {
             UITextureSwapper.SwapMainMenuLogo(__instance.transform.root.gameObject);
+            UITextureSwapper.SwapMedalIcons();
+            ApConnectionPanel.Attach(__instance);
+        }
+    }
+
+    // No getting past the title screen without a session
+    [HarmonyPatch(typeof(MenuHDEngagementScreen), "OnSubmitAction")]
+    public class MenuHDEngagementScreen_OnSubmitAction_Patch
+    {
+        static bool Prefix() => ApConnectionPanel.CanLeaveTitle;
+    }
+
+    // Navigating onto a connection field shouldn't start typing; Submit does that
+    [HarmonyPatch(typeof(TMP_InputField), "OnSelect")]
+    public class TMP_InputField_OnSelect_Patch
+    {
+        static void Postfix(TMP_InputField __instance, ref bool ___m_ShouldActivateNextUpdate)
+        {
+            if (ApConnectionPanel.Owns(__instance))
+                ___m_ShouldActivateNextUpdate = false;
         }
     }
 
@@ -377,13 +399,9 @@ namespace GarfieldKartAPMod.Patches
         {
             if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
 
-            var cupsList = ArchipelagoItemTracker.GetAvailableCups();
-
-            // Disable Championship button if no cups available
-            if (cupsList.Count == 0)
-            {
-                ButtonHelper.DisableButtonsByIndices(___m_buttons, 1);
-            }
+            // The game never re-enables it itself
+            bool anyCups = ArchipelagoItemTracker.GetAvailableCups().Count > 0;
+            ButtonHelper.SetButtonsInteractable(___m_buttons, anyCups, 1);
         }
     }
 
@@ -543,6 +561,15 @@ namespace GarfieldKartAPMod.Patches
             {
                 TrackChecksDisplay.AttachOrUpdate(___m_itemsButtons[i], tracks[i]);
             }
+        }
+    }
+    
+    [HarmonyPatch(typeof(HD_TrackSelection_Championship), "ChangeRarity")]
+    public class HD_TrackSelection_Championship_ChangeRarity_Patch
+    {
+        static void Postfix(HD_TrackSelection_Championship __instance, int cup)
+        {
+            TrackChecksDisplay.AttachOrUpdateCup(__instance, cup);
         }
     }
 
@@ -800,13 +827,16 @@ namespace GarfieldKartAPMod.Patches
                 }
             }
             
-            // If Puzzle rando is enabled and we have springs and puzzle pieces are uncollected, prioritize springs
-            if (ArchipelagoHelper.IsPuzzleRandomizationEnabled() &&
-                ArchipelagoItemTracker.HasBonusAvailable(BonusCategory.SPRING))
+            // Favour items that reach uncollected puzzle pieces
+            if (ArchipelagoHelper.IsPuzzleRandomizationEnabled())
             {
                 string track = Singleton<GameConfigurator>.Instance.StartScene;
-                if (ArchipelagoItemTracker.GetPuzzlePieceCount(track) < 3 && UnityEngine.Random.value < 0.5f)
-                    bonus = BonusCategory.SPRING;
+                var puzzleItems = new List<BonusCategory> { BonusCategory.SPRING };
+                if (track == "E3C3") puzzleItems.Add(BonusCategory.LASAGNA);
+                puzzleItems.RemoveAll(item => !ArchipelagoItemTracker.HasBonusAvailable(item));
+
+                if (puzzleItems.Count > 0 && ArchipelagoItemTracker.GetPuzzlePieceCount(track) < 3 && UnityEngine.Random.value < 0.5f)
+                    bonus = puzzleItems[UnityEngine.Random.Range(0, puzzleItems.Count)];
             }
 
             return FinishItemRoll(__instance, ___m_kart, bonus);
@@ -920,6 +950,18 @@ namespace GarfieldKartAPMod.Patches
             }
         }
      }
+
+    [HarmonyPatch(typeof(HUDBonusHD), "StartAnimation")]
+    public class HUDBonusHD_StartAnimation_Patch
+    {
+        static void Prefix(HUDBonusHD __instance, int slotIndex, int ___m_indexToAffectSlot1)
+        {
+            if (!ArchipelagoHelper.IsConnectedAndEnabled) return;
+
+            if (slotIndex == 1 && ___m_indexToAffectSlot1 != -1)
+                __instance.ForceSwap();
+        }
+    }
 
     [HarmonyPatch(typeof(GkRacingAI), "ActivateBonus")]
     public class GkRacingAI_ActivateBonus_Patch

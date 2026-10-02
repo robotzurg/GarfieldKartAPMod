@@ -41,10 +41,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Include="Resources\Sprites\archipelago_logo.png" />
 		<EmbeddedResource Include="Resources\Sprites\garfkart_ap_icon.png" />
 		<EmbeddedResource Include="Resources\Sprites\garfkart_ap_puzzle_filled.png" />
 		<EmbeddedResource Include="Resources\Sprites\garfkart_ap_puzzle_empty.png" />
 		<EmbeddedResource Include="Resources\Sprites\logo_garfAP_complete.png" />
+		<EmbeddedResource Include="Resources\Sprites\ui_medal_bronze.png" />
+		<EmbeddedResource Include="Resources\Sprites\ui_medal_silver.png" />
+		<EmbeddedResource Include="Resources\Sprites\ui_medal_gold.png" />
+		<EmbeddedResource Include="Resources\Sprites\ui_medal_platinum.png" />
 	</ItemGroup>
 </Project>

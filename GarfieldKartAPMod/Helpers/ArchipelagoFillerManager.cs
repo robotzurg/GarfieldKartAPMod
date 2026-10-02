@@ -155,7 +155,6 @@ namespace GarfieldKartAPMod.Helpers
                 foreach (ActiveFillerItem active in activeDuration.Where(active => active.Item is TrapItem))
                 {
                     active.TrapSecondsActive = 0f;
-                    GarfieldKartAPMod.APClient.QueueNotification($"{active.Item.Name} Activated!");
                 }
             }
 
@@ -224,8 +223,6 @@ namespace GarfieldKartAPMod.Helpers
                     Discharge(i);
                     continue;
                 }
-
-                GarfieldKartAPMod.APClient.QueueNotification($"{active.Item.Name} Wore Off!");
                 Log.Message($"[Filler] {active.Item.Name} wore off, still owed a race");
             }
 
@@ -275,9 +272,6 @@ namespace GarfieldKartAPMod.Helpers
         private static void Activate(FillerItem filler)
         {
             activeDuration.Add(new ActiveFillerItem { Item = filler, RemainingRaces = 1 });
-            // The quote announces itself at the end of the race, so it doesn't need this
-            if (filler.Id != ArchipelagoConstants.ITEM_QUOTE_FILLER)
-                GarfieldKartAPMod.APClient.QueueNotification($"{filler.Name} Activated!");
             Log.Message($"[Filler] Activated {filler.Name}");
         }
 
@@ -288,9 +282,7 @@ namespace GarfieldKartAPMod.Helpers
             activeDuration.RemoveAt(index);
             usedFiller.Add(active.Item.Id);
 
-            Log.Message($"[Filler] Expired {active.Item.Name}");
-            GarfieldKartAPMod.APClient.QueueNotification($"{active.Item.Name} Expired!");
-        }
+            Log.Message($"[Filler] Expired {active.Item.Name}");        }
 
         // The save holds only what's active and what's used up, so anything else the server has
         // sent must still be waiting its turn. Runs on the socket thread, so no Unity API here -

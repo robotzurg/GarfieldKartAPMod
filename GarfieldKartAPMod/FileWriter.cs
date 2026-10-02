@@ -9,7 +9,7 @@ namespace GarfieldKartAPMod
         private const string LastConnectionFileName = "last_connection.txt";
 
         // Save the last used connection info to disk. Overwrites each time, so it's the default on the next run.
-        public void WriteLastConnection(string host, int port, string slotName, string password)
+        public static void WriteLastConnection(string host, int port, string slotName, string password)
         {
             try
             {

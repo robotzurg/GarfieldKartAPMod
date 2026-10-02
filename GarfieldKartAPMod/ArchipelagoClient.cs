@@ -7,7 +7,10 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Text;
+using System.Threading;
+using HarmonyLib;
 using ArchipelagoColor = Archipelago.MultiClient.Net.Models.Color;
 
 namespace GarfieldKartAPMod
@@ -22,6 +25,9 @@ namespace GarfieldKartAPMod
         // The slot name used for the current connection (stable, unlike server-side aliases)
         public string SlotName { get; private set; }
 
+        // Why the last Connect() failed, for the connection screen and reconnect popup
+        public string LastConnectionError { get; private set; }
+
         public event Action OnConnected;
         public event Action<string> OnConnectionFailed;
         public event Action OnDisconnected;
@@ -31,22 +37,25 @@ namespace GarfieldKartAPMod
             try
             {
                 Log.Message($"Attempting to connect to {hostname}:{port} as {slotName}");
+                LastConnectionError = null;
 
-                session = ArchipelagoSessionFactory.CreateSession(hostname, port);
+                // Not live until logged in, so login errors aren't a lost connection
+                ArchipelagoSession newSession = ArchipelagoSessionFactory.CreateSession(hostname, port);
 
-                session.Socket.ErrorReceived += OnError;
-                session.Socket.SocketClosed += OnSocketClosed;
+                newSession.Socket.ErrorReceived += (ex, message) => OnError(newSession, ex, message);
+                newSession.Socket.SocketClosed += reason => OnSocketClosed(newSession, reason);
 
-                LoginResult result = session.TryConnectAndLogin(
+                LoginResult result = newSession.TryConnectAndLogin(
                     "Garfield Kart - Furious Racing",
                     slotName,
                     ItemsHandlingFlags.AllItems,
-                    new Version(0, 6, 6),
+                    new Version(0, 6, 7),
                     password: string.IsNullOrEmpty(password) ? null : password
                 );
 
                 if (result.Successful)
                 {
+                    session = newSession;
                     LoginSuccessful loginSuccess = (LoginSuccessful)result;
                     SlotName = slotName;
                     GarfieldKartAPMod.sessionSlotData = loginSuccess.SlotData;
@@ -74,6 +83,7 @@ namespace GarfieldKartAPMod
                     LoginFailure failure = (LoginFailure)result;
                     string errorMsg = string.Join(", ", failure.Errors);
                     Log.Error($"Connection failed: {errorMsg}");
+                    LastConnectionError = errorMsg;
                     OnConnectionFailed?.Invoke(errorMsg);
                     session = null;
                 }
@@ -81,6 +91,7 @@ namespace GarfieldKartAPMod
             catch (Exception ex)
             {
                 Log.Error($"Connection exception: {ex}");
+                LastConnectionError = ex.Message;
                 OnConnectionFailed?.Invoke(ex.Message);
                 session = null;
             }
@@ -93,11 +104,18 @@ namespace GarfieldKartAPMod
 
         public void Disconnect()
         {
-            if (session == null) return;
-            session.Socket.DisconnectAsync();
-            session = null;
+            // Cleared first so the close event isn't treated as a lost connection
+            ArchipelagoSession closing = Interlocked.Exchange(ref session, null);
+            if (closing == null) return;
+            closing.Socket.DisconnectAsync();
             DeathLinkManager.OnDisconnected();
             Log.Message("Disconnected from Archipelago");
+        }
+
+        public void CheckConnection()
+        {
+            ArchipelagoSession current = session;
+            if (current != null && !current.Socket.Connected) OnSocketClosed(current, "connection lost");
         }
 
         private void OnMessageReceived(LogMessage message)
@@ -148,31 +166,20 @@ namespace GarfieldKartAPMod
             return null;
         }
 
-        //private void OnItemReceived(ReceivedItemsHelper helper)
-        //{
-        //    var item = helper.PeekItem();
-
-        //    string itemName = session.Items.GetItemName(item.ItemId);
-        //    string playerName = session.Players.GetPlayerName(item.Player);
-
-        //    Log.Message($"Item Received: {itemName} from {playerName}");
-
-        //    ArchipelagoItemTracker.AddReceivedItem(item.ItemId);
-
-        //    pendingNotifications.Enqueue((item.ItemId, item.Player, itemName, playerName));
-
-        //    helper.DequeueItem();
-        //}
-
-        private void OnError(Exception ex, string message)
+        private void OnError(ArchipelagoSession from, Exception ex, string message)
         {
-            Log.Error($"Socket error: {message} - {ex.Message}");
+            Log.Error($"Socket error: {message}");
+            if (ex is WebSocketException) OnSocketClosed(from, "connection lost");
         }
 
-        private void OnSocketClosed(string reason)
+        private void OnSocketClosed(ArchipelagoSession lost, string reason)
         {
+            if (Interlocked.CompareExchange(ref session, null, lost) != lost) return;
             Log.Warning($"Socket closed: {reason}");
-            session = null;
+
+            // Mono leaves a dropped socket "Open", so the library would poll it forever
+            Traverse.Create(lost.Socket).Field("Socket").GetValue<WebSocket>()?.Abort();
+
             DeathLinkManager.OnDisconnected();
             OnDisconnected?.Invoke();
         }

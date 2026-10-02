@@ -39,7 +39,6 @@ namespace GarfieldKartAPMod.Helpers
             if (!ArchipelagoFillerManager.TryConsumeInstant(ArchipelagoConstants.ITEM_START_BOOST_HELPER_FILLER)) return;
 
             kart.BoostStartType = Kart.BoostType.SUPER;
-            GarfieldKartAPMod.APClient?.QueueNotification("Start Boost Helper used: perfect start boost!");
             Log.Message("[Filler] Start Boost Helper consumed: guaranteed super start boost");
         }
 
@@ -72,7 +71,6 @@ namespace GarfieldKartAPMod.Helpers
 
             BonusCategory bonus = available[Random.Range(0, available.Count)];
             bonusMgr.SetItem(bonus, 1, isFromCheat: true);
-            GarfieldKartAPMod.APClient?.QueueNotification($"Random Item Box opened: {BonusDisplayNames[bonus]}!");
             Log.Message($"[Filler] Random Item Box granted {bonus}");
         }
     }

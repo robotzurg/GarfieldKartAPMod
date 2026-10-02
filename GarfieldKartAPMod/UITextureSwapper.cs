@@ -15,6 +15,11 @@ namespace GarfieldKartAPMod
         public static Sprite puzzlePieceEmptySprite;
         public static Sprite mainMenuLogoSprite;
         public static Sprite galleryIconSprite;
+        public static Sprite bronzeMedalSprite;
+        public static Sprite silverMedalSprite;
+        public static Sprite goldMedalSprite;
+        public static Sprite platinumMedalSprite;
+        private static bool medalsLoaded;
         private static bool initialized;
         private static bool hasSwappedThisMenu;
 
@@ -30,6 +35,13 @@ namespace GarfieldKartAPMod
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_puzzle_empty.png", out puzzlePieceEmptySprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("logo_garfAP_complete.png", out mainMenuLogoSprite);
             allSpritesLoaded = allSpritesLoaded && TryLoadSprite("garfkart_ap_icon.png", out galleryIconSprite);
+
+            // Non-short-circuit so every medal loads; any failure keeps the game's art over the red placeholder
+            medalsLoaded = TryLoadSprite("ui_medal_bronze.png", out bronzeMedalSprite)
+                           & TryLoadSprite("ui_medal_silver.png", out silverMedalSprite)
+                           & TryLoadSprite("ui_medal_gold.png", out goldMedalSprite)
+                           & TryLoadSprite("ui_medal_platinum.png", out platinumMedalSprite);
+            allSpritesLoaded = allSpritesLoaded && medalsLoaded;
 
             if (allSpritesLoaded)
             {
@@ -190,6 +202,20 @@ namespace GarfieldKartAPMod
             }
         }
         
+        public static void SwapMedalIcons()
+        {
+            if (!medalsLoaded || !Aube.Singleton<UISprites>.IsInstanced) return;
+
+            UISprites.MedalSprites medals = UISprites.MedalIcons;
+            if (medals[E_TimeTrialMedal.Bronze] == bronzeMedalSprite) return;
+
+            medals[E_TimeTrialMedal.Bronze] = bronzeMedalSprite;
+            medals[E_TimeTrialMedal.Silver] = silverMedalSprite;
+            medals[E_TimeTrialMedal.Gold] = goldMedalSprite;
+            medals[E_TimeTrialMedal.Platinium] = platinumMedalSprite;
+            Log.Message("Swapped time trial medal icons");
+        }
+
         private const float GalleryIconScale = 0.7f;
 
         // Shift it a bit to line up

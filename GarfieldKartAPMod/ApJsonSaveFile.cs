@@ -64,6 +64,10 @@ namespace GarfieldKartAPMod
         public static int GetCupVictoryCount() => Load()?.CupVictories.Count ?? 0;
         public static int GetTimeTrialVictoryCount() => Load()?.TimeTrialVictories.Count ?? 0;
 
+        public static bool HasRaceVictory(string track) => Load()?.RaceVictories.Contains(track) ?? false;
+        public static bool HasCupVictory(int cupId) => Load()?.CupVictories.Contains(cupId) ?? false;
+        public static bool HasTimeTrialVictory(string track) => Load()?.TimeTrialVictories.Contains(track) ?? false;
+
         // ========== FILLER STATE ==========
 
         public static List<SavedActiveFiller> GetActiveFillerState()

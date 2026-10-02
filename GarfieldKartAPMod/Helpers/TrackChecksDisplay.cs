@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace GarfieldKartAPMod.Helpers
         private const string ObjectName = "APTrackChecksText";
         private const string LapsanityObjectName = "APLapsanityText";
         private const string TimeTrialObjectName = "APTimeTrialText";
+        private const string CupObjectName = "APCupChecksText";
 
         private const string FoundColor = "#6BE36B";
         private const string MissingColor = "#999999";
@@ -18,6 +20,8 @@ namespace GarfieldKartAPMod.Helpers
 
         // Medal grades in E_TimeTrialMedal order (Bronze = 1), so index + 1 is the medal
         private static readonly string[] MedalLabels = ["Bronze", "Silver", "Gold", "Plat"];
+
+        private static readonly string[] CCLabels = ["50cc", "100cc", "150cc"];
 
         public static void AttachOrUpdate(HD_TrackSelection_Item item, string trackScene)
         {
@@ -62,8 +66,28 @@ namespace GarfieldKartAPMod.Helpers
                 }
             }
         }
+        
+        public static void AttachOrUpdateCup(HD_TrackSelection_Championship panel, int cupId)
+        {
+            if (panel == null) return;
 
-        private static TextMeshProUGUI GetOrCreateText(HD_TrackSelection_Item item, string name, bool isTop)
+            bool shouldShow = ArchipelagoHelper.IsConnectedAndEnabled
+                              && ArchipelagoConstants.GetCupVictoryLoc(cupId) != -1;
+            
+            HD_TrackSelection_Item trackItem = panel.GetComponentInParent<MenuHDTrackSelection>()?.GetComponentInChildren<HD_TrackSelection_Item>(true)
+                                               ?? Resources.FindObjectsOfTypeAll<HD_TrackSelection_Item>().FirstOrDefault();
+            TextMeshProUGUI style = trackItem?.GetComponentInChildren<TextMeshProUGUI>(true);
+            TextMeshProUGUI cupText = GetOrCreateText(panel, CupObjectName, false, style);
+            if (cupText == null) return;
+
+            cupText.gameObject.SetActive(shouldShow);
+            if (shouldShow)
+            {
+                cupText.text = BuildCupText(cupId);
+            }
+        }
+
+        private static TextMeshProUGUI GetOrCreateText(Component item, string name, bool isTop, TextMeshProUGUI style = null)
         {
             Transform existing = item.transform.Find(name);
             if (existing != null) return existing.GetComponent<TextMeshProUGUI>();
@@ -100,6 +124,13 @@ namespace GarfieldKartAPMod.Helpers
             text.enableWordWrapping = false;
             text.overflowMode = TextOverflowModes.Overflow;
             text.raycastTarget = false;
+            if (style != null)
+            {
+                text.font = style.font;
+                text.fontSharedMaterial = style.fontSharedMaterial;
+                text.color = style.color;
+                text.fontStyle = style.fontStyle;
+            }
 
             RectTransform rect = go.GetComponent<RectTransform>();
             if (isTop)
@@ -128,15 +159,14 @@ namespace GarfieldKartAPMod.Helpers
             long victoryLoc = ArchipelagoConstants.GetRaceVictoryLoc(trackScene);
             if (victoryLoc == -1) return "";
 
-            var parts = new List<string> { $"Win: {Mark(victoryLoc)}" };
+            var parts = new List<string> { $"Win: {Mark(ApJsonSaveFile.HasRaceVictory(trackScene))}" };
 
             // CC victory checks exist cumulatively up to the CC requirement
             int ccRequirement = ArchipelagoHelper.GetCCRequirement();
-            string[] ccLabels = ["50cc", "100cc", "150cc"];
-            for (int cc = 0; cc < ccRequirement && cc < ccLabels.Length; cc++)
+            for (int cc = 0; cc < ccRequirement && cc < CCLabels.Length; cc++)
             {
                 long ccLoc = ArchipelagoConstants.LOC_RACE_VICTORY_CC_BASE + cc * ArchipelagoConstants.LOC_RACE_VICTORY_CC_GAP + victoryLoc;
-                parts.Add($"{ccLabels[cc]}: {Mark(ccLoc)}");
+                parts.Add($"{CCLabels[cc]}: {Mark(ccLoc)}");
             }
 
             if (ArchipelagoHelper.IsHatRandomizerEnabled())
@@ -179,12 +209,36 @@ namespace GarfieldKartAPMod.Helpers
             }
 
             if (medalMarks.Count == 0) return "";
-            return $"Time Trials\n{string.Join("/", medalMarks)}";
+            string won = Mark(ApJsonSaveFile.HasTimeTrialVictory(trackScene));
+            return $"Victory: {won}\n{string.Join("/", medalMarks)}";
         }
 
-        private static string Mark(long locationId)
+        private static string BuildCupText(int cupId)
         {
-            return ArchipelagoItemTracker.HasLocation(locationId) ? FoundMark : MissingMark;
+            var parts = new List<string> { $"Win: {Mark(ApJsonSaveFile.HasCupVictory(cupId))}" };
+            
+            int ccRequirement = ArchipelagoHelper.GetCCRequirement();
+            for (int cc = 0; cc < ccRequirement && cc < CCLabels.Length; cc++)
+            {
+                long ccLoc = ArchipelagoConstants.LOC_CUP_VICTORY_CC_BASE + cc * ArchipelagoConstants.LOC_CUP_VICTORY_CC_GAP + (cupId + 1);
+                parts.Add($"{CCLabels[cc]}: {Mark(ccLoc)}");
+            }
+            
+            if (ArchipelagoHelper.IsSpoilerRandomizerEnabled())
+            {
+                var spoilerLocs = ArchipelagoConstants.GetSpoilerLocs(cupId);
+                for (int spoilerIdx = 0; spoilerIdx < spoilerLocs.Count; spoilerIdx++)
+                {
+                    parts.Add($"Spoiler {spoilerIdx + 1}: {Mark(ArchipelagoItemTracker.HasLocation(spoilerLocs[spoilerIdx]))}");
+                }
+            }
+
+            return string.Join("\n", parts);
         }
+
+        // Victories come from the local save
+        private static string Mark(bool found) => found ? FoundMark : MissingMark;
+
+        private static string Mark(long locationId) => Mark(ArchipelagoItemTracker.HasLocation(locationId));
     }
 }
